@@ -16,7 +16,7 @@ function Onboarding() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const meta = user?.user_metadata ?? {};
-  const [f, setF] = useState({ full_name: (meta.full_name as string) ?? (meta.name as string) ?? "", job_title: "", company: "", label: "Work" });
+  const [f, setF] = useState({ full_name: (meta["full_name"] as string) ?? (meta["name"] as string) ?? "", job_title: "", company: "", label: "Work" });
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {

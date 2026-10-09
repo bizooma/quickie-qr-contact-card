@@ -112,13 +112,13 @@ function fold(line: string): string {
 
 export function buildVCard(
   card: CardData,
-  opts: { photoBase64?: string; photoType?: string; cardUrl?: string } = {},
+  opts: { photoBase64?: string | undefined; photoType?: string | undefined; cardUrl?: string | undefined } = {},
 ): string {
   const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
   const name = card.full_name.trim() || "Contact";
   const parts = name.split(/\s+/);
-  const last = parts.length > 1 ? parts[parts.length - 1] : "";
-  const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : parts[0];
+  const last = parts.length > 1 ? (parts[parts.length - 1] ?? "") : "";
+  const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] ?? "");
   lines.push(`N:${esc(last)};${esc(first)};;;`);
   lines.push(`FN:${esc(name)}`);
   if (card.company) lines.push(`ORG:${esc(card.company)}`);
