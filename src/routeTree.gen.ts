@@ -14,6 +14,8 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
+import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,19 +42,33 @@ const AppOnboardingRoute = AppOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AppRoute,
 } as any)
+const CSlugRoute = CSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppCardsIdRoute = AppCardsIdRouteImport.update({
+  id: '/cards/$id',
+  path: '/cards/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
+  '/app/cards/$id': typeof AppCardsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/c/$slug': typeof CSlugRoute
   '/app': typeof AppIndexRoute
+  '/app/cards/$id': typeof AppCardsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -60,20 +76,38 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
+  '/app/cards/$id': typeof AppCardsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/auth' | '/app/onboarding' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/onboarding'
+    | '/c/$slug'
+    | '/app/'
+    | '/app/cards/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/onboarding' | '/app'
-  id: '__root__' | '/' | '/app' | '/auth' | '/app/onboarding' | '/app/'
+  to: '/' | '/auth' | '/app/onboarding' | '/c/$slug' | '/app' | '/app/cards/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/onboarding'
+    | '/c/$slug'
+    | '/app/'
+    | '/app/cards/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CSlugRoute: typeof CSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -113,17 +147,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOnboardingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/c/$slug': {
+      id: '/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/c/$slug'
+      preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/cards/$id': {
+      id: '/app/cards/$id'
+      path: '/cards/$id'
+      fullPath: '/app/cards/$id'
+      preLoaderRoute: typeof AppCardsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppCardsIdRoute: typeof AppCardsIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppOnboardingRoute: AppOnboardingRoute,
   AppIndexRoute: AppIndexRoute,
+  AppCardsIdRoute: AppCardsIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -132,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  CSlugRoute: CSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
