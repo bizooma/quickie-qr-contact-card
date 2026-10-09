@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BarChart3, CreditCard, ScanLine, Settings, Users } from "lucide-react";
+import { BarChart3, CreditCard, ScanLine, Settings, Users, Wrench } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,8 @@ const NAV = [
   { to: "/app", label: "Cards", icon: CreditCard, exact: true },
   { to: "/app/contacts", label: "Contacts", icon: Users },
   { to: "/app/scan", label: "Scan", icon: ScanLine },
-  { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/app/analytics", label: "Analytics", icon: BarChart3, desktopOnly: true },
+  { to: "/app/tools", label: "Tools", icon: Wrench },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -44,7 +45,11 @@ function AppLayout() {
     );
 
   const active = (to: string, exact?: boolean) =>
-    exact ? pathname === to || pathname.startsWith("/app/cards") : pathname.startsWith(to);
+    exact
+      ? pathname === to || pathname.startsWith("/app/cards")
+      : to === "/app/tools"
+        ? ["/app/tools", "/app/signature", "/app/background"].some((p) => pathname.startsWith(p))
+        : pathname.startsWith(to);
 
   return (
     <div className="min-h-screen md:pl-60">
@@ -72,7 +77,8 @@ function AppLayout() {
         <Outlet />
       </main>
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background/90 backdrop-blur md:hidden">
-        {NAV.map((n) => (
+        {/* Analytics lives under Tools on mobile to keep five tabs. */}
+        {NAV.filter((n) => !("desktopOnly" in n)).map((n) => (
           <Link
             key={n.to}
             to={n.to}
