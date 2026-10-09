@@ -11,6 +11,7 @@ import {
   Smartphone,
   Sparkles,
   Trash2,
+  Wand2,
   X,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -36,7 +37,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { SUGGESTED_TAGS } from "@/lib/contacts-api";
 import { buildContactVCard, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
-import { draftFollowUp } from "@/lib/ai.functions";
+import { draftFollowUp, enrichContact } from "@/lib/ai.functions";
+import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
 
 export const Route = createFileRoute("/app/contacts/$id")({ component: ContactDetail });
@@ -66,6 +68,9 @@ function ContactDetail() {
   const [tag, setTag] = useState("");
   const [followUp, setFollowUp] = useState<FollowUpDraft | null>(null);
   const [drafting, setDrafting] = useState(false);
+  const [enriching, setEnriching] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
+  const [enrichSummary, setEnrichSummary] = useState("");
 
   useEffect(() => {
     const c = data?.contact;
@@ -77,6 +82,8 @@ function ContactDetail() {
         company: c.company ?? "",
         job_title: c.job_title ?? "",
         met_at: c.met_at ?? "",
+        website: c.website ?? "",
+        linkedin_url: c.linkedin_url ?? "",
       });
   }, [data?.contact]);
 
@@ -187,6 +194,37 @@ function ContactDetail() {
       refresh();
     }
   }
+  async function runEnrichment() {
+    setEnriching(true);
+    try {
+      const result = await enrichContact({ data: { contactId: id } });
+      setSuggestions(buildSuggestions(c!, result));
+      setEnrichSummary(result.summary);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not enrich this contact");
+    } finally {
+      setEnriching(false);
+    }
+  }
+  // Only explicitly accepted values are written; each accept updates just its own field(s).
+  async function acceptSuggestions(list: Suggestion[]) {
+    if (!list.length) return;
+    const patch: Partial<Record<Suggestion["field"], string>> = {};
+    for (const s of list) patch[s.field] = s.value;
+    const { error } = await supabase.from("contacts").update(patch).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const done = new Set(list.map((s) => s.field));
+    setSuggestions((prev) => (prev ?? []).filter((s) => !done.has(s.field)));
+    toast.success(list.length > 1 ? "Suggestions saved" : `${ENRICH_LABELS[list[0]!.field]} saved`);
+    refresh();
+  }
+  function dismissSuggestion(field: Suggestion["field"]) {
+    setSuggestions((prev) => (prev ?? []).filter((s) => s.field !== field));
+  }
+
   async function deleteContact() {
     const { error } = await supabase.from("contacts").delete().eq("id", id);
     if (error) {
@@ -245,7 +283,64 @@ function ContactDetail() {
           <Smartphone className="h-4 w-4" />
           Save to phone
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={runEnrichment}
+          disabled={enriching || !canEnrich(c)}
+          title={canEnrich(c) ? undefined : "Add a company or email first"}
+        >
+          {enriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+          {enriching ? "Researching…" : "Enrich with AI"}
+        </Button>
       </div>
+
+      {suggestions && (
+        <section className="surface mb-8 space-y-3 p-4" aria-live="polite">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-sm font-bold">
+                <Sparkles className="h-4 w-4 text-brand" />
+                AI suggestions
+              </h2>
+              {enrichSummary && <p className="mt-1 text-xs text-muted-foreground">{enrichSummary}</p>}
+            </div>
+            <button onClick={() => setSuggestions(null)} aria-label="Close suggestions" className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {suggestions.length === 0 ? (
+            <p className="text-sm">Couldn't find anything reliable — nothing was changed.</p>
+          ) : (
+            <>
+              <ul className="divide-y">
+                {suggestions.map((s) => (
+                  <li key={s.field} className="flex flex-wrap items-center gap-3 py-2.5">
+                    <div className="min-w-0 flex-1 text-sm">
+                      <p className="text-xs font-semibold text-muted-foreground">{ENRICH_LABELS[s.field]}</p>
+                      <p className="break-words">
+                        {s.current ? (
+                          <>Replace <span className="text-muted-foreground line-through">{s.current}</span> with <span className="font-semibold">{s.value}</span></>
+                        ) : (
+                          <><span className="text-muted-foreground">Empty</span> → <span className="font-semibold">{s.value}</span></>
+                        )}
+                      </p>
+                      {s.source && <p className="mt-0.5 break-all text-xs text-muted-foreground">Source: {s.source}</p>}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="sm" onClick={() => acceptSuggestions([s])}>Accept</Button>
+                      <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(s.field)}>Dismiss</Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {suggestions.length > 1 && (
+                <Button size="sm" variant="outline" onClick={() => acceptSuggestions(suggestions)}>Accept all</Button>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-bold">Follow up</h2>
@@ -388,6 +483,8 @@ function ContactDetail() {
             ["company", "Company"],
             ["job_title", "Title"],
             ["met_at", "Where you met"],
+            ["website", "Website"],
+            ["linkedin_url", "LinkedIn"],
           ] as const
         ).map(([k, l]) => (
           <div key={k} className="space-y-1">

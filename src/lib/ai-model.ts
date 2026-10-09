@@ -44,3 +44,23 @@ export const FollowUpDraftSchema = z.object({
 });
 
 export type FollowUpDraft = z.infer<typeof FollowUpDraftSchema>;
+
+export const EnrichInputSchema = z.object({
+  contactId: z.string().uuid(),
+});
+
+// Each field is null unless the model verified it; `source` cites the URL/evidence.
+const EnrichedFieldSchema = z
+  .object({ value: z.string(), source: z.string() })
+  .nullable();
+
+export const EnrichmentResultSchema = z.object({
+  job_title: EnrichedFieldSchema,
+  company: EnrichedFieldSchema,
+  website: EnrichedFieldSchema,
+  linkedin_url: EnrichedFieldSchema,
+  // One-line explanation of how identity was verified (or why nothing was found).
+  summary: z.string(),
+});
+
+export type EnrichmentResult = z.infer<typeof EnrichmentResultSchema>;

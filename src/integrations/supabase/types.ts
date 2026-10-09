@@ -229,12 +229,14 @@ export type Database = {
           full_name: string
           id: string
           job_title: string | null
+          linkedin_url: string | null
           met_at: string | null
           note: string | null
           phone: string | null
           source: string
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
           card_id?: string | null
@@ -244,12 +246,14 @@ export type Database = {
           full_name: string
           id?: string
           job_title?: string | null
+          linkedin_url?: string | null
           met_at?: string | null
           note?: string | null
           phone?: string | null
           source?: string
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
           card_id?: string | null
@@ -259,12 +263,14 @@ export type Database = {
           full_name?: string
           id?: string
           job_title?: string | null
+          linkedin_url?: string | null
           met_at?: string | null
           note?: string | null
           phone?: string | null
           source?: string
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: [
           {

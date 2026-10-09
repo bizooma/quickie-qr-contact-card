@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  EnrichInputSchema,
+  EnrichmentResultSchema,
   FollowUpDraftSchema,
   FollowUpInputSchema,
   ScanCardsInputSchema,
@@ -141,4 +143,78 @@ export const draftFollowUp = createServerFn({ method: "POST" })
       throw new Error("Could not draft a follow-up for this contact. Try again.");
     }
     return response.parsed_output;
+  });
+
+/** Researches a contact on the web and returns verified field SUGGESTIONS only; never writes. */
+export const enrichContact = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(EnrichInputSchema)
+  .handler(async ({ data, context }) => {
+    const { data: contact, error } = await context.supabase
+      .from("contacts")
+      .select("full_name, email, company, job_title, website, linkedin_url")
+      .eq("id", data.contactId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!contact) throw new Error("Contact not found");
+    const hasNameCompany = !!contact.full_name.trim() && !!contact.company?.trim();
+    if (!hasNameCompany && !contact.email?.trim()) {
+      throw new Error("Add a company or an email to this contact before enriching.");
+    }
+
+    const known = [
+      `Name: ${contact.full_name}`,
+      contact.email && `Email: ${contact.email} (domain: ${contact.email.split("@")[1] ?? "unknown"})`,
+      contact.company && `Company: ${contact.company}`,
+      contact.job_title && `Title: ${contact.job_title}`,
+      contact.website && `Website: ${contact.website}`,
+      contact.linkedin_url && `LinkedIn: ${contact.linkedin_url}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const client = await getAnthropic();
+    const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
+    type Params = Parameters<typeof client.messages.parse>[0];
+    const messages: Params["messages"] = [
+      {
+        role: "user",
+        content:
+          `Research this professional contact and suggest values for job_title, company, website ` +
+          `(company website) and linkedin_url (their personal LinkedIn profile).\n\nKnown:\n${known}`,
+      },
+    ];
+
+    // Server-side web search can pause long turns; continue a bounded number of times.
+    for (let turn = 0; turn < 3; turn++) {
+      const response = await client.messages.parse({
+        model: MODEL,
+        max_tokens: 16000,
+        system:
+          "You enrich contact records using web search. Search for the person by name + company, " +
+          "or by the email domain to identify their company. Before suggesting anything, verify the " +
+          "result is the SAME person (name plus company, domain, or role must match) — common names " +
+          "need extra corroboration. Prefer official sources: LinkedIn, the company's own website, " +
+          "reputable press. For every field you cannot verify with high confidence, return null — " +
+          "never guess or infer from patterns. Returning all nulls is correct when nothing reliable " +
+          "is found. For each non-null field, `source` names the exact URL or evidence it came from. " +
+          "`summary` is one sentence on how identity was verified, or why nothing reliable was found.",
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
+        messages,
+        output_config: { format: zodOutputFormat(EnrichmentResultSchema) },
+      });
+
+      if (response.stop_reason === "refusal") {
+        throw new Error("The AI declined to research this contact.");
+      }
+      if (response.stop_reason === "pause_turn") {
+        messages.push({ role: "assistant", content: response.content });
+        continue;
+      }
+      if (!response.parsed_output) {
+        throw new Error("Could not enrich this contact. Try again.");
+      }
+      return response.parsed_output;
+    }
+    throw new Error("Research took too long. Try again.");
   });
