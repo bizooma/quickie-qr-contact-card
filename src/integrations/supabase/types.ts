@@ -14,13 +14,316 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      card_links: {
+        Row: {
+          card_id: string
+          created_at: string
+          icon: string
+          id: string
+          label: string
+          position: number
+          url: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          icon?: string
+          id?: string
+          label?: string
+          position?: number
+          url?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          label?: string
+          position?: number
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_links_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_views: {
+        Row: {
+          card_id: string
+          created_at: string
+          event_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_views_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cards: {
+        Row: {
+          accent_color: string
+          background_color: string
+          bio: string | null
+          company: string | null
+          created_at: string
+          emails: Json
+          font: string
+          full_name: string
+          headshot_path: string | null
+          id: string
+          job_title: string | null
+          label: string
+          location: string | null
+          logo_path: string | null
+          phones: Json
+          slug: string
+          template: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          accent_color?: string
+          background_color?: string
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          emails?: Json
+          font?: string
+          full_name?: string
+          headshot_path?: string | null
+          id?: string
+          job_title?: string | null
+          label?: string
+          location?: string | null
+          logo_path?: string | null
+          phones?: Json
+          slug: string
+          template?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          accent_color?: string
+          background_color?: string
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          emails?: Json
+          font?: string
+          full_name?: string
+          headshot_path?: string | null
+          id?: string
+          job_title?: string | null
+          label?: string
+          location?: string | null
+          logo_path?: string | null
+          phones?: Json
+          slug?: string
+          template?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      contact_notes: {
+        Row: {
+          body: string
+          contact_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_tags: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          tag: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          tag: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          tag?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          card_id: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          job_title: string | null
+          met_at: string | null
+          note: string | null
+          phone: string | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          job_title?: string | null
+          met_at?: string | null
+          note?: string | null
+          phone?: string | null
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          job_title?: string | null
+          met_at?: string | null
+          note?: string | null
+          phone?: string | null
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          onboarded: boolean
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_public_card: { Args: { _slug: string }; Returns: Json }
+      log_card_event: {
+        Args: { _event: string; _slug: string }
+        Returns: undefined
+      }
+      submit_shareback: {
+        Args: {
+          _company: string
+          _email: string
+          _name: string
+          _note: string
+          _phone: string
+          _slug: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
