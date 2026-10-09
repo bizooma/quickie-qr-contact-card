@@ -12,4 +12,8 @@
 - [x] 2b Contact enrichment: suggest-and-confirm on contact detail (web search)
 - [x] 2c (rest) Voice notes (browser dictation) + AI note summaries
 Requires the ANTHROPIC_API_KEY secret in the server environment.
-## Later (not started — see project memory): Phase 3 reach tools, Phase 4 pro
+## Phase 3 — Reach tools
+- [x] Email signature generator (/app/signature)
+- [x] Meeting background generator (/app/background)
+- Wallet passes: skipped (needs external signing accounts)
+## Later (not started — see project memory): Phase 4 pro
