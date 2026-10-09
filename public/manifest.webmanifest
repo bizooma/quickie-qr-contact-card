@@ -1,0 +1,9 @@
+{
+  "name": "SignatureSurge",
+  "short_name": "SignatureSurge",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#FAF8F5",
+  "theme_color": "#E8553D",
+  "icons": [{ "src": "/favicon.ico", "sizes": "64x64", "type": "image/x-icon" }]
+}
