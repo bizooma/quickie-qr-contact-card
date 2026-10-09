@@ -1,0 +1,60 @@
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { slugify, type CardData, type CardLink, type LabeledValue } from "./card-model";
+
+export type CardRow = Tables<"cards">;
+
+export function rowToCard(row: CardRow, links: CardLink[]): CardData {
+  return {
+    slug: row.slug, label: row.label, full_name: row.full_name, job_title: row.job_title, company: row.company,
+    phones: (row.phones as LabeledValue[]) ?? [], emails: (row.emails as LabeledValue[]) ?? [],
+    website: row.website, location: row.location, bio: row.bio, headshot_path: row.headshot_path, logo_path: row.logo_path,
+    accent_color: row.accent_color, background_color: row.background_color, font: row.font, template: row.template, links,
+  };
+}
+
+export async function listCards(): Promise<CardRow[]> {
+  const { data, error } = await supabase.from("cards").select("*").order("created_at");
+  if (error) throw error;
+  return data;
+}
+
+export async function getCard(id: string) {
+  const [{ data: card, error }, { data: links, error: lerr }] = await Promise.all([
+    supabase.from("cards").select("*").eq("id", id).maybeSingle(),
+    supabase.from("card_links").select("*").eq("card_id", id).order("position"),
+  ]);
+  if (error) throw error;
+  if (lerr) throw lerr;
+  return { card, links: (links ?? []).map((l) => ({ id: l.id, label: l.label, url: l.url, icon: l.icon })) };
+}
+
+/** Create a card with a unique slug, retrying with a numeric suffix on collision. */
+export async function createCard(userId: string, input: { label: string; full_name: string; job_title?: string; company?: string; email?: string }) {
+  const base = slugify(input.full_name || input.label);
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const slug = attempt === 0 ? base : `${base.slice(0, 40)}-${Math.random().toString(36).slice(2, 6)}`;
+    const { data, error } = await supabase.from("cards").insert({
+      user_id: userId, slug, label: input.label, full_name: input.full_name,
+      job_title: input.job_title || null, company: input.company || null,
+      emails: input.email ? [{ label: "Work", value: input.email }] : [],
+    }).select().single();
+    if (!error) return data;
+    if (error.code !== "23505") throw error;
+  }
+  throw new Error("Could not find a free card address, please try again");
+}
+
+/** Replace a card's links with the given ordered list (idempotent). */
+export async function saveLinks(userId: string, cardId: string, links: CardLink[]) {
+  const rows = links.map((l, i) => ({ id: l.id ?? crypto.randomUUID(), card_id: cardId, user_id: userId, label: l.label, url: l.url, icon: l.icon, position: i }));
+  if (rows.length) {
+    const { error } = await supabase.from("card_links").upsert(rows);
+    if (error) throw error;
+  }
+  const keep = rows.map((r) => r.id);
+  let q = supabase.from("card_links").delete().eq("card_id", cardId);
+  if (keep.length) q = q.not("id", "in", `(${keep.join(",")})`);
+  const { error } = await q;
+  if (error) throw error;
+}
