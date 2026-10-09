@@ -14,16 +14,16 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
-import { Route as AppBackgroundRouteImport } from './routes/app.background'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
-import { Route as AppSignatureRouteImport } from './routes/app.signature'
-import { Route as AppToolsRouteImport } from './routes/app.tools'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
 import { Route as AppContactsIndexRouteImport } from './routes/app.contacts.index'
 import { Route as AppContactsIdRouteImport } from './routes/app.contacts.$id'
+import { Route as AppToolsIndexRouteImport } from './routes/app.tools.index'
+import { Route as AppToolsBackgroundRouteImport } from './routes/app.tools.background'
+import { Route as AppToolsSignatureRouteImport } from './routes/app.tools.signature'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -50,11 +50,6 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
-const AppBackgroundRoute = AppBackgroundRouteImport.update({
-  id: '/background',
-  path: '/background',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -68,16 +63,6 @@ const AppScanRoute = AppScanRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSignatureRoute = AppSignatureRouteImport.update({
-  id: '/signature',
-  path: '/signature',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppToolsRoute = AppToolsRouteImport.update({
-  id: '/tools',
-  path: '/tools',
   getParentRoute: () => AppRoute,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -100,39 +85,54 @@ const AppContactsIdRoute = AppContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
+  id: '/tools/',
+  path: '/tools/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppToolsBackgroundRoute = AppToolsBackgroundRouteImport.update({
+  id: '/tools/background',
+  path: '/tools/background',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppToolsSignatureRoute = AppToolsSignatureRouteImport.update({
+  id: '/tools/signature',
+  path: '/tools/signature',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
-  '/app/background': typeof AppBackgroundRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/signature': typeof AppSignatureRoute
-  '/app/tools': typeof AppToolsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/tools/background': typeof AppToolsBackgroundRoute
+  '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts/': typeof AppContactsIndexRoute
+  '/app/tools/': typeof AppToolsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
-  '/app/background': typeof AppBackgroundRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/signature': typeof AppSignatureRoute
-  '/app/tools': typeof AppToolsRoute
   '/c/$slug': typeof CSlugRoute
   '/app': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/tools/background': typeof AppToolsBackgroundRoute
+  '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts': typeof AppContactsIndexRoute
+  '/app/tools': typeof AppToolsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,17 +140,17 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
-  '/app/background': typeof AppBackgroundRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/signature': typeof AppSignatureRoute
-  '/app/tools': typeof AppToolsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/tools/background': typeof AppToolsBackgroundRoute
+  '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts/': typeof AppContactsIndexRoute
+  '/app/tools/': typeof AppToolsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,50 +159,50 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/analytics'
-    | '/app/background'
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
-    | '/app/signature'
-    | '/app/tools'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
     | '/app/contacts/$id'
+    | '/app/tools/background'
+    | '/app/tools/signature'
     | '/app/contacts/'
+    | '/app/tools/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/app/analytics'
-    | '/app/background'
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
-    | '/app/signature'
-    | '/app/tools'
     | '/c/$slug'
     | '/app'
     | '/app/cards/$id'
     | '/app/contacts/$id'
+    | '/app/tools/background'
+    | '/app/tools/signature'
     | '/app/contacts'
+    | '/app/tools'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/auth'
     | '/app/analytics'
-    | '/app/background'
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
-    | '/app/signature'
-    | '/app/tools'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
     | '/app/contacts/$id'
+    | '/app/tools/background'
+    | '/app/tools/signature'
     | '/app/contacts/'
+    | '/app/tools/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,13 +249,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/background': {
-      id: '/app/background'
-      path: '/background'
-      fullPath: '/app/background'
-      preLoaderRoute: typeof AppBackgroundRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/onboarding': {
       id: '/app/onboarding'
       path: '/onboarding'
@@ -275,20 +268,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/signature': {
-      id: '/app/signature'
-      path: '/signature'
-      fullPath: '/app/signature'
-      preLoaderRoute: typeof AppSignatureRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/tools': {
-      id: '/app/tools'
-      path: '/tools'
-      fullPath: '/app/tools'
-      preLoaderRoute: typeof AppToolsRouteImport
       parentRoute: typeof AppRoute
     }
     '/c/$slug': {
@@ -319,35 +298,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/tools/': {
+      id: '/app/tools/'
+      path: '/tools'
+      fullPath: '/app/tools/'
+      preLoaderRoute: typeof AppToolsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/tools/background': {
+      id: '/app/tools/background'
+      path: '/tools/background'
+      fullPath: '/app/tools/background'
+      preLoaderRoute: typeof AppToolsBackgroundRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/tools/signature': {
+      id: '/app/tools/signature'
+      path: '/tools/signature'
+      fullPath: '/app/tools/signature'
+      preLoaderRoute: typeof AppToolsSignatureRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
-  AppBackgroundRoute: typeof AppBackgroundRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppScanRoute: typeof AppScanRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  AppSignatureRoute: typeof AppSignatureRoute
-  AppToolsRoute: typeof AppToolsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCardsIdRoute: typeof AppCardsIdRoute
   AppContactsIdRoute: typeof AppContactsIdRoute
+  AppToolsBackgroundRoute: typeof AppToolsBackgroundRoute
+  AppToolsSignatureRoute: typeof AppToolsSignatureRoute
   AppContactsIndexRoute: typeof AppContactsIndexRoute
+  AppToolsIndexRoute: typeof AppToolsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
-  AppBackgroundRoute: AppBackgroundRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppScanRoute: AppScanRoute,
   AppSettingsRoute: AppSettingsRoute,
-  AppSignatureRoute: AppSignatureRoute,
-  AppToolsRoute: AppToolsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCardsIdRoute: AppCardsIdRoute,
   AppContactsIdRoute: AppContactsIdRoute,
+  AppToolsBackgroundRoute: AppToolsBackgroundRoute,
+  AppToolsSignatureRoute: AppToolsSignatureRoute,
   AppContactsIndexRoute: AppContactsIndexRoute,
+  AppToolsIndexRoute: AppToolsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

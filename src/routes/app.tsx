@@ -24,8 +24,8 @@ const NAV = [
   { to: "/app", label: "Cards", icon: CreditCard, exact: true },
   { to: "/app/contacts", label: "Contacts", icon: Users },
   { to: "/app/scan", label: "Scan", icon: ScanLine },
-  { to: "/app/analytics", label: "Analytics", icon: BarChart3, desktopOnly: true },
   { to: "/app/tools", label: "Tools", icon: Wrench },
+  { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -45,11 +45,7 @@ function AppLayout() {
     );
 
   const active = (to: string, exact?: boolean) =>
-    exact
-      ? pathname === to || pathname.startsWith("/app/cards")
-      : to === "/app/tools"
-        ? ["/app/tools", "/app/signature", "/app/background"].some((p) => pathname.startsWith(p))
-        : pathname.startsWith(to);
+    exact ? pathname === to || pathname.startsWith("/app/cards") : pathname.startsWith(to);
 
   return (
     <div className="min-h-screen md:pl-60">
@@ -76,14 +72,13 @@ function AppLayout() {
       <main className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pb-10 md:pt-10">
         <Outlet />
       </main>
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background/90 backdrop-blur md:hidden">
-        {/* Analytics lives under Tools on mobile to keep five tabs. */}
-        {NAV.filter((n) => !("desktopOnly" in n)).map((n) => (
+      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background/90 backdrop-blur md:hidden">
+        {NAV.map((n) => (
           <Link
             key={n.to}
             to={n.to}
             className={cn(
-              "flex flex-col items-center gap-1 py-3 text-[11px] font-medium text-muted-foreground",
+              "flex flex-col items-center gap-1 py-3 text-[10px] font-medium text-muted-foreground",
               active(n.to, "exact" in n) && "text-brand",
             )}
           >

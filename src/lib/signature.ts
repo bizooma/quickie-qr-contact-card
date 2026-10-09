@@ -1,78 +1,134 @@
-// Pure, client-safe email signature builder. Output is email-client-safe HTML:
-// tables + inline styles only, and never <img> (card images are private, expiring URLs).
-import { contrastText, initials, normalizeUrl, type CardData } from "./card-model";
+// Email-signature HTML builder. Email clients only render table layouts with
+// inline styles, so no classes, no flexbox, no external CSS — and no <img>:
+// card media lives in a private bucket behind expiring signed URLs.
+import { initials, normalizeUrl, type CardData } from "./card-model";
 
 export const SIGNATURE_STYLES = [
-  { id: "minimal", name: "Minimal", hint: "Text only" },
-  { id: "classic", name: "Classic", hint: "Initials badge + details" },
+  { id: "classic", name: "Classic", hint: "Initials badge + two columns" },
+  { id: "minimal", name: "Minimal", hint: "Clean text lines" },
   { id: "compact", name: "Compact", hint: "Single line" },
 ] as const;
+
 export type SignatureStyle = (typeof SIGNATURE_STYLES)[number]["id"];
 
-export const SIGNATURE_LINK_LIMIT = 4;
-const FONT = "Arial, Helvetica, sans-serif";
+export const MAX_SIGNATURE_LINKS = 4;
 
-export function escapeHtml(v: string): string {
-  return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+const FONT = "font-family:Arial,Helvetica,sans-serif;";
+
+function esc(v: string): string {
+  return v
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-/** Only allow plain web/mail/tel links into hrefs. */
-function safeHref(url: string): string | null {
-  const u = normalizeUrl(url);
-  return /^(https?:|mailto:|tel:)/i.test(u) ? escapeHtml(u) : null;
+type Parts = {
+  name: string;
+  tagline: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  links: { label: string; url: string }[];
+  accent: string;
+  publicUrl: string;
+};
+
+function parts(card: CardData, publicUrl: string): Parts {
+  const tagline = [card.job_title, card.company].filter(Boolean).join(" · ") || null;
+  return {
+    name: card.full_name.trim() || "Your Name",
+    tagline,
+    phone: card.phones[0]?.value.trim() || null,
+    email: card.emails[0]?.value.trim() || null,
+    website: card.website?.trim() || null,
+    links: card.links
+      .filter((l) => l.url.trim())
+      .slice(0, MAX_SIGNATURE_LINKS)
+      .map((l) => ({ label: l.label.trim() || "Link", url: normalizeUrl(l.url) })),
+    accent: card.accent_color,
+    publicUrl,
+  };
 }
 
-function a(href: string | null, text: string, color: string, extra = ""): string {
-  const t = escapeHtml(text);
-  return href ? `<a href="${href}" style="color:${color};text-decoration:none;${extra}">${t}</a>` : t;
+function saveButton(p: Parts): string {
+  return (
+    `<a href="${esc(p.publicUrl)}" style="display:inline-block;background-color:${esc(p.accent)};` +
+    `color:#ffffff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;` +
+    `font-weight:bold;${FONT}">Save my contact</a>`
+  );
 }
 
-export function buildSignatureHtml(card: CardData, style: SignatureStyle, cardUrl: string): string {
-  const accent = /^#[0-9a-f]{6}$/i.test(card.accent_color) ? card.accent_color : "#E8553D";
-  const onAccent = contrastText(accent);
-  const name = escapeHtml(card.full_name.trim() || "Your name");
-  const role = [card.job_title, card.company].filter((v): v is string => !!v?.trim()).map(escapeHtml).join(" · ");
-  const phones = card.phones.filter((p) => p.value.trim());
-  const email = card.emails.find((e) => e.value.trim())?.value.trim();
-  const links = card.links.filter((l) => l.url.trim()).slice(0, SIGNATURE_LINK_LIMIT);
-  const save = safeHref(cardUrl);
+function contactLine(p: Parts): string {
+  const bits = [p.phone, p.email, p.website ? p.website.replace(/^https?:\/\//, "") : null]
+    .filter((b): b is string => !!b)
+    .map(esc);
+  return bits.join("&nbsp;&nbsp;·&nbsp;&nbsp;");
+}
 
-  const contactBits = [
-    ...phones.map((p) => a(safeHref(`tel:${p.value.replace(/[^\d+]/g, "")}`), p.value.trim(), "#333333")),
-    ...(email ? [a(safeHref(`mailto:${email}`), email, "#333333")] : []),
-    ...(card.website ? [a(safeHref(card.website), card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), "#333333")] : []),
+function linksLine(p: Parts): string {
+  return p.links
+    .map(
+      (l) =>
+        `<a href="${esc(l.url)}" style="color:${esc(p.accent)};text-decoration:none;font-size:12px;${FONT}">${esc(l.label)}</a>`,
+    )
+    .join('<span style="color:#9ca3af;font-size:12px;">&nbsp;·&nbsp;</span>');
+}
+
+function badgeCell(p: Parts): string {
+  return (
+    `<td style="width:56px;vertical-align:top;">` +
+    `<table cellpadding="0" cellspacing="0" border="0"><tr>` +
+    `<td align="center" style="width:52px;height:52px;background-color:${esc(p.accent)};border-radius:10px;` +
+    `color:#ffffff;font-size:20px;font-weight:bold;${FONT}">${esc(initials(p.name))}</td>` +
+    `</tr></table></td>`
+  );
+}
+
+function infoRows(p: Parts): string {
+  const rows = [
+    `<tr><td style="font-size:16px;font-weight:bold;color:#111827;${FONT}padding-bottom:2px;">${esc(p.name)}</td></tr>`,
   ];
-  const sep = `<span style="color:#BBBBBB;">&nbsp;|&nbsp;</span>`;
-  const linkRow = links.map((l) => a(safeHref(l.url), l.label || l.icon, accent, "font-weight:bold;")).join(sep);
-  const saveBtn = save
-    ? `<a href="${save}" style="display:inline-block;background-color:${accent};color:${onAccent};font-family:${FONT};font-size:12px;font-weight:bold;text-decoration:none;padding:6px 12px;border-radius:4px;">Save my contact</a>`
-    : "";
+  if (p.tagline) {
+    rows.push(
+      `<tr><td style="font-size:13px;color:#6b7280;${FONT}padding-bottom:6px;">${esc(p.tagline)}</td></tr>`,
+    );
+  }
+  const contact = contactLine(p);
+  if (contact) {
+    rows.push(
+      `<tr><td style="font-size:13px;color:#374151;${FONT}padding-bottom:6px;">${contact}</td></tr>`,
+    );
+  }
+  if (p.links.length) {
+    rows.push(`<tr><td style="padding-bottom:10px;">${linksLine(p)}</td></tr>`);
+  }
+  rows.push(`<tr><td>${saveButton(p)}</td></tr>`);
+  return rows.join("");
+}
+
+export function buildSignatureHtml(
+  card: CardData,
+  publicUrl: string,
+  style: SignatureStyle,
+): string {
+  const p = parts(card, publicUrl);
 
   if (style === "compact") {
-    const parts = [`<strong style="color:#111111;">${name}</strong>`, role, ...contactBits, save ? a(save, "Save my contact", accent, "font-weight:bold;") : ""].filter(Boolean);
-    return `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td style="font-family:${FONT};font-size:13px;line-height:18px;color:#555555;border-left:3px solid ${accent};padding-left:8px;">${parts.join(sep)}</td></tr></table>`;
+    const bits = [
+      `<span style="font-weight:bold;color:#111827;">${esc(p.name)}</span>`,
+      p.tagline ? `<span style="color:#6b7280;">${esc(p.tagline)}</span>` : null,
+      contactLine(p) || null,
+      `<a href="${esc(p.publicUrl)}" style="color:${esc(p.accent)};font-weight:bold;text-decoration:none;">Save my contact</a>`,
+    ].filter(Boolean);
+    return (
+      `<table cellpadding="0" cellspacing="0" border="0"><tr>` +
+      `<td style="font-size:13px;color:#374151;${FONT}">${bits.join('<span style="color:#9ca3af;">&nbsp;·&nbsp;</span>')}</td>` +
+      `</tr></table>`
+    );
   }
 
-  const textBlock =
-    `<p style="margin:0;font-family:${FONT};font-size:16px;line-height:20px;font-weight:bold;color:#111111;">${name}</p>` +
-    (role ? `<p style="margin:2px 0 0 0;font-family:${FONT};font-size:13px;line-height:18px;color:#555555;">${role}</p>` : "") +
-    (contactBits.length ? `<p style="margin:8px 0 0 0;font-family:${FONT};font-size:13px;line-height:18px;color:#333333;">${contactBits.join(sep)}</p>` : "") +
-    (linkRow ? `<p style="margin:6px 0 0 0;font-family:${FONT};font-size:12px;line-height:18px;">${linkRow}</p>` : "") +
-    (saveBtn ? `<p style="margin:10px 0 0 0;">${saveBtn}</p>` : "");
-
-  if (style === "minimal") {
-    return `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td style="font-family:${FONT};border-top:2px solid ${accent};padding-top:10px;">${textBlock}</td></tr></table>`;
-  }
-
-  const badge = `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td width="64" height="64" align="center" valign="middle" style="width:64px;height:64px;background-color:${accent};color:${onAccent};font-family:${FONT};font-size:24px;font-weight:bold;border-radius:32px;text-align:center;">${escapeHtml(initials(card.full_name))}</td></tr></table>`;
-  return `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td valign="top" style="padding-right:14px;border-right:2px solid ${accent};">${badge}</td><td valign="top" style="padding-left:14px;">${textBlock}</td></tr></table>`;
-}
-
-/** Plain-text fallback used alongside text/html on the clipboard. */
-export function buildSignatureText(card: CardData, cardUrl: string): string {
-  const role = [card.job_title, card.company].filter(Boolean).join(" · ");
-  const email = card.emails.find((e) => e.value.trim())?.value;
-  return [card.full_name, role, ...card.phones.map((p) => p.value), email, card.website, `Save my contact: ${cardUrl}`]
-    .filter((v): v is string => !!v?.trim())
-    .join("\n");
+  const info = `<td style="vertical-align:top;${style === "classic" ? "padding-left:14px;" : ""}"><table cellpadding="0" cellspacing="0" border="0">${infoRows(p)}</table></td>`;
+  const cells = style === "classic" ? badgeCell(p) + info : info;
+  return `<table cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>`;
 }
