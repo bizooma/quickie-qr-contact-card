@@ -98,7 +98,7 @@ function PublicCard() {
         </div>
       } />
       <footer className="pb-10 text-center">
-        <Link to="/" className="text-xs opacity-60 hover:opacity-100" style={{ color: contrastText(card.background_color) }}>Create your own card · SignatureSurge</Link>
+        <Link to="/" className="text-xs opacity-60 hover:opacity-100" style={{ color: contrastText(card.background_color) }}>Create your own card · ContactKickstart</Link>
       </footer>
       <ShareBack slug={slug} name={card.full_name} open={open} onOpenChange={setOpen} />
     </div>

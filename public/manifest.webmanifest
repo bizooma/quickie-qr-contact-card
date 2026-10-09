@@ -1,6 +1,6 @@
 {
-  "name": "SignatureSurge",
-  "short_name": "SignatureSurge",
+  "name": "ContactKickstart",
+  "short_name": "ContactKickstart",
   "start_url": "/app",
   "display": "standalone",
   "background_color": "#FAF8F5",
