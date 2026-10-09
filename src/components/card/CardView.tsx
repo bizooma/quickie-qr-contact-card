@@ -57,7 +57,7 @@ export function CardView({
       )}
       <div className="mx-auto max-w-md px-6 pb-10">
         {t === "banner" ? (
-          <div className="-mt-14 flex flex-col items-center gap-4">{avatar(112, true)}{header}</div>
+          <div className="relative z-10 -mt-14 flex flex-col items-center gap-4">{avatar(112, true)}{header}</div>
         ) : t === "minimal" ? (
           <div className="flex flex-col gap-5 pt-10">
             <div className="flex items-center justify-between">{avatar(72)}{logoUrl && <img src={logoUrl} alt="" className="h-9 max-w-[110px] object-contain" />}</div>
