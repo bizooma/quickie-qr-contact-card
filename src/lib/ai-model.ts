@@ -64,3 +64,14 @@ export const EnrichmentResultSchema = z.object({
 });
 
 export type EnrichmentResult = z.infer<typeof EnrichmentResultSchema>;
+
+export const SummarizeNoteInputSchema = z.object({
+  noteId: z.string().uuid(),
+});
+
+export const NoteSummarySchema = z.object({
+  key_points: z.array(z.string()),
+  next_steps: z.array(z.string()),
+});
+
+export type NoteSummary = z.infer<typeof NoteSummarySchema>;

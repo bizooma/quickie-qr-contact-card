@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  NoteSummarySchema,
+  SummarizeNoteInputSchema,
   EnrichInputSchema,
   EnrichmentResultSchema,
   FollowUpDraftSchema,
@@ -217,4 +219,42 @@ export const enrichContact = createServerFn({ method: "POST" })
       return response.parsed_output;
     }
     throw new Error("Research took too long. Try again.");
+  });
+
+/** Summarizes one contact note into key points and next steps; does not write anything. */
+export const summarizeNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(SummarizeNoteInputSchema)
+  .handler(async ({ data, context }) => {
+    const { data: note, error } = await context.supabase
+      .from("contact_notes")
+      .select("body")
+      .eq("id", data.noteId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!note) throw new Error("Note not found");
+
+    const client = await getAnthropic();
+    const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
+
+    const response = await client.messages.parse({
+      model: MODEL,
+      max_tokens: 16000,
+      system:
+        "You summarize notes a professional took after meeting someone (often raw voice " +
+        "transcripts with filler words and no punctuation). Return concise key_points (facts, " +
+        "needs, interests, context) and next_steps (concrete follow-up actions). Each item is one " +
+        "short sentence. Use only what the note says — never invent details. Return an empty " +
+        "next_steps array if none are implied.",
+      messages: [{ role: "user", content: `Summarize this note:\n\n${note.body}` }],
+      output_config: { format: zodOutputFormat(NoteSummarySchema) },
+    });
+
+    if (response.stop_reason === "refusal") {
+      throw new Error("The AI declined to summarize this note.");
+    }
+    if (!response.parsed_output) {
+      throw new Error("Could not summarize this note. Try again.");
+    }
+    return response.parsed_output;
   });
