@@ -8,9 +8,9 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Dashboard — SignatureSurge" },
+      { title: "Dashboard — ContactKickstart" },
       { name: "description", content: "Manage your cards, contacts and analytics." },
-      { property: "og:title", content: "Dashboard — SignatureSurge" },
+      { property: "og:title", content: "Dashboard — ContactKickstart" },
       { property: "og:description", content: "Manage your cards, contacts and analytics." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -55,7 +55,7 @@ function AppLayout() {
     <div className="min-h-screen md:pl-60">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r bg-sidebar p-5 md:flex">
         <Link to="/" className="mb-10 font-display text-lg font-bold">
-          Signature<span className="text-brand">Surge</span>
+          Contact<span className="text-brand">Kickstart</span>
         </Link>
         <nav className="space-y-1">
           {NAV.map((n) => (

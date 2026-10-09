@@ -8,9 +8,9 @@ import type { CardData } from "@/lib/card-model";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SignatureSurge — Your digital business card" },
+      { title: "ContactKickstart — Your digital business card" },
       { name: "description", content: "Create a beautiful digital business card, share it by QR code or link, and capture every contact you meet." },
-      { property: "og:title", content: "SignatureSurge — Your digital business card" },
+      { property: "og:title", content: "ContactKickstart — Your digital business card" },
       { property: "og:description", content: "Share by QR or link. Capture every contact you meet." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -32,7 +32,7 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <span className="font-display text-lg font-bold">Signature<span className="text-brand">Surge</span></span>
+        <span className="font-display text-lg font-bold">Contact<span className="text-brand">Kickstart</span></span>
         <Button asChild size="sm" variant={user ? "default" : "ghost"}>
           <Link to={user ? "/app" : "/auth"}>{user ? "Open app" : "Sign in"}</Link>
         </Button>

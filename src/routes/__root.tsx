@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#E8553D" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { title: "SignatureSurge — Digital business cards" },
+      { title: "ContactKickstart — Digital business cards" },
       { name: "description", content: "Share your digital business card and capture contacts." },
     ],
     links: [

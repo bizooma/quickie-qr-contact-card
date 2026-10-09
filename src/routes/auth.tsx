@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — SignatureSurge" },
-      { name: "description", content: "Sign in or create your SignatureSurge account." },
-      { property: "og:title", content: "Sign in — SignatureSurge" },
-      { property: "og:description", content: "Sign in or create your SignatureSurge account." },
+      { title: "Sign in — ContactKickstart" },
+      { name: "description", content: "Sign in or create your ContactKickstart account." },
+      { property: "og:title", content: "Sign in — ContactKickstart" },
+      { property: "og:description", content: "Sign in or create your ContactKickstart account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -59,7 +59,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <p className="mb-10 text-center font-display text-xl font-bold">Signature<span className="text-brand">Surge</span></p>
+        <p className="mb-10 text-center font-display text-xl font-bold">Contact<span className="text-brand">Kickstart</span></p>
         <h1 className="text-3xl font-bold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{mode === "signin" ? "Sign in to manage your cards." : "Your first card is one minute away."}</p>
         <Button variant="outline" className="mt-8 h-11 w-full" onClick={google}>Continue with Google</Button>
