@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
+import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
@@ -51,6 +52,11 @@ const AppOnboardingRoute = AppOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AppRoute,
 } as any)
+const AppScanRoute = AppScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/c/$slug': typeof CSlugRoute
   '/app': typeof AppIndexRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/analytics'
     | '/app/onboarding'
+    | '/app/scan'
     | '/app/settings'
     | '/c/$slug'
     | '/app/'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/analytics'
     | '/app/onboarding'
+    | '/app/scan'
     | '/app/settings'
     | '/c/$slug'
     | '/app'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/analytics'
     | '/app/onboarding'
+    | '/app/scan'
     | '/app/settings'
     | '/c/$slug'
     | '/app/'
@@ -208,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOnboardingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/scan': {
+      id: '/app/scan'
+      path: '/scan'
+      fullPath: '/app/scan'
+      preLoaderRoute: typeof AppScanRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/settings': {
       id: '/app/settings'
       path: '/settings'
@@ -249,6 +268,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
+  AppScanRoute: typeof AppScanRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCardsIdRoute: typeof AppCardsIdRoute
@@ -259,6 +279,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
+  AppScanRoute: AppScanRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCardsIdRoute: AppCardsIdRoute,
