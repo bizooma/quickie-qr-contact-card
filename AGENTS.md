@@ -8,3 +8,9 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Architecture rules
+- Public card data, view/save logging, and share-back submissions go only through SECURITY DEFINER RPCs (`get_public_card`, `log_card_event`, `submit_shareback`); anon has no direct table grants. Why: keeps owner data private while the public page stays login-free.
+- Card images live in the private `card-media` bucket under `<user_id>/` and are shown via signed URLs. Why: workspace blocks public buckets.
+- Authenticated app screens live under `/app` with `ssr: false` and query via the browser client (RLS). Why: session is client-side.
+- Pure card logic (vCard, CSV, slugs) lives in `src/lib/card-model.ts` with unit tests. Why: testable without network.

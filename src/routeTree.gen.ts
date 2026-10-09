@@ -13,9 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
+import { Route as AppContactsIndexRouteImport } from './routes/app.contacts.index'
+import { Route as AppContactsIdRouteImport } from './routes/app.contacts.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,9 +41,19 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -52,33 +66,55 @@ const AppCardsIdRoute = AppCardsIdRouteImport.update({
   path: '/cards/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContactsIndexRoute = AppContactsIndexRouteImport.update({
+  id: '/contacts/',
+  path: '/contacts/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContactsIdRoute = AppContactsIdRouteImport.update({
+  id: '/contacts/$id',
+  path: '/contacts/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/settings': typeof AppSettingsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
+  '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/contacts/': typeof AppContactsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/settings': typeof AppSettingsRoute
   '/c/$slug': typeof CSlugRoute
   '/app': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
+  '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/contacts': typeof AppContactsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/settings': typeof AppSettingsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
+  '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/contacts/': typeof AppContactsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -86,21 +122,39 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/app/analytics'
     | '/app/onboarding'
+    | '/app/settings'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
+    | '/app/contacts/$id'
+    | '/app/contacts/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/onboarding' | '/c/$slug' | '/app' | '/app/cards/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/analytics'
+    | '/app/onboarding'
+    | '/app/settings'
+    | '/c/$slug'
+    | '/app'
+    | '/app/cards/$id'
+    | '/app/contacts/$id'
+    | '/app/contacts'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/auth'
+    | '/app/analytics'
     | '/app/onboarding'
+    | '/app/settings'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
+    | '/app/contacts/$id'
+    | '/app/contacts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -140,11 +194,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/analytics': {
+      id: '/app/analytics'
+      path: '/analytics'
+      fullPath: '/app/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/onboarding': {
       id: '/app/onboarding'
       path: '/onboarding'
       fullPath: '/app/onboarding'
       preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/c/$slug': {
@@ -161,19 +229,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCardsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/contacts/': {
+      id: '/app/contacts/'
+      path: '/contacts'
+      fullPath: '/app/contacts/'
+      preLoaderRoute: typeof AppContactsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/contacts/$id': {
+      id: '/app/contacts/$id'
+      path: '/contacts/$id'
+      fullPath: '/app/contacts/$id'
+      preLoaderRoute: typeof AppContactsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCardsIdRoute: typeof AppCardsIdRoute
+  AppContactsIdRoute: typeof AppContactsIdRoute
+  AppContactsIndexRoute: typeof AppContactsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCardsIdRoute: AppCardsIdRoute,
+  AppContactsIdRoute: AppContactsIdRoute,
+  AppContactsIndexRoute: AppContactsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

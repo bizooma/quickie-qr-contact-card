@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Download, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { contrastText } from "@/lib/card-model";
 
 export function publicCardUrl(slug: string) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -10,8 +11,9 @@ export function publicCardUrl(slug: string) {
 
 function qrColors(accent: string, bg: string) {
   // Keep a light background behind dark modules so every phone camera can read it.
-  const dark = bg.toUpperCase() === "#FFFFFF" || bg.toUpperCase() === "#FAF7F2" ? accent : accent;
-  return { dark, light: "#FFFFFF" };
+  // Light accents would be unreadable, so fall back to near-black.
+  void bg;
+  return { dark: contrastText(accent) === "#FFFFFF" ? accent : "#111111", light: "#FFFFFF" };
 }
 
 export function useQr(slug: string, accent: string, bg: string) {
