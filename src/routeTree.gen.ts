@@ -14,9 +14,12 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
+import { Route as AppBackgroundRouteImport } from './routes/app.background'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppSignatureRouteImport } from './routes/app.signature'
+import { Route as AppToolsRouteImport } from './routes/app.tools'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
 import { Route as AppContactsIndexRouteImport } from './routes/app.contacts.index'
@@ -47,6 +50,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBackgroundRoute = AppBackgroundRouteImport.update({
+  id: '/background',
+  path: '/background',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -60,6 +68,16 @@ const AppScanRoute = AppScanRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSignatureRoute = AppSignatureRouteImport.update({
+  id: '/signature',
+  path: '/signature',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppToolsRoute = AppToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
   getParentRoute: () => AppRoute,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -88,9 +106,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/background': typeof AppBackgroundRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/signature': typeof AppSignatureRoute
+  '/app/tools': typeof AppToolsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
@@ -101,9 +122,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/background': typeof AppBackgroundRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/signature': typeof AppSignatureRoute
+  '/app/tools': typeof AppToolsRoute
   '/c/$slug': typeof CSlugRoute
   '/app': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
@@ -116,9 +140,12 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/background': typeof AppBackgroundRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/signature': typeof AppSignatureRoute
+  '/app/tools': typeof AppToolsRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
@@ -132,9 +159,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/analytics'
+    | '/app/background'
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
+    | '/app/signature'
+    | '/app/tools'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
@@ -145,9 +175,12 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/analytics'
+    | '/app/background'
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
+    | '/app/signature'
+    | '/app/tools'
     | '/c/$slug'
     | '/app'
     | '/app/cards/$id'
@@ -159,9 +192,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/analytics'
+    | '/app/background'
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
+    | '/app/signature'
+    | '/app/tools'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
@@ -213,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/background': {
+      id: '/app/background'
+      path: '/background'
+      fullPath: '/app/background'
+      preLoaderRoute: typeof AppBackgroundRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/onboarding': {
       id: '/app/onboarding'
       path: '/onboarding'
@@ -232,6 +275,20 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/signature': {
+      id: '/app/signature'
+      path: '/signature'
+      fullPath: '/app/signature'
+      preLoaderRoute: typeof AppSignatureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/tools': {
+      id: '/app/tools'
+      path: '/tools'
+      fullPath: '/app/tools'
+      preLoaderRoute: typeof AppToolsRouteImport
       parentRoute: typeof AppRoute
     }
     '/c/$slug': {
@@ -267,9 +324,12 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppBackgroundRoute: typeof AppBackgroundRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppScanRoute: typeof AppScanRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppSignatureRoute: typeof AppSignatureRoute
+  AppToolsRoute: typeof AppToolsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCardsIdRoute: typeof AppCardsIdRoute
   AppContactsIdRoute: typeof AppContactsIdRoute
@@ -278,9 +338,12 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
+  AppBackgroundRoute: AppBackgroundRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppScanRoute: AppScanRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppSignatureRoute: AppSignatureRoute,
+  AppToolsRoute: AppToolsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCardsIdRoute: AppCardsIdRoute,
   AppContactsIdRoute: AppContactsIdRoute,
