@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Copy,
   Loader2,
+  Mic,
+  Square,
   Mail,
   Phone,
   Plus,
@@ -37,7 +39,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { SUGGESTED_TAGS } from "@/lib/contacts-api";
 import { buildContactVCard, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
-import { draftFollowUp, enrichContact } from "@/lib/ai.functions";
+import { draftFollowUp, enrichContact, summarizeNote } from "@/lib/ai.functions";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { canSummarize, formatSummaryNote, mergeTranscript, VOICE_NOTE_PREFIX } from "@/lib/voice-notes";
 import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
 
@@ -65,6 +69,13 @@ function ContactDetail() {
   const { data, refetch } = useQuery({ queryKey: ["contact", id], queryFn: () => loadContact(id) });
   const [form, setForm] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
+  const [fromVoice, setFromVoice] = useState(false);
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const dictationBase = useRef("");
+  const speech = useSpeechRecognition(
+    (t) => setNote(mergeTranscript(dictationBase.current, t)),
+    (msg) => toast.error(msg),
+  );
   const [tag, setTag] = useState("");
   const [followUp, setFollowUp] = useState<FollowUpDraft | null>(null);
   const [drafting, setDrafting] = useState(false);
@@ -123,12 +134,14 @@ function ContactDetail() {
   async function addNote(e: React.FormEvent) {
     e.preventDefault();
     if (!note.trim() || !user) return;
+    speech.stop();
     const { error } = await supabase
       .from("contact_notes")
-      .insert({ contact_id: id, user_id: user.id, body: note.trim() });
+      .insert({ contact_id: id, user_id: user.id, body: (fromVoice ? VOICE_NOTE_PREFIX : "") + note.trim() });
     if (error) toast.error(error.message);
     else {
       setNote("");
+      setFromVoice(false);
       refresh();
     }
   }
@@ -223,6 +236,31 @@ function ContactDetail() {
   }
   function dismissSuggestion(field: Suggestion["field"]) {
     setSuggestions((prev) => (prev ?? []).filter((s) => s.field !== field));
+  }
+
+  function toggleDictation() {
+    if (speech.listening) return speech.stop();
+    dictationBase.current = note;
+    setFromVoice(true);
+    speech.start();
+  }
+  // Saves the summary as a NEW note; the original note is never modified.
+  async function summarize(noteId: string) {
+    if (!user) return;
+    setSummarizingId(noteId);
+    try {
+      const summary = await summarizeNote({ data: { noteId } });
+      const { error } = await supabase
+        .from("contact_notes")
+        .insert({ contact_id: id, user_id: user.id, body: formatSummaryNote(summary, new Date()) });
+      if (error) throw error;
+      toast.success("Summary saved as a note");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not summarize this note");
+    } finally {
+      setSummarizingId(null);
+    }
   }
 
   async function deleteContact() {
@@ -448,9 +486,32 @@ function ContactDetail() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
-          <Button type="submit" size="sm" disabled={!note.trim()}>
-            Add note
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="submit" size="sm" disabled={!note.trim()}>
+              Add note
+            </Button>
+            {speech.supported && (
+              <Button
+                type="button"
+                size="sm"
+                variant={speech.listening ? "destructive" : "outline"}
+                onClick={toggleDictation}
+                aria-pressed={speech.listening}
+              >
+                {speech.listening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {speech.listening ? "Stop" : "Voice note"}
+              </Button>
+            )}
+            {speech.listening && (
+              <span className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-destructive" />
+                Listening…
+              </span>
+            )}
+          </div>
+          {!speech.supported && (
+            <p className="text-xs text-muted-foreground">Tip: use your keyboard's dictation mic in the note field to speak a note.</p>
+          )}
         </form>
         <ul className="mt-4 space-y-2">
           {data.notes.map((n) => (
@@ -460,6 +521,18 @@ function ContactDetail() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   {format(new Date(n.created_at), "MMM d, yyyy · h:mm a")}
                 </p>
+                {canSummarize(n.body) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 -ml-2"
+                    onClick={() => summarize(n.id)}
+                    disabled={summarizingId !== null}
+                  >
+                    {summarizingId === n.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {summarizingId === n.id ? "Summarizing…" : "Summarize with AI"}
+                  </Button>
+                )}
               </div>
               <button
                 onClick={() => del("contact_notes", n.id)}
