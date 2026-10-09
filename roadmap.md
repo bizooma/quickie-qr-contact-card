@@ -12,4 +12,8 @@
 - [x] 2b Contact enrichment: suggest-and-confirm on contact detail (web search)
 - [x] 2c (rest) Voice notes (browser dictation) + AI note summaries
 Requires the ANTHROPIC_API_KEY secret in the server environment.
-## Later (not started — see project memory): Phase 3 reach tools, Phase 4 pro
+## Phase 3 — reach tools
+- [x] Email signature generator (/app/tools/signature): 3 email-safe layouts, save-contact link, Gmail/Outlook/Apple Mail setup
+- [x] Virtual background generator (/app/tools/background): 1920x1080 PNG with card QR, corner/size options, custom upload
+- [ ] Apple/Google Wallet passes — deferred: needs an Apple Developer account + pass signing certs (or Google Wallet issuer)
+## Later (not started — see project memory): Phase 4 pro

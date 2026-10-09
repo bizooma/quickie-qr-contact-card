@@ -41,11 +41,27 @@ import { buildContactVCard, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 import { draftFollowUp, enrichContact, summarizeNote } from "@/lib/ai.functions";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { canSummarize, formatSummaryNote, mergeTranscript, VOICE_NOTE_PREFIX } from "@/lib/voice-notes";
+import {
+  canSummarize,
+  formatSummaryNote,
+  mergeTranscript,
+  VOICE_NOTE_PREFIX,
+} from "@/lib/voice-notes";
 import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
 
 export const Route = createFileRoute("/app/contacts/$id")({ component: ContactDetail });
+
+const DETAIL_FIELDS = [
+  "full_name",
+  "email",
+  "phone",
+  "company",
+  "job_title",
+  "met_at",
+  "website",
+  "linkedin_url",
+] as const;
 
 async function loadContact(id: string) {
   const [c, n, t] = await Promise.all([
@@ -115,6 +131,18 @@ function ContactDetail() {
     qc.invalidateQueries({ queryKey: ["contacts"] });
   };
 
+  // Edits used to vanish unless you scrolled down to "Save details" — surface a
+  // sticky save bar whenever any detail field differs from what's stored.
+  const dirty = DETAIL_FIELDS.some(
+    (k) => (form[k] ?? "") !== (((c as Record<string, unknown>)[k] as string | null) ?? ""),
+  );
+  const discardEdits = () =>
+    setForm(
+      Object.fromEntries(
+        DETAIL_FIELDS.map((k) => [k, ((c as Record<string, unknown>)[k] as string | null) ?? ""]),
+      ),
+    );
+
   async function saveFields() {
     if (!form["full_name"]?.trim()) {
       toast.error("Name is required");
@@ -135,9 +163,11 @@ function ContactDetail() {
     e.preventDefault();
     if (!note.trim() || !user) return;
     speech.stop();
-    const { error } = await supabase
-      .from("contact_notes")
-      .insert({ contact_id: id, user_id: user.id, body: (fromVoice ? VOICE_NOTE_PREFIX : "") + note.trim() });
+    const { error } = await supabase.from("contact_notes").insert({
+      contact_id: id,
+      user_id: user.id,
+      body: (fromVoice ? VOICE_NOTE_PREFIX : "") + note.trim(),
+    });
     if (error) toast.error(error.message);
     else {
       setNote("");
@@ -341,9 +371,15 @@ function ContactDetail() {
                 <Sparkles className="h-4 w-4 text-brand" />
                 AI suggestions
               </h2>
-              {enrichSummary && <p className="mt-1 text-xs text-muted-foreground">{enrichSummary}</p>}
+              {enrichSummary && (
+                <p className="mt-1 text-xs text-muted-foreground">{enrichSummary}</p>
+              )}
             </div>
-            <button onClick={() => setSuggestions(null)} aria-label="Close suggestions" className="text-muted-foreground hover:text-foreground">
+            <button
+              onClick={() => setSuggestions(null)}
+              aria-label="Close suggestions"
+              className="text-muted-foreground hover:text-foreground"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -355,25 +391,44 @@ function ContactDetail() {
                 {suggestions.map((s) => (
                   <li key={s.field} className="flex flex-wrap items-center gap-3 py-2.5">
                     <div className="min-w-0 flex-1 text-sm">
-                      <p className="text-xs font-semibold text-muted-foreground">{ENRICH_LABELS[s.field]}</p>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {ENRICH_LABELS[s.field]}
+                      </p>
                       <p className="break-words">
                         {s.current ? (
-                          <>Replace <span className="text-muted-foreground line-through">{s.current}</span> with <span className="font-semibold">{s.value}</span></>
+                          <>
+                            Replace{" "}
+                            <span className="text-muted-foreground line-through">{s.current}</span>{" "}
+                            with <span className="font-semibold">{s.value}</span>
+                          </>
                         ) : (
-                          <><span className="text-muted-foreground">Empty</span> → <span className="font-semibold">{s.value}</span></>
+                          <>
+                            <span className="text-muted-foreground">Empty</span> →{" "}
+                            <span className="font-semibold">{s.value}</span>
+                          </>
                         )}
                       </p>
-                      {s.source && <p className="mt-0.5 break-all text-xs text-muted-foreground">Source: {s.source}</p>}
+                      {s.source && (
+                        <p className="mt-0.5 break-all text-xs text-muted-foreground">
+                          Source: {s.source}
+                        </p>
+                      )}
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" onClick={() => acceptSuggestions([s])}>Accept</Button>
-                      <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(s.field)}>Dismiss</Button>
+                      <Button size="sm" onClick={() => acceptSuggestions([s])}>
+                        Accept
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(s.field)}>
+                        Dismiss
+                      </Button>
                     </div>
                   </li>
                 ))}
               </ul>
               {suggestions.length > 1 && (
-                <Button size="sm" variant="outline" onClick={() => acceptSuggestions(suggestions)}>Accept all</Button>
+                <Button size="sm" variant="outline" onClick={() => acceptSuggestions(suggestions)}>
+                  Accept all
+                </Button>
               )}
             </>
           )}
@@ -503,14 +558,19 @@ function ContactDetail() {
               </Button>
             )}
             {speech.listening && (
-              <span className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+              <span
+                className="flex items-center gap-2 text-xs text-muted-foreground"
+                aria-live="polite"
+              >
                 <span className="h-2 w-2 animate-pulse rounded-full bg-destructive" />
                 Listening…
               </span>
             )}
           </div>
           {!speech.supported && (
-            <p className="text-xs text-muted-foreground">Tip: use your keyboard's dictation mic in the note field to speak a note.</p>
+            <p className="text-xs text-muted-foreground">
+              Tip: use your keyboard's dictation mic in the note field to speak a note.
+            </p>
           )}
         </form>
         <ul className="mt-4 space-y-2">
@@ -529,7 +589,11 @@ function ContactDetail() {
                     onClick={() => summarize(n.id)}
                     disabled={summarizingId !== null}
                   >
-                    {summarizingId === n.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {summarizingId === n.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
                     {summarizingId === n.id ? "Summarizing…" : "Summarize with AI"}
                   </Button>
                 )}
@@ -591,6 +655,23 @@ function ContactDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {dirty && (
+        <div
+          className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl border bg-background/95 p-3 pl-4 shadow-lg backdrop-blur md:bottom-6"
+          role="status"
+        >
+          <span className="text-sm font-medium">Unsaved changes</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={discardEdits}>
+              Discard
+            </Button>
+            <Button size="sm" onClick={saveFields}>
+              Save
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

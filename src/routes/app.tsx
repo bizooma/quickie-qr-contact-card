@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BarChart3, CreditCard, ScanLine, Settings, Users } from "lucide-react";
+import { BarChart3, CreditCard, ScanLine, Settings, Users, Wrench } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ const NAV = [
   { to: "/app", label: "Cards", icon: CreditCard, exact: true },
   { to: "/app/contacts", label: "Contacts", icon: Users },
   { to: "/app/scan", label: "Scan", icon: ScanLine },
+  { to: "/app/tools", label: "Tools", icon: Wrench },
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -71,13 +72,13 @@ function AppLayout() {
       <main className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pb-10 md:pt-10">
         <Outlet />
       </main>
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background/90 backdrop-blur md:hidden">
+      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background/90 backdrop-blur md:hidden">
         {NAV.map((n) => (
           <Link
             key={n.to}
             to={n.to}
             className={cn(
-              "flex flex-col items-center gap-1 py-3 text-[11px] font-medium text-muted-foreground",
+              "flex flex-col items-center gap-1 py-3 text-[10px] font-medium text-muted-foreground",
               active(n.to, "exact" in n) && "text-brand",
             )}
           >
