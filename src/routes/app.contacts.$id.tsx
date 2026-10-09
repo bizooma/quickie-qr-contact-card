@@ -1,7 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Copy, Loader2, Mail, Phone, Plus, Sparkles, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  Loader2,
+  Mail,
+  Phone,
+  Plus,
+  Smartphone,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,7 +34,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SUGGESTED_TAGS } from "@/lib/contacts-api";
-import { initials } from "@/lib/card-model";
+import { buildContactVCard, initials } from "@/lib/card-model";
+import { downloadFile, VCF_MIME } from "@/lib/download";
 import { draftFollowUp } from "@/lib/ai.functions";
 import type { FollowUpDraft } from "@/lib/ai-model";
 
@@ -130,6 +142,19 @@ function ContactDetail() {
     if (error) toast.error(error.message);
     else refresh();
   }
+  function saveToPhone() {
+    const vcf = buildContactVCard({
+      full_name: c!.full_name,
+      job_title: c!.job_title,
+      company: c!.company,
+      email: c!.email,
+      phone: c!.phone,
+      note: c!.met_at ? `Met at ${c!.met_at}` : null,
+    });
+    downloadFile(`${c!.full_name.replace(/[^\w-]+/g, "-")}.vcf`, vcf, VCF_MIME);
+    toast.success("Contact file downloaded — open it to add them to your phone");
+  }
+
   async function generateFollowUp() {
     setDrafting(true);
     try {
@@ -216,6 +241,10 @@ function ContactDetail() {
             </a>
           </Button>
         )}
+        <Button variant="outline" size="sm" onClick={saveToPhone}>
+          <Smartphone className="h-4 w-4" />
+          Save to phone
+        </Button>
       </div>
 
       <section className="mb-8">

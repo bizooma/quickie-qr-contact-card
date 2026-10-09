@@ -38,12 +38,37 @@ export const FONTS = [
   { id: "mono", name: "Technical", css: "var(--font-mono)" },
 ] as const;
 
-export const ACCENT_PRESETS = ["#E8553D", "#1F2937", "#2563EB", "#0F766E", "#CA8A04", "#BE185D", "#7C3AED"];
-export const BACKGROUND_PRESETS = ["#FFFFFF", "#FAF7F2", "#F1F5F9", "#111827", "#0B1F1A", "#1C1917"];
+export const ACCENT_PRESETS = [
+  "#E8553D",
+  "#1F2937",
+  "#2563EB",
+  "#0F766E",
+  "#CA8A04",
+  "#BE185D",
+  "#7C3AED",
+];
+export const BACKGROUND_PRESETS = [
+  "#FFFFFF",
+  "#FAF7F2",
+  "#F1F5F9",
+  "#111827",
+  "#0B1F1A",
+  "#1C1917",
+];
 
 export const LINK_ICONS = [
-  "link", "linkedin", "x", "instagram", "youtube", "tiktok", "facebook", "github",
-  "calendar", "payment", "website", "message",
+  "link",
+  "linkedin",
+  "x",
+  "instagram",
+  "youtube",
+  "tiktok",
+  "facebook",
+  "github",
+  "calendar",
+  "payment",
+  "website",
+  "message",
 ] as const;
 
 export function fontCss(font: string): string {
@@ -60,8 +85,16 @@ export function guessIcon(url: string): string {
   if (u.includes("tiktok.com")) return "tiktok";
   if (u.includes("facebook.com")) return "facebook";
   if (u.includes("github.com")) return "github";
-  if (u.includes("calendly.com") || u.includes("cal.com") || u.includes("savvycal")) return "calendar";
-  if (u.includes("paypal") || u.includes("venmo") || u.includes("cash.app") || u.includes("stripe.com") || u.includes("buy.stripe")) return "payment";
+  if (u.includes("calendly.com") || u.includes("cal.com") || u.includes("savvycal"))
+    return "calendar";
+  if (
+    u.includes("paypal") ||
+    u.includes("venmo") ||
+    u.includes("cash.app") ||
+    u.includes("stripe.com") ||
+    u.includes("buy.stripe")
+  )
+    return "payment";
   return "link";
 }
 
@@ -112,7 +145,11 @@ function fold(line: string): string {
 
 export function buildVCard(
   card: CardData,
-  opts: { photoBase64?: string | undefined; photoType?: string | undefined; cardUrl?: string | undefined } = {},
+  opts: {
+    photoBase64?: string | undefined;
+    photoType?: string | undefined;
+    cardUrl?: string | undefined;
+  } = {},
 ): string {
   const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
   const name = card.full_name.trim() || "Contact";
@@ -137,13 +174,53 @@ export function buildVCard(
   if (opts.cardUrl) lines.push(`URL;TYPE=Card:${esc(opts.cardUrl)}`);
   for (const l of card.links) {
     if (!l.url.trim()) continue;
-    lines.push(`URL;TYPE=${esc(l.label || l.icon).replace(/[^A-Za-z0-9-]/g, "") || "Link"}:${esc(normalizeUrl(l.url))}`);
+    lines.push(
+      `URL;TYPE=${esc(l.label || l.icon).replace(/[^A-Za-z0-9-]/g, "") || "Link"}:${esc(normalizeUrl(l.url))}`,
+    );
   }
   if (card.location) lines.push(`ADR;TYPE=WORK:;;${esc(card.location)};;;;`);
   if (card.bio) lines.push(`NOTE:${esc(card.bio)}`);
-  if (opts.photoBase64) lines.push(`PHOTO;ENCODING=b;TYPE=${opts.photoType ?? "JPEG"}:${opts.photoBase64}`);
+  if (opts.photoBase64)
+    lines.push(`PHOTO;ENCODING=b;TYPE=${opts.photoType ?? "JPEG"}:${opts.photoBase64}`);
   lines.push("END:VCARD");
   return lines.map(fold).join("\r\n") + "\r\n";
+}
+
+/** The fields a captured contact can contribute to a vCard. */
+export type ContactVCardInput = {
+  full_name: string;
+  job_title?: string | null | undefined;
+  company?: string | null | undefined;
+  email?: string | null | undefined;
+  phone?: string | null | undefined;
+  website?: string | null | undefined;
+  note?: string | null | undefined;
+};
+
+export function buildContactVCard(c: ContactVCardInput): string {
+  const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
+  const name = c.full_name.trim() || "Contact";
+  const parts = name.split(/\s+/);
+  const last = parts.length > 1 ? (parts[parts.length - 1] ?? "") : "";
+  const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] ?? "");
+  lines.push(`N:${esc(last)};${esc(first)};;;`);
+  lines.push(`FN:${esc(name)}`);
+  if (c.company?.trim()) lines.push(`ORG:${esc(c.company.trim())}`);
+  if (c.job_title?.trim()) lines.push(`TITLE:${esc(c.job_title.trim())}`);
+  if (c.phone?.trim()) lines.push(`TEL;TYPE=CELL,VOICE:${esc(c.phone.trim())}`);
+  if (c.email?.trim()) lines.push(`EMAIL;TYPE=INTERNET,WORK:${esc(c.email.trim())}`);
+  if (c.website?.trim()) lines.push(`URL:${esc(normalizeUrl(c.website))}`);
+  if (c.note?.trim()) lines.push(`NOTE:${esc(c.note.trim())}`);
+  lines.push("END:VCARD");
+  return lines.map(fold).join("\r\n") + "\r\n";
+}
+
+/** One .vcf holding many contacts — phones import the whole batch from a single file. */
+export function contactsToVcf(contacts: ContactVCardInput[]): string {
+  return contacts
+    .filter((c) => c.full_name.trim())
+    .map(buildContactVCard)
+    .join("");
 }
 
 // ---------- CSV ----------
@@ -169,9 +246,33 @@ function csvCell(v: string): string {
 }
 
 export function contactsToCsv(rows: ContactRow[]): string {
-  const header = ["Name", "Email", "Phone", "Company", "Title", "Met at", "Source", "Card", "Tags", "Note", "Captured at"];
+  const header = [
+    "Name",
+    "Email",
+    "Phone",
+    "Company",
+    "Title",
+    "Met at",
+    "Source",
+    "Card",
+    "Tags",
+    "Note",
+    "Captured at",
+  ];
   const body = rows.map((r) =>
-    [r.full_name, r.email ?? "", r.phone ?? "", r.company ?? "", r.job_title ?? "", r.met_at ?? "", r.source, r.card_label ?? "", r.tags.join("; "), r.note ?? "", r.created_at]
+    [
+      r.full_name,
+      r.email ?? "",
+      r.phone ?? "",
+      r.company ?? "",
+      r.job_title ?? "",
+      r.met_at ?? "",
+      r.source,
+      r.card_label ?? "",
+      r.tags.join("; "),
+      r.note ?? "",
+      r.created_at,
+    ]
       .map(csvCell)
       .join(","),
   );
@@ -179,10 +280,12 @@ export function contactsToCsv(rows: ContactRow[]): string {
 }
 
 export function initials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join("") || "?";
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p.charAt(0).toUpperCase())
+      .join("") || "?"
+  );
 }
