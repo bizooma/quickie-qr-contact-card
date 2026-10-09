@@ -1,7 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { Camera, Loader2, ScanLine, Sparkles, Trash2 } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  Loader2,
+  ScanLine,
+  Smartphone,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +20,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { scanCards } from "@/lib/ai.functions";
 import { SCAN_IMAGE_LIMIT, type ScannedContact } from "@/lib/ai-model";
 import { prepareImage, type PreparedImage } from "@/lib/image-prep";
+import { contactsToVcf } from "@/lib/card-model";
+import { downloadFile, VCF_MIME } from "@/lib/download";
 
 export const Route = createFileRoute("/app/scan")({ component: ScanPage });
 
@@ -27,6 +37,7 @@ function ScanPage() {
   const [scanning, setScanning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [results, setResults] = useState<EditableContact[] | null>(null);
+  const [savedBatch, setSavedBatch] = useState<EditableContact[] | null>(null);
 
   async function addFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -101,12 +112,22 @@ function ScanPage() {
       }
       qc.invalidateQueries({ queryKey: ["contacts"] });
       toast.success(`Saved ${chosen.length} contact${chosen.length > 1 ? "s" : ""}`);
-      navigate({ to: "/app/contacts" });
+      setResults(null);
+      setSavedBatch(chosen);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save contacts");
     } finally {
       setSaving(false);
     }
+  }
+
+  function addBatchToPhone() {
+    if (!savedBatch) return;
+    const vcf = contactsToVcf(
+      savedBatch.map((c) => ({ ...c, note: metAt.trim() ? `Met at ${metAt.trim()}` : null })),
+    );
+    downloadFile(`contacts-${new Date().toISOString().slice(0, 10)}.vcf`, vcf, VCF_MIME);
+    toast.success("Contact file downloaded — open it to add everyone to your phone");
   }
 
   return (
@@ -126,7 +147,7 @@ function ScanPage() {
         onChange={(e) => addFiles(e.target.files)}
       />
 
-      {!results && (
+      {!results && !savedBatch && (
         <>
           <div className="mb-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {images.map((img, i) => (
@@ -241,6 +262,43 @@ function ScanPage() {
             </Button>
           </div>
         </>
+      )}
+
+      {savedBatch && (
+        <div className="surface space-y-4 p-6 text-center">
+          <CheckCircle2 className="mx-auto h-10 w-10 text-brand" />
+          <div>
+            <h2 className="text-lg font-bold">
+              {savedBatch.length} contact{savedBatch.length > 1 ? "s" : ""} saved
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add them to your phone's contacts too — one tap downloads a contact file, and opening
+              it imports the whole batch.
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button onClick={addBatchToPhone}>
+              <Smartphone className="h-4 w-4" />
+              Add to phone contacts
+            </Button>
+            <Button variant="outline" onClick={() => navigate({ to: "/app/contacts" })}>
+              View contacts
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSavedBatch(null);
+                setImages([]);
+              }}
+            >
+              Scan more cards
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            iPhone: open the downloaded file and tap "Add all contacts". Android: open it and
+            confirm the import.
+          </p>
+        </div>
       )}
     </div>
   );
