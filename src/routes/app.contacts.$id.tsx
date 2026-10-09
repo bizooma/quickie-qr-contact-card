@@ -49,9 +49,9 @@ function ContactDetail() {
   const refresh = () => { refetch(); qc.invalidateQueries({ queryKey: ["contacts"] }); };
 
   async function saveFields() {
-    if (!form.full_name?.trim()) { toast.error("Name is required"); return; }
+    if (!form["full_name"]?.trim()) { toast.error("Name is required"); return; }
     const row = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v.trim() || null]));
-    const { error } = await supabase.from("contacts").update({ ...row, full_name: form.full_name.trim() }).eq("id", id);
+    const { error } = await supabase.from("contacts").update({ ...row, full_name: (form["full_name"] ?? "").trim() }).eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Saved"); refresh(); }
   }
   async function addNote(e: React.FormEvent) {

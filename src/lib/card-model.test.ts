@@ -25,7 +25,7 @@ describe("vCard", () => {
 describe("CSV export", () => {
   it("neutralises formula injection from share-back input", () => {
     const csv = contactsToCsv([{ full_name: "=HYPERLINK(1)", email: null, phone: null, company: null, job_title: null, met_at: null, source: "shareback", card_label: "Work", tags: ["Hot lead"], note: null, created_at: "2026-01-01" }]);
-    expect(csv.split("\r\n")[1].startsWith("'=HYPERLINK(1)")).toBe(true);
+    expect((csv.split("\r\n")[1] ?? "").startsWith("'=HYPERLINK(1)")).toBe(true);
   });
 });
 

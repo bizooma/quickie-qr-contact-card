@@ -3,7 +3,7 @@
 
 export type LabeledValue = { label: string; value: string };
 
-export type CardLink = { id?: string; label: string; url: string; icon: string };
+export type CardLink = { id?: string | undefined; label: string; url: string; icon: string };
 
 export type CardData = {
   slug: string;
@@ -183,6 +183,6 @@ export function initials(name: string): string {
     .trim()
     .split(/\s+/)
     .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
+    .map((p) => p.charAt(0).toUpperCase())
     .join("") || "?";
 }

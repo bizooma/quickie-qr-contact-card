@@ -7,7 +7,7 @@ import { LinkIcon } from "./LinkIcon";
 // rather than design tokens.
 export function CardView({
   card, headshotUrl, logoUrl, actions,
-}: { card: CardData; headshotUrl?: string | null; logoUrl?: string | null; actions?: ReactNode }) {
+}: { card: CardData; headshotUrl?: string | null | undefined; logoUrl?: string | null | undefined; actions?: ReactNode }) {
   const bg = card.background_color;
   const fg = contrastText(bg);
   const accent = card.accent_color;

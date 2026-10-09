@@ -157,13 +157,13 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
                     <SelectContent>{LINK_ICONS.map((ic) => <SelectItem key={ic} value={ic}><span className="flex items-center gap-2"><LinkIcon icon={ic} className="h-4 w-4" />{ICON_LABELS[ic]}</span></SelectItem>)}</SelectContent>
                   </Select>
                   <Input placeholder="Label" value={l.label} onChange={(e) => set("links", card.links.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                  <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => { const a = [...card.links]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; set("links", a); }} aria-label="Move up"><ArrowUp className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" disabled={i === card.links.length - 1} onClick={() => { const a = [...card.links]; [a[i + 1], a[i]] = [a[i], a[i + 1]]; set("links", a); }} aria-label="Move down"><ArrowDown className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => { set("links", swap(card.links, i, i - 1)); }} aria-label="Move up"><ArrowUp className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" disabled={i === card.links.length - 1} onClick={() => { set("links", swap(card.links, i, i + 1)); }} aria-label="Move down"><ArrowDown className="h-4 w-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={() => set("links", card.links.filter((_, j) => j !== i))} aria-label="Remove"><X className="h-4 w-4" /></Button>
                 </div>
                 <Input placeholder="https://" value={l.url} onChange={(e) => {
                   const url = e.target.value;
-                  set("links", card.links.map((x, j) => (j === i ? { ...x, url, icon: x.icon === "link" ? guessIcon(url) : x.icon, label: x.label || (guessIcon(url) !== "link" ? ICON_LABELS[guessIcon(url)] : "") } : x)));
+                  set("links", card.links.map((x, j) => (j === i ? { ...x, url, icon: x.icon === "link" ? guessIcon(url) : x.icon, label: x.label || (guessIcon(url) !== "link" ? ICON_LABELS[guessIcon(url)] ?? "" : "") } : x)));
                 }} />
               </div>
             ))}
@@ -199,6 +199,14 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
   );
 }
 
+function swap<T>(arr: T[], a: number, b: number): T[] {
+  const out = [...arr];
+  const x = out[a] as T;
+  out[a] = out[b] as T;
+  out[b] = x;
+  return out;
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label>{label}</Label>{children}</div>;
 }
@@ -232,7 +240,7 @@ function ColorRow({ label, value, presets, onChange }: { label: string; value: s
   );
 }
 
-function ImagePick({ label, url, round, onPick, onClear }: { label: string; url: string | null; round?: boolean; onPick: (f?: File) => void; onClear: () => void }) {
+function ImagePick({ label, url, round, onPick, onClear }: { label: string; url: string | null | undefined; round?: boolean; onPick: (f?: File) => void; onClear: () => void }) {
   return (
     <div className="space-y-1.5"><Label>{label}</Label>
       <div className="flex items-center gap-3">

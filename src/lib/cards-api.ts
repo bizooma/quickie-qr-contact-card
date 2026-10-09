@@ -30,7 +30,7 @@ export async function getCard(id: string) {
 }
 
 /** Create a card with a unique slug, retrying with a numeric suffix on collision. */
-export async function createCard(userId: string, input: { label: string; full_name: string; job_title?: string; company?: string; email?: string }) {
+export async function createCard(userId: string, input: { label: string; full_name: string; job_title?: string | undefined; company?: string | undefined; email?: string | undefined }) {
   const base = slugify(input.full_name || input.label);
   for (let attempt = 0; attempt < 6; attempt++) {
     const slug = attempt === 0 ? base : `${base.slice(0, 40)}-${Math.random().toString(36).slice(2, 6)}`;
