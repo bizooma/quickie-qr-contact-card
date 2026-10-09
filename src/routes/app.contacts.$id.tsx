@@ -209,7 +209,8 @@ function ContactDetail() {
   // Only explicitly accepted values are written; each accept updates just its own field(s).
   async function acceptSuggestions(list: Suggestion[]) {
     if (!list.length) return;
-    const patch = Object.fromEntries(list.map((s) => [s.field, s.value]));
+    const patch: Partial<Record<Suggestion["field"], string>> = {};
+    for (const s of list) patch[s.field] = s.value;
     const { error } = await supabase.from("contacts").update(patch).eq("id", id);
     if (error) {
       toast.error(error.message);
