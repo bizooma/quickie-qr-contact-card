@@ -50,8 +50,8 @@ function AppLayout() {
   return (
     <div className="min-h-screen md:pl-60">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r bg-sidebar p-5 md:flex">
-        <Link to="/" className="mb-10 font-display text-lg font-bold">
-          Contact<span className="text-brand">Kickstart</span>
+        <Link to="/" className="mb-10">
+          <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-14 w-auto" />
         </Link>
         <nav className="space-y-1">
           {NAV.map((n) => (

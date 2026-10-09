@@ -59,7 +59,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <p className="mb-10 text-center font-display text-xl font-bold">Contact<span className="text-brand">Kickstart</span></p>
+        <img src="/brand/logo-badge.webp" alt="ContactKickstart" className="mx-auto mb-10 h-24 w-24" />
         <h1 className="text-3xl font-bold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{mode === "signin" ? "Sign in to manage your cards." : "Your first card is one minute away."}</p>
         <Button variant="outline" className="mt-8 h-11 w-full" onClick={google}>Continue with Google</Button>
