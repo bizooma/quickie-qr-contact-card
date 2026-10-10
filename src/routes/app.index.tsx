@@ -64,7 +64,7 @@ function CardsPage() {
       )}
       <Dialog open={!!qrCard} onOpenChange={(o) => !o && setQrCard(null)}>
         <DialogContent><DialogHeader><DialogTitle>Share {qrCard?.label}</DialogTitle></DialogHeader>
-          {qrCard && <QrPanel slug={qrCard.slug} accent={qrCard.accent_color} bg={qrCard.background_color} name={qrCard.full_name} />}
+          {qrCard && <QrPanel slug={qrCard.slug} accent={qrCard.accent_color} bg={qrCard.background_color} name={qrCard.full_name} logoPath={qrCard.logo_path} />}
         </DialogContent>
       </Dialog>
       <Dialog open={newOpen} onOpenChange={setNewOpen}>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -22,8 +22,23 @@ export const Route = createFileRoute("/app/contacts/")({ component: ContactsPage
 const RANGES = { all: "Any time", "7": "Last 7 days", "30": "Last 30 days", "90": "Last 90 days" } as const;
 
 function ContactsPage() {
-  const { data: contacts = [], isLoading } = useQuery({ queryKey: ["contacts"], queryFn: listContacts });
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const { data: contacts = [], isLoading } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: listContacts,
+  });
   const { data: cards = [] } = useQuery({ queryKey: ["cards"], queryFn: listCards });
+
+  // Opening this page clears the "new leads" badge in the nav.
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .update({ contacts_seen_at: new Date().toISOString() })
+      .eq("id", user.id)
+      .then(() => qc.invalidateQueries({ queryKey: ["new-leads"] }));
+  }, [user, qc]);
   const [q, setQ] = useState("");
   const [tag, setTag] = useState("all");
   const [cardId, setCardId] = useState("all");
@@ -41,19 +56,34 @@ function ContactsPage() {
   });
 
   const cardLabel = useMemo(() => Object.fromEntries(cards.map((c) => [c.id, c.label])), [cards]);
-  const allTags = useMemo(() => Array.from(new Set(contacts.flatMap((c) => c.tags))).sort(), [contacts]);
+  const allTags = useMemo(
+    () => Array.from(new Set(contacts.flatMap((c) => c.tags))).sort(),
+    [contacts],
+  );
 
   const filtered = contacts.filter((c) => {
     const s = q.trim().toLowerCase();
-    if (s && ![c.full_name, c.email, c.company, c.phone, c.met_at].some((v) => v?.toLowerCase().includes(s))) return false;
+    if (
+      s &&
+      ![c.full_name, c.email, c.company, c.phone, c.met_at].some((v) =>
+        v?.toLowerCase().includes(s),
+      )
+    )
+      return false;
     if (tag !== "all" && !c.tags.includes(tag)) return false;
     if (cardId !== "all" && c.card_id !== cardId) return false;
-    if (range !== "all" && Date.now() - new Date(c.created_at).getTime() > Number(range) * 864e5) return false;
+    if (range !== "all" && Date.now() - new Date(c.created_at).getTime() > Number(range) * 864e5)
+      return false;
     return true;
   });
 
   function exportCsv() {
-    const csv = contactsToCsv(filtered.map((c) => ({ ...c, card_label: c.card_id ? cardLabel[c.card_id] ?? null : null })));
+    const csv = contactsToCsv(
+      filtered.map((c) => ({
+        ...c,
+        card_label: c.card_id ? (cardLabel[c.card_id] ?? null) : null,
+      })),
+    );
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     a.download = `contacts-${format(new Date(), "yyyy-MM-dd")}.csv`;
@@ -63,25 +93,88 @@ function ContactsPage() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-3xl font-bold">Contacts</h1><p className="mt-1 text-sm text-muted-foreground">{contacts.length} people you've met</p></div>
+        <div>
+          <h1 className="text-3xl font-bold">Contacts</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{contacts.length} people you've met</p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}><Download className="h-4 w-4" />CSV</Button>
-          <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4" />Add</Button>
+          <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}>
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add
+          </Button>
         </div>
       </div>
       <div className="mb-5 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
-        <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Search name, company, email…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <Select value={tag} onValueChange={setTag}><SelectTrigger className="sm:w-36"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All tags</SelectItem>{allTags.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select>
-        <Select value={cardId} onValueChange={setCardId}><SelectTrigger className="sm:w-36"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All cards</SelectItem>{cards.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}</SelectContent></Select>
-        <Select value={range} onValueChange={(v) => setRange(v as keyof typeof RANGES)}><SelectTrigger className="sm:w-36"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(RANGES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search name, company, email…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <Select value={tag} onValueChange={setTag}>
+          <SelectTrigger className="sm:w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All tags</SelectItem>
+            {allTags.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={cardId} onValueChange={setCardId}>
+          <SelectTrigger className="sm:w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All cards</SelectItem>
+            {cards.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={range} onValueChange={(v) => setRange(v as keyof typeof RANGES)}>
+          <SelectTrigger className="sm:w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(RANGES).map(([k, v]) => (
+              <SelectItem key={k} value={k}>
+                {v}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : filtered.length === 0 ? (
-        <div className="surface p-10 text-center"><p className="font-semibold">No contacts yet</p><p className="mt-1 text-sm text-muted-foreground">When someone shares their details from your card, they'll appear here.</p></div>
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : filtered.length === 0 ? (
+        <div className="surface p-10 text-center">
+          <p className="font-semibold">No contacts yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            When someone shares their details from your card, they'll appear here.
+          </p>
+        </div>
       ) : (
         <ul className="surface divide-y">
           {filtered.map((c) => (
             <li key={c.id}>
-              <Link to="/app/contacts/$id" params={{ id: c.id }} className="flex items-center gap-4 px-4 py-3.5 hover:bg-muted/50">
+              <Link
+                to="/app/contacts/$id"
+                params={{ id: c.id }}
+                className="flex items-center gap-4 px-4 py-3.5 hover:bg-muted/50"
+              >
                 {c.photo_path && photoUrls[c.photo_path] ? (
                   <img
                     src={photoUrls[c.photo_path]}
@@ -89,16 +182,31 @@ function ContactsPage() {
                     className="h-11 w-11 shrink-0 rounded-full border object-cover"
                   />
                 ) : (
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-accent-foreground">{initials(c.full_name)}</div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-accent-foreground">
+                    {initials(c.full_name)}
+                  </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{c.full_name}</p>
-                  <p className="truncate text-sm text-muted-foreground">{[c.job_title, c.company].filter(Boolean).join(" · ") || c.email || c.phone}</p>
-                  {c.tags.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{c.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
+                  <p className="truncate text-sm text-muted-foreground">
+                    {[c.job_title, c.company].filter(Boolean).join(" · ") || c.email || c.phone}
+                  </p>
+                  {c.tags.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {c.tags.map((t) => (
+                        <Badge key={t} variant="secondary" className="text-[10px]">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="hidden text-right text-xs text-muted-foreground sm:block">
                   <p>{format(new Date(c.created_at), "MMM d, yyyy · h:mm a")}</p>
-                  <p>{c.met_at || (c.card_id ? `${cardLabel[c.card_id] ?? "Card"} card` : "Added manually")}</p>
+                  <p>
+                    {c.met_at ||
+                      (c.card_id ? `${cardLabel[c.card_id] ?? "Card"} card` : "Added manually")}
+                  </p>
                 </div>
               </Link>
             </li>

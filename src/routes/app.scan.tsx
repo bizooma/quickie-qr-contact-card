@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { scanCards } from "@/lib/ai.functions";
+import { notifyNewContacts } from "@/lib/capture.functions";
 import { SCAN_IMAGE_LIMIT, type ScannedContact } from "@/lib/ai-model";
 import {
   cropHeadshot,
@@ -26,6 +27,8 @@ import {
   type PreparedImage,
 } from "@/lib/image-prep";
 import { uploadContactPhoto } from "@/lib/media";
+import { decodeQrFromImage } from "@/lib/qr-decode";
+import { decodeQrText, mergeScannedContacts } from "@/lib/scan-decode";
 import { contactsToVcf } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 
@@ -61,9 +64,29 @@ function ScanPage() {
     setScanning(true);
     setResults(null);
     try {
-      const { contacts } = await scanCards({
-        data: { images: images.map(({ data, media_type }) => ({ data, media_type })) },
+      // AI card reading and local QR decoding run in parallel: QR codes
+      // (vCards, MECARDs, LinkedIn profiles) are machine-exact and free.
+      let aiError: unknown = null;
+      const [ai, qrTexts] = await Promise.all([
+        scanCards({
+          data: { images: images.map(({ data, media_type }) => ({ data, media_type })) },
+        }).catch((e: unknown) => {
+          aiError = e;
+          return { contacts: [] };
+        }),
+        Promise.all(images.map((img) => decodeQrFromImage(img).catch(() => null))),
+      ]);
+      const qrContacts = qrTexts.flatMap((text, i) => {
+        if (!text) return [];
+        const decoded = decodeQrText(text);
+        if (decoded.type !== "contact" && decoded.type !== "linkedin") return [];
+        return [{ ...decoded.contact, source_image_index: i }];
       });
+      const contacts = mergeScannedContacts(ai.contacts, qrContacts);
+      if (aiError && !contacts.length) throw aiError;
+      if (aiError) {
+        toast.warning("AI reading failed — showing only what the QR codes contained");
+      }
       if (!contacts.length) {
         toast.error("No business cards found in these photos");
         return;
@@ -150,6 +173,9 @@ function ScanPage() {
         const { error: nerr } = await supabase.from("contact_notes").insert(extras);
         if (nerr) throw nerr;
       }
+      // Fan out to the user's webhook (if configured); never blocks the save.
+      const ids = (rows ?? []).map((r) => r.id);
+      if (ids.length) notifyNewContacts({ data: { contactIds: ids } }).catch(() => {});
       qc.invalidateQueries({ queryKey: ["contacts"] });
       toast.success(`Saved ${chosen.length} contact${chosen.length > 1 ? "s" : ""}`);
       setResults(null);

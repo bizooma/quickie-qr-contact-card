@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_secrets: {
+        Row: {
+          created_at: string
+          key: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       card_links: {
         Row: {
           card_id: string
@@ -59,23 +77,35 @@ export type Database = {
         Row: {
           card_id: string
           created_at: string
+          device: string | null
           event_type: string
           id: string
+          meta: string | null
+          referrer: string | null
           user_id: string
+          visitor: string | null
         }
         Insert: {
           card_id: string
           created_at?: string
+          device?: string | null
           event_type?: string
           id?: string
+          meta?: string | null
+          referrer?: string | null
           user_id: string
+          visitor?: string | null
         }
         Update: {
           card_id?: string
           created_at?: string
+          device?: string | null
           event_type?: string
           id?: string
+          meta?: string | null
+          referrer?: string | null
           user_id?: string
+          visitor?: string | null
         }
         Relationships: [
           {
@@ -103,6 +133,7 @@ export type Database = {
           label: string
           location: string | null
           logo_path: string | null
+          og_path: string | null
           phones: Json
           slug: string
           template: string
@@ -125,6 +156,7 @@ export type Database = {
           label?: string
           location?: string | null
           logo_path?: string | null
+          og_path?: string | null
           phones?: Json
           slug: string
           template?: string
@@ -147,6 +179,7 @@ export type Database = {
           label?: string
           location?: string | null
           logo_path?: string | null
+          og_path?: string | null
           phones?: Json
           slug?: string
           template?: string
@@ -288,27 +321,60 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          contacts_seen_at: string
           created_at: string
           display_name: string | null
           id: string
           onboarded: boolean
           updated_at: string
+          webhook_url: string | null
         }
         Insert: {
           avatar_url?: string | null
+          contacts_seen_at?: string
           created_at?: string
           display_name?: string | null
           id: string
           onboarded?: boolean
           updated_at?: string
+          webhook_url?: string | null
         }
         Update: {
           avatar_url?: string | null
+          contacts_seen_at?: string
           created_at?: string
           display_name?: string | null
           id?: string
           onboarded?: boolean
           updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -319,7 +385,14 @@ export type Database = {
     Functions: {
       get_public_card: { Args: { _slug: string }; Returns: Json }
       log_card_event: {
-        Args: { _event: string; _slug: string }
+        Args: {
+          _device?: string
+          _event: string
+          _meta?: string
+          _referrer?: string
+          _slug: string
+          _visitor?: string
+        }
         Returns: undefined
       }
       submit_shareback: {
