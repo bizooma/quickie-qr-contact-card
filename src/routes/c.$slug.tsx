@@ -111,13 +111,17 @@ function PublicCard() {
       : /mobi|android|iphone/i.test(navigator.userAgent)
         ? "mobile"
         : "desktop";
-    supabase.rpc("log_card_event", {
-      _slug: slug,
-      _event: "view",
-      ...(referrer ? { _referrer: referrer } : {}),
-      _device: device,
-      ...(visitor ? { _visitor: visitor } : {}),
-    });
+    // supabase.rpc returns a lazy builder: it only sends the request once
+    // awaited/then-ed, so fire-and-forget calls MUST end in .then().
+    supabase
+      .rpc("log_card_event", {
+        _slug: slug,
+        _event: "view",
+        ...(referrer ? { _referrer: referrer } : {}),
+        _device: device,
+        ...(visitor ? { _visitor: visitor } : {}),
+      })
+      .then(undefined, () => {});
   }, [slug]);
 
   async function saveContact() {
@@ -128,7 +132,7 @@ function PublicCard() {
     a.href = URL.createObjectURL(blob);
     a.download = `${(card.full_name || "contact").replace(/[^a-z0-9]+/gi, "-")}.vcf`;
     a.click();
-    supabase.rpc("log_card_event", { _slug: slug, _event: "save" });
+    supabase.rpc("log_card_event", { _slug: slug, _event: "save" }).then(undefined, () => {});
   }
 
   async function shareCard() {
@@ -157,7 +161,9 @@ function PublicCard() {
         headshotUrl={headshotUrl}
         logoUrl={logoUrl}
         onLinkClick={(label) => {
-          supabase.rpc("log_card_event", { _slug: slug, _event: "click", _meta: label });
+          supabase
+            .rpc("log_card_event", { _slug: slug, _event: "click", _meta: label })
+            .then(undefined, () => {});
         }}
         actions={
           <div className="grid grid-cols-2 gap-2">
