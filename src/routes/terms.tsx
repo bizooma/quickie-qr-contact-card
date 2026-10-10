@@ -38,7 +38,7 @@ function Terms() {
       </p>
       <h2>Contact</h2>
       <p>
-        Questions: <a href="mailto:support@contactkickstart.com">support@contactkickstart.com</a>.
+        Questions: <a href="mailto:support@myaisummit.dev">support@myaisummit.dev</a>.
       </p>
     </LegalPage>
   );
