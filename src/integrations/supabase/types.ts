@@ -211,7 +211,15 @@ export type Database = {
           user_id?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cards_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_notes: {
         Row: {
@@ -531,8 +539,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_overview: { Args: Record<PropertyKey, never>; Returns: Json }
+      admin_overview: { Args: never; Returns: Json }
       get_public_card: { Args: { _slug: string }; Returns: Json }
+      in_same_org_as: { Args: { _user: string }; Returns: boolean }
       log_card_event: {
         Args: {
           _device?: string
@@ -544,6 +553,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      org_role_of: { Args: { _org: string }; Returns: string }
+      org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
       submit_shareback: {
         Args: {
           _company: string
