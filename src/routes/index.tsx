@@ -492,7 +492,7 @@ function Landing() {
           <Link to="/terms" className="hover:text-foreground">
             Terms
           </Link>
-          <a href="mailto:support@contactkickstart.com" className="hover:text-foreground">
+          <a href="mailto:support@myaisummit.dev" className="hover:text-foreground">
             Contact
           </a>
           <Link to="/auth" className="hover:text-foreground">
