@@ -105,8 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
-// Follow the device's light/dark preference before first paint.
-const THEME_SCRIPT = `(function(){try{var m=window.matchMedia('(prefers-color-scheme: dark)');var a=function(){document.documentElement.classList.toggle('dark',m.matches)};a();m.addEventListener('change',a)}catch(e){}})();`;
+// Apply the saved theme (ck-theme: light/dark; absent = follow the device)
+// before first paint so there is no flash; 'ck-theme-change' re-applies live.
+const THEME_SCRIPT = `(function(){try{var m=window.matchMedia('(prefers-color-scheme: dark)');var a=function(){var t=null;try{t=localStorage.getItem('ck-theme')}catch(e){}document.documentElement.classList.toggle('dark',t==='dark'||(t!=='light'&&m.matches))};a();m.addEventListener('change',a);window.addEventListener('ck-theme-change',a)}catch(e){}})();`;
 
 function RootShell({ children }: { children: ReactNode }) {
   return (

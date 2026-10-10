@@ -24,6 +24,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { listCards } from "@/lib/cards-api";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { getVapidPublicKey } from "@/lib/capture.functions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useTheme, type ThemePref } from "@/hooks/use-theme";
 import { createBillingPortal, createCheckout, getBillingState } from "@/lib/billing.functions";
 import { KIND_LABELS, PRO_PRICE_LABEL, USAGE_KINDS } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
@@ -86,6 +94,7 @@ function Settings() {
           <Label>Display name</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
+        <ThemePicker />
         <Button onClick={saveProfile}>Save</Button>
       </section>
       <PlanSection />
@@ -139,6 +148,27 @@ function Settings() {
         busy={busy}
         deleteAccount={deleteAccount}
       />
+    </div>
+  );
+}
+
+/** Light / Dark / System appearance dropdown; applies instantly, no reload. */
+function ThemePicker() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <div className="space-y-1">
+      <Label>Appearance</Label>
+      <Select value={theme} onValueChange={(v) => setTheme(v as ThemePref)}>
+        <SelectTrigger className="w-44">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="system">🖥️ System</SelectItem>
+          <SelectItem value="light">☀️ Light</SelectItem>
+          <SelectItem value="dark">🌙 Dark</SelectItem>
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">System follows your device's setting.</p>
     </div>
   );
 }
