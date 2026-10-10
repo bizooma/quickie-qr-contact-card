@@ -120,6 +120,24 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [save]);
 
+  // In-app navigation (e.g. tapping Back right after picking a photo) unmounts
+  // the editor WITHOUT firing beforeunload, and the autosave effect's cleanup
+  // cancels the pending timer — which silently discarded the edit. Flush the
+  // pending (or failed) write on unmount instead; the request outlives the
+  // component.
+  const cardRef = useRef(card);
+  cardRef.current = card;
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(
+    () => () => {
+      if (saveRef.current === "saving" || saveRef.current === "error") {
+        void persist(cardRef.current);
+      }
+    },
+    [persist],
+  );
+
   const set = <K extends keyof CardData>(k: K, v: CardData[K]) => setCard((c) => ({ ...c, [k]: v }));
 
   async function saveSlug() {
