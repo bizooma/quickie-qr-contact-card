@@ -29,7 +29,9 @@ async function getAnthropic() {
 export const scanCards = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(ScanCardsInputSchema)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertWithinLimit, recordUsage } = await import("./usage.server");
+    await assertWithinLimit(context.userId, "scan");
     const client = await getAnthropic();
     const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
@@ -77,6 +79,7 @@ export const scanCards = createServerFn({ method: "POST" })
     if (!response.parsed_output) {
       throw new Error("Could not read the cards from these photos. Try clearer, closer shots.");
     }
+    await recordUsage(context.userId, "scan");
     return response.parsed_output;
   });
 
@@ -85,6 +88,8 @@ export const draftFollowUp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(FollowUpInputSchema)
   .handler(async ({ data, context }) => {
+    const { assertWithinLimit, recordUsage } = await import("./usage.server");
+    await assertWithinLimit(context.userId, "follow_up");
     const { supabase } = context;
     const [c, n, t, card] = await Promise.all([
       supabase.from("contacts").select("*").eq("id", data.contactId).maybeSingle(),
@@ -150,6 +155,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
     if (response.stop_reason === "refusal" || !response.parsed_output) {
       throw new Error("Could not draft a follow-up for this contact. Try again.");
     }
+    await recordUsage(context.userId, "follow_up");
     return response.parsed_output;
   });
 
@@ -158,6 +164,8 @@ export const enrichContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(EnrichInputSchema)
   .handler(async ({ data, context }) => {
+    const { assertWithinLimit, recordUsage } = await import("./usage.server");
+    await assertWithinLimit(context.userId, "enrich");
     const { data: contact, error } = await context.supabase
       .from("contacts")
       .select("full_name, email, company, job_title, website, linkedin_url")
@@ -222,6 +230,7 @@ export const enrichContact = createServerFn({ method: "POST" })
       if (!response.parsed_output) {
         throw new Error("Could not enrich this contact. Try again.");
       }
+      await recordUsage(context.userId, "enrich");
       return response.parsed_output;
     }
     throw new Error("Research took too long. Try again.");
@@ -232,6 +241,8 @@ export const summarizeNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(SummarizeNoteInputSchema)
   .handler(async ({ data, context }) => {
+    const { assertWithinLimit, recordUsage } = await import("./usage.server");
+    await assertWithinLimit(context.userId, "summarize");
     const { data: note, error } = await context.supabase
       .from("contact_notes")
       .select("body")
@@ -262,5 +273,6 @@ export const summarizeNote = createServerFn({ method: "POST" })
     if (!response.parsed_output) {
       throw new Error("Could not summarize this note. Try again.");
     }
+    await recordUsage(context.userId, "summarize");
     return response.parsed_output;
   });

@@ -1,19 +1,32 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronRight, LogOut } from "lucide-react";
+import { ChevronRight, LogOut, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { listCards } from "@/lib/cards-api";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { getVapidPublicKey } from "@/lib/capture.functions";
+import { createBillingPortal, createCheckout, getBillingState } from "@/lib/billing.functions";
+import { KIND_LABELS, PRO_PRICE_LABEL, USAGE_KINDS } from "@/lib/plans";
+import { InstallInstructions } from "@/components/InstallPrompt";
 
 export const Route = createFileRoute("/app/settings")({ component: Settings });
 
@@ -75,6 +88,7 @@ function Settings() {
         </div>
         <Button onClick={saveProfile}>Save</Button>
       </section>
+      <PlanSection />
       <section>
         <h2 className="mb-3 text-lg font-bold">Cards</h2>
         <ul className="surface divide-y">
@@ -93,6 +107,10 @@ function Settings() {
             </li>
           ))}
         </ul>
+      </section>
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Install the app</h2>
+        <InstallInstructions />
       </section>
       <section className="space-y-4">
         <h2 className="text-lg font-bold">Notifications & integrations</h2>
@@ -122,6 +140,112 @@ function Settings() {
         deleteAccount={deleteAccount}
       />
     </div>
+  );
+}
+
+/** Current plan, this month's AI usage, and the upgrade/manage actions. */
+function PlanSection() {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
+
+  // Back from Stripe Checkout: thank the user and refetch until the webhook
+  // has flipped the plan (it usually lands within a few seconds).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const state = params.get("billing");
+    if (!state) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    if (state === "success") {
+      toast.success("Payment received — your plan updates in a moment");
+      const timers = [2000, 5000, 10000].map((ms) =>
+        setTimeout(() => qc.invalidateQueries({ queryKey: ["billing"] }), ms),
+      );
+      return () => timers.forEach(clearTimeout);
+    }
+    if (state === "cancelled") toast("Checkout cancelled — no charge was made");
+    return;
+  }, [qc]);
+
+  async function upgrade() {
+    setBusy(true);
+    try {
+      const { url } = await createCheckout();
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start checkout");
+      setBusy(false);
+    }
+  }
+
+  async function manage() {
+    setBusy(true);
+    try {
+      const { url } = await createBillingPortal();
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not open billing");
+      setBusy(false);
+    }
+  }
+
+  if (!billing) return null;
+  const pro = billing.plan === "pro";
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-bold">Plan & usage</h2>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${pro ? "bg-brand text-white" : "bg-muted text-muted-foreground"}`}
+        >
+          {pro ? "Pro" : "Free"}
+        </span>
+      </div>
+      <div className="surface space-y-3 p-4">
+        {USAGE_KINDS.map((k) => {
+          const u = billing.usage[k];
+          const pct = u.limit ? Math.min(100, Math.round((u.used / u.limit) * 100)) : 0;
+          return (
+            <div key={k}>
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="font-medium">{KIND_LABELS[k]}</span>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {u.limit === null ? `${u.used} · unlimited` : `${u.used} / ${u.limit} this month`}
+                </span>
+              </div>
+              {u.limit !== null && (
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full ${pct >= 100 ? "bg-destructive" : "bg-brand"}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {pro ? (
+        <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
+          Manage billing
+        </Button>
+      ) : (
+        <div className="space-y-2">
+          <Button disabled={busy || !billing.stripeConfigured} onClick={upgrade}>
+            <Sparkles className="h-4 w-4" />
+            Upgrade to Pro — {PRO_PRICE_LABEL}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Pro: unlimited AI scans, enrichment, follow-ups and summaries, plus up to 50 cards.
+          </p>
+          {!billing.stripeConfigured && (
+            <p className="text-xs text-muted-foreground">
+              Upgrades are not available yet (billing is still being set up).
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 

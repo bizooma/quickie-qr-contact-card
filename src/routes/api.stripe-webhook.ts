@@ -1,0 +1,76 @@
+import { createFileRoute } from "@tanstack/react-router";
+import type Stripe from "stripe";
+
+// Stripe webhook: the single source of truth for who is on Pro. Signature
+// verification uses WebCrypto (constructEventAsync) so it runs on Workers.
+// Configure the endpoint in Stripe as POST <site>/api/stripe-webhook with
+// events: checkout.session.completed, customer.subscription.updated,
+// customer.subscription.deleted.
+
+export const Route = createFileRoute("/api/stripe-webhook")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const { getStripe, stripeEnv, webhookCryptoProvider } = await import("@/lib/stripe.server");
+        const { webhookSecret, secretKey } = stripeEnv();
+        if (!secretKey || !webhookSecret) {
+          return Response.json({ error: "billing not configured" }, { status: 503 });
+        }
+        const signature = request.headers.get("stripe-signature");
+        if (!signature) return Response.json({ error: "missing signature" }, { status: 400 });
+
+        let event: Stripe.Event;
+        try {
+          const body = await request.text();
+          event = await getStripe().webhooks.constructEventAsync(
+            body,
+            signature,
+            webhookSecret,
+            undefined,
+            webhookCryptoProvider(),
+          );
+        } catch {
+          return Response.json({ error: "invalid signature" }, { status: 400 });
+        }
+
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        if (event.type === "checkout.session.completed") {
+          const session = event.data.object;
+          const userId = session.client_reference_id;
+          if (userId && session.mode === "subscription") {
+            await supabaseAdmin
+              .from("profiles")
+              .update({
+                plan: "pro",
+                stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+                stripe_subscription_id:
+                  typeof session.subscription === "string" ? session.subscription : null,
+              })
+              .eq("id", userId);
+          }
+        } else if (
+          event.type === "customer.subscription.updated" ||
+          event.type === "customer.subscription.deleted"
+        ) {
+          const sub = event.data.object;
+          const customer = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+          if (customer) {
+            const active =
+              event.type !== "customer.subscription.deleted" &&
+              (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due");
+            await supabaseAdmin
+              .from("profiles")
+              .update({
+                plan: active ? "pro" : "free",
+                stripe_subscription_id: active ? sub.id : null,
+              })
+              .eq("stripe_customer_id", customer);
+          }
+        }
+
+        return Response.json({ received: true });
+      },
+    },
+  },
+});

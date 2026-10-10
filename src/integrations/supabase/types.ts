@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_secrets: {
         Row: {
           created_at: string
@@ -326,6 +347,9 @@ export type Database = {
           display_name: string | null
           id: string
           onboarded: boolean
+          plan: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
           webhook_url: string | null
         }
@@ -336,6 +360,9 @@ export type Database = {
           display_name?: string | null
           id: string
           onboarded?: boolean
+          plan?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           webhook_url?: string | null
         }
@@ -346,6 +373,9 @@ export type Database = {
           display_name?: string | null
           id?: string
           onboarded?: boolean
+          plan?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           webhook_url?: string | null
         }
