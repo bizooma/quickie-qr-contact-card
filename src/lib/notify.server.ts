@@ -138,6 +138,7 @@ export type WebhookContact = {
   email: string | null;
   phone: string | null;
   company: string | null;
+  address: string | null;
   note: string | null;
   source: string;
   card_label: string | null;

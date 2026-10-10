@@ -59,7 +59,7 @@ export function parseVCard(text: string): ScannedContact | null {
         break;
       case "ADR": {
         const addr = value.split(";").filter(Boolean).join(", ");
-        if (addr) extras.push(addr);
+        if (addr) out["address"] = out["address"] || addr;
         break;
       }
       default:
@@ -74,6 +74,7 @@ export function parseVCard(text: string): ScannedContact | null {
     email: out["email"] ?? null,
     phone: out["phone"] ?? null,
     website: out["website"] ?? null,
+    address: out["address"] ?? null,
     extra: extras.length ? extras.join("\n") : null,
     source_image_index: 0,
     headshot_box: null,
@@ -109,6 +110,9 @@ export function parseMeCard(text: string): ScannedContact | null {
       case "NOTE":
         out["note"] = value;
         break;
+      case "ADR":
+        out["address"] = out["address"] || value;
+        break;
       default:
         break;
     }
@@ -121,6 +125,7 @@ export function parseMeCard(text: string): ScannedContact | null {
     email: out["email"] ?? null,
     phone: out["phone"] ?? null,
     website: out["website"] ?? null,
+    address: out["address"] ?? null,
     extra: out["note"] ?? null,
     source_image_index: 0,
     headshot_box: null,
@@ -162,6 +167,7 @@ export function decodeQrText(text: string): DecodedQr {
         email: null,
         phone: null,
         website: null,
+        address: null,
         extra: `LinkedIn: ${url}`,
         source_image_index: 0,
         headshot_box: null,
@@ -205,6 +211,7 @@ export function mergeScannedContacts(ai: ScannedContact[], qr: ScannedContact[])
         email: q.email ?? match.email,
         phone: q.phone ?? match.phone,
         website: q.website ?? match.website,
+        address: q.address ?? match.address,
         extra: [q.extra, match.extra].filter(Boolean).join("\n") || null,
         source_image_index: match.source_image_index,
         headshot_box: match.headshot_box,

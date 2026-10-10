@@ -81,6 +81,7 @@ describe("CSV export", () => {
         phone: null,
         company: null,
         job_title: null,
+        address: null,
         met_at: null,
         source: "shareback",
         card_label: "Work",
