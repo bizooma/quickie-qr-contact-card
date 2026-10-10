@@ -553,6 +553,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_site_event: {
+        Args: { _event_type: string; _meta?: string | null }
+        Returns: undefined
+      }
       org_role_of: { Args: { _org: string }; Returns: string }
       org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
       submit_shareback: {

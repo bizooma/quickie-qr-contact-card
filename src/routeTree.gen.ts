@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe-webhook'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
@@ -43,6 +45,16 @@ const AppRoute = AppRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
@@ -135,6 +147,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -156,6 +170,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -179,6 +195,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -203,6 +221,8 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
@@ -224,6 +244,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
@@ -246,6 +268,8 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/privacy'
+    | '/terms'
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
@@ -269,6 +293,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   AuthResetRoute: typeof AuthResetRoute
   CSlugRoute: typeof CSlugRoute
@@ -295,6 +321,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe-webhook': {
@@ -459,6 +499,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   AuthResetRoute: AuthResetRoute,
   CSlugRoute: CSlugRoute,
