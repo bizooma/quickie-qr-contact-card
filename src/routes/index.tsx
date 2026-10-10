@@ -32,7 +32,7 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-12 w-auto" />
+        <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-20 w-auto md:h-28" />
         <Button asChild size="sm" variant={user ? "default" : "ghost"}>
           <Link to={user ? "/app" : "/auth"}>{user ? "Open app" : "Sign in"}</Link>
         </Button>
