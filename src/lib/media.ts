@@ -8,12 +8,33 @@ export async function uploadCardImage(userId: string, file: File): Promise<strin
   if (file.size > 5 * 1024 * 1024) throw new Error("Image must be under 5 MB");
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
   if (error) throw error;
   return path;
 }
 
-export async function signedUrls(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
+/** Stores a contact's headshot (cropped from a scanned card) under the owner's folder. */
+export async function uploadContactPhoto(userId: string, blob: Blob): Promise<string> {
+  const path = `${userId}/contact-photos/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (error) throw error;
+  return path;
+}
+
+/** Best-effort storage cleanup; callers ignore failures (orphans are harmless). */
+export async function removeMedia(paths: (string | null | undefined)[]): Promise<void> {
+  const list = paths.filter((p): p is string => !!p);
+  if (!list.length) return;
+  await supabase.storage.from(BUCKET).remove(list);
+}
+
+export async function signedUrls(
+  paths: (string | null | undefined)[],
+): Promise<Record<string, string>> {
   const list = Array.from(new Set(paths.filter((p): p is string => !!p)));
   if (!list.length) return {};
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(list, SIGN_SECONDS);

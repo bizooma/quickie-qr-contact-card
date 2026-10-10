@@ -19,13 +19,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { scanCards } from "@/lib/ai.functions";
 import { SCAN_IMAGE_LIMIT, type ScannedContact } from "@/lib/ai-model";
-import { prepareImage, type PreparedImage } from "@/lib/image-prep";
+import {
+  cropHeadshot,
+  prepareImage,
+  type CroppedHeadshot,
+  type PreparedImage,
+} from "@/lib/image-prep";
+import { uploadContactPhoto } from "@/lib/media";
 import { contactsToVcf } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 
 export const Route = createFileRoute("/app/scan")({ component: ScanPage });
 
-type EditableContact = ScannedContact & { include: boolean };
+type EditableContact = ScannedContact & { include: boolean; headshot: CroppedHeadshot | null };
 
 function ScanPage() {
   const { user } = useAuth();
@@ -62,7 +68,18 @@ function ScanPage() {
         toast.error("No business cards found in these photos");
         return;
       }
-      setResults(contacts.map((c) => ({ ...c, include: true })));
+      // Crop printed headshots client-side from the same photos the AI looked at.
+      const withHeadshots = await Promise.all(
+        contacts.map(async (c) => {
+          const img = images[c.source_image_index];
+          return {
+            ...c,
+            include: true,
+            headshot: img ? await cropHeadshot(img, c.headshot_box) : null,
+          };
+        }),
+      );
+      setResults(withHeadshots);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Scan failed");
     } finally {
@@ -99,6 +116,29 @@ function ScanPage() {
         )
         .select("id");
       if (error) throw error;
+      // Attach cropped headshots; a failed photo upload never blocks the contact save.
+      let photoFailures = 0;
+      await Promise.all(
+        (rows ?? []).map(async (row, i) => {
+          const shot = chosen[i]?.headshot;
+          if (!shot) return;
+          try {
+            const path = await uploadContactPhoto(user.id, shot.blob);
+            const { error: perr } = await supabase
+              .from("contacts")
+              .update({ photo_path: path })
+              .eq("id", row.id);
+            if (perr) throw perr;
+          } catch {
+            photoFailures += 1;
+          }
+        }),
+      );
+      if (photoFailures) {
+        toast.warning(
+          `${photoFailures} headshot${photoFailures > 1 ? "s" : ""} could not be uploaded — the contact${photoFailures > 1 ? "s were" : " was"} saved without ${photoFailures > 1 ? "them" : "it"}`,
+        );
+      }
       const extras = (rows ?? []).flatMap((row, i) => {
         const c = chosen[i];
         const parts = [c?.website && `Website: ${c.website}`, c?.extra].filter(Boolean);
@@ -200,9 +240,7 @@ function ScanPage() {
             ) : (
               <ScanLine className="h-4 w-4" />
             )}
-            {scanning
-              ? "Reading cards…"
-              : `Scan ${images.length || ""} photo${images.length === 1 ? "" : "s"} with AI`}
+            {scanning ? "Reading cards…" : "Upload Contact"}
           </Button>
         </>
       )}
@@ -224,6 +262,23 @@ function ScanPage() {
                     aria-label={`Include ${c.full_name || "this card"}`}
                   />
                   <span className="text-sm font-semibold">Card {i + 1}</span>
+                  {c.headshot && (
+                    <div className="group relative ml-auto">
+                      <img
+                        src={c.headshot.previewUrl}
+                        alt={`Photo of ${c.full_name || "this contact"} from the card`}
+                        className="h-12 w-12 rounded-full border object-cover"
+                      />
+                      <button
+                        onClick={() => edit(i, { headshot: null })}
+                        aria-label="Don't save this photo"
+                        title="Don't save this photo"
+                        className="absolute -right-1 -top-1 rounded-full border bg-background p-0.5 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {(

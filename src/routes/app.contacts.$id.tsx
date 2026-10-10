@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { removeMedia, signedUrls } from "@/lib/media";
 import { SUGGESTED_TAGS } from "@/lib/contacts-api";
 import { buildContactVCard, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
@@ -83,6 +84,12 @@ function ContactDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data, refetch } = useQuery({ queryKey: ["contact", id], queryFn: () => loadContact(id) });
+  const photoPath = data?.contact?.photo_path ?? null;
+  const { data: photoUrl } = useQuery({
+    queryKey: ["contact-photo", photoPath],
+    enabled: !!photoPath,
+    queryFn: async () => (photoPath ? ((await signedUrls([photoPath]))[photoPath] ?? null) : null),
+  });
   const [form, setForm] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [fromVoice, setFromVoice] = useState(false);
@@ -312,6 +319,7 @@ function ContactDetail() {
       toast.error(error.message);
       return;
     }
+    void removeMedia([photoPath]).catch(() => {});
     qc.invalidateQueries({ queryKey: ["contacts"] });
     navigate({ to: "/app/contacts" });
   }
@@ -328,9 +336,17 @@ function ContactDetail() {
         Contacts
       </Link>
       <div className="mb-8 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-soft text-xl font-semibold text-accent-foreground">
-          {initials(c.full_name)}
-        </div>
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt={`Photo of ${c.full_name}`}
+            className="h-16 w-16 shrink-0 rounded-full border object-cover"
+          />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-soft text-xl font-semibold text-accent-foreground">
+            {initials(c.full_name)}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold">{c.full_name}</h1>
           <p className="text-sm text-muted-foreground">

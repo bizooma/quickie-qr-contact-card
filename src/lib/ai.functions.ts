@@ -43,7 +43,13 @@ export const scanCards = createServerFn({ method: "POST" })
         "Normalize phone numbers to include the country code when it is printed. " +
         "Put addresses, social handles, taglines, or handwritten text in `extra`. " +
         "Use null for anything not on the card — never invent a value. " +
-        "Skip anything that is clearly not a business card.",
+        "Skip anything that is clearly not a business card. " +
+        "`source_image_index` is the zero-based position, in the order given, of the photo " +
+        "the card was found in. If the card itself shows a photo of the person (a printed " +
+        "headshot), set `headshot_box` to a tight bounding box around that printed photo, " +
+        "with x/y/w/h as fractions (0–1) of the full photo's width and height, x/y being the " +
+        "top-left corner. Only box a photographic human face printed on the card — never a " +
+        "logo, icon, illustration, or QR code, and never the whole card. Use null when unsure.",
       messages: [
         {
           role: "user",

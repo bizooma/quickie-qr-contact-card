@@ -17,6 +17,15 @@ export const ScanCardsInputSchema = z.object({
   images: z.array(ScanImageSchema).min(1).max(SCAN_IMAGE_LIMIT),
 });
 
+// Normalized (0–1) box, relative to the photo the card appears in, around a
+// person's headshot printed on the card. Null when the card shows no face.
+export const HeadshotBoxSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  w: z.number().min(0).max(1),
+  h: z.number().min(0).max(1),
+});
+
 export const ScannedContactSchema = z.object({
   full_name: z.string(),
   job_title: z.string().nullable(),
@@ -26,6 +35,9 @@ export const ScannedContactSchema = z.object({
   website: z.string().nullable(),
   // Anything else legible on the card: address, social handles, handwritten notes.
   extra: z.string().nullable(),
+  // Zero-based index of the uploaded photo this card was found in.
+  source_image_index: z.number().int().min(0),
+  headshot_box: HeadshotBoxSchema.nullable(),
 });
 
 export const ScanResultSchema = z.object({
@@ -33,6 +45,7 @@ export const ScanResultSchema = z.object({
 });
 
 export type ScannedContact = z.infer<typeof ScannedContactSchema>;
+export type HeadshotBox = z.infer<typeof HeadshotBoxSchema>;
 
 export const FollowUpInputSchema = z.object({
   contactId: z.string().uuid(),
@@ -50,9 +63,7 @@ export const EnrichInputSchema = z.object({
 });
 
 // Each field is null unless the model verified it; `source` cites the URL/evidence.
-const EnrichedFieldSchema = z
-  .object({ value: z.string(), source: z.string() })
-  .nullable();
+const EnrichedFieldSchema = z.object({ value: z.string(), source: z.string() }).nullable();
 
 export const EnrichmentResultSchema = z.object({
   job_title: EnrichedFieldSchema,
