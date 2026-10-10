@@ -1,7 +1,16 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { BarChart3, CreditCard, ScanLine, Settings, Users, Wrench } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  CreditCard,
+  ScanLine,
+  Settings,
+  ShieldCheck,
+  Users,
+  Wrench,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -32,6 +41,10 @@ const NAV = [
   { to: "/app/settings", label: "Settings", icon: Settings },
 ] as const;
 
+// Sidebar-only extras: the mobile bottom bar stays at six items, so Team (and
+// Admin for platform admins) are reached from Settings on small screens.
+const SIDEBAR_EXTRA = [{ to: "/app/org", label: "Team", icon: Building2 }] as const;
+
 function AppLayout() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +56,14 @@ function AppLayout() {
 
   // People can share their details back at any time; surface the ones that
   // arrived since the contacts page was last opened.
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user,
+    queryFn: async () =>
+      (await supabase.from("profiles").select("is_admin").eq("id", user!.id).maybeSingle()).data
+        ?.is_admin ?? false,
+  });
+
   const { data: newLeads = 0 } = useQuery({
     queryKey: ["new-leads"],
     enabled: !!user,
@@ -96,6 +117,22 @@ function AppLayout() {
                   {newLeads > 99 ? "99+" : newLeads}
                 </span>
               )}
+            </Link>
+          ))}
+          {[
+            ...SIDEBAR_EXTRA,
+            ...(isAdmin ? [{ to: "/app/admin", label: "Admin", icon: ShieldCheck }] : []),
+          ].map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+                active(n.to) && "bg-sidebar-accent text-foreground",
+              )}
+            >
+              <n.icon className="h-4 w-4" />
+              {n.label}
             </Link>
           ))}
         </nav>
