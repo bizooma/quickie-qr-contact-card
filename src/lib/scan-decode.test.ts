@@ -18,6 +18,7 @@ const VCARD = [
   "TEL;TYPE=CELL:+1 555 0100",
   "EMAIL;TYPE=WORK:jane@acme.com",
   "URL:https://acme.com",
+  "ADR;TYPE=WORK:;;500 Main St;Springfield;IL;62701;USA",
   "NOTE:Met at expo\\, hall 4",
   "END:VCARD",
 ].join("\r\n");
@@ -31,6 +32,7 @@ describe("parseVCard", () => {
     expect(c.phone).toBe("+1 555 0100");
     expect(c.email).toBe("jane@acme.com");
     expect(c.website).toBe("https://acme.com");
+    expect(c.address).toBe("500 Main St, Springfield, IL, 62701, USA");
     expect(c.extra).toBe("Met at expo, hall 4");
   });
   it("falls back to N when FN is missing", () => {
@@ -89,6 +91,7 @@ function sc(p: Partial<ScannedContact>): ScannedContact {
     email: null,
     phone: null,
     website: null,
+    address: null,
     extra: null,
     source_image_index: 0,
     headshot_box: null,

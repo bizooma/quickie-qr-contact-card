@@ -49,6 +49,7 @@ export const submitShareback = createServerFn({ method: "POST" })
               email: data.email.trim() || null,
               phone: data.phone.trim() || null,
               company: data.company.trim() || null,
+              address: null,
               note: data.note.trim() || null,
               source: "shareback",
               card_label: card.label,
@@ -85,7 +86,7 @@ export const notifyNewContacts = createServerFn({ method: "POST" })
     // RLS scopes this read to the caller's own contacts.
     const { data: rows } = await supabase
       .from("contacts")
-      .select("full_name, email, phone, company, note, source, met_at, created_at")
+      .select("full_name, email, phone, company, address, note, source, met_at, created_at")
       .in("id", data.contactIds);
     if (!rows?.length) return { ok: true };
     const { postContactWebhook } = await import("./notify.server");
@@ -96,6 +97,7 @@ export const notifyNewContacts = createServerFn({ method: "POST" })
         email: r.email,
         phone: r.phone,
         company: r.company,
+        address: r.address,
         note: r.note,
         source: r.source,
         card_label: r.met_at,

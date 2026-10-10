@@ -133,6 +133,7 @@ function ScanPage() {
             company: c.company?.trim() || null,
             email: c.email?.trim() || null,
             phone: c.phone?.trim() || null,
+            address: c.address?.trim() || null,
             met_at: metAt.trim() || null,
             source: "scan",
           })),
@@ -315,6 +316,7 @@ function ScanPage() {
                       ["email", "Email"],
                       ["phone", "Phone"],
                       ["website", "Website"],
+                      ["address", "Address"],
                     ] as const
                   ).map(([k, l]) => (
                     <div key={k} className="space-y-1">

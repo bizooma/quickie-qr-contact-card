@@ -62,6 +62,7 @@ const DETAIL_FIELDS = [
   "met_at",
   "website",
   "linkedin_url",
+  "address",
 ] as const;
 
 async function loadContact(id: string) {
@@ -118,6 +119,7 @@ function ContactDetail() {
         met_at: c.met_at ?? "",
         website: c.website ?? "",
         linkedin_url: c.linkedin_url ?? "",
+        address: c.address ?? "",
       });
   }, [data?.contact]);
 
@@ -219,6 +221,7 @@ function ContactDetail() {
       company: c!.company,
       email: c!.email,
       phone: c!.phone,
+      address: c!.address,
       note: c!.met_at ? `Met at ${c!.met_at}` : null,
     });
     downloadFile(`${c!.full_name.replace(/[^\w-]+/g, "-")}.vcf`, vcf, VCF_MIME);
@@ -651,6 +654,7 @@ function ContactDetail() {
             ["met_at", "Where you met"],
             ["website", "Website"],
             ["linkedin_url", "LinkedIn"],
+            ["address", "Address"],
           ] as const
         ).map(([k, l]) => (
           <div key={k} className="space-y-1">

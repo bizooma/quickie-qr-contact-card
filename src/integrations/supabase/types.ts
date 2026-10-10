@@ -276,6 +276,7 @@ export type Database = {
       }
       contacts: {
         Row: {
+          address: string | null
           card_id: string | null
           company: string | null
           created_at: string
@@ -294,6 +295,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          address?: string | null
           card_id?: string | null
           company?: string | null
           created_at?: string
@@ -312,6 +314,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          address?: string | null
           card_id?: string | null
           company?: string | null
           created_at?: string
