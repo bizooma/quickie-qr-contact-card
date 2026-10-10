@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, ExternalLink, Eye, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -46,27 +46,43 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
 
   useEffect(() => { signedUrls([card.headshot_path, card.logo_path]).then((u) => setUrls((p) => ({ ...p, ...u }))); }, [card.headshot_path, card.logo_path]);
 
-  // Debounced autosave: every edit is published to the live card.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const persist = useCallback(async (c: CardData) => {
+    if (!user) return;
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    try {
+      const { links, slug: _s, ...fields } = c;
+      const { error } = await supabase.from("cards").update(fields).eq("id", cardId);
+      if (error) throw error;
+      const lj = JSON.stringify(links);
+      if (lj !== lastLinks.current) { await saveLinks(user.id, cardId, links); lastLinks.current = lj; }
+      setSave("saved");
+      qc.invalidateQueries({ queryKey: ["cards"] });
+    } catch (err) {
+      setSave("error");
+      toast.error(err instanceof Error ? err.message : "Could not save");
+    }
+  }, [cardId, user, qc]);
+
+  // Debounced autosave: every edit is published to the live card. The header's
+  // Save button flushes the pending write immediately via persist().
   useEffect(() => {
     if (first.current) { first.current = false; return; }
     if (!user) return;
     setSave("saving");
-    const t = setTimeout(async () => {
-      try {
-        const { links, slug: _s, ...fields } = card;
-        const { error } = await supabase.from("cards").update(fields).eq("id", cardId);
-        if (error) throw error;
-        const lj = JSON.stringify(links);
-        if (lj !== lastLinks.current) { await saveLinks(user.id, cardId, links); lastLinks.current = lj; }
-        setSave("saved");
-        qc.invalidateQueries({ queryKey: ["cards"] });
-      } catch (err) {
-        setSave("error");
-        toast.error(err instanceof Error ? err.message : "Could not save");
-      }
-    }, 700);
-    return () => clearTimeout(t);
-  }, [card, cardId, user, qc]);
+    timer.current = setTimeout(() => persist(card), 700);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [card, user, persist]);
+
+  // A pending write is lost if the tab closes before the debounce fires.
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (save === "saving" || save === "error") e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [save]);
 
   const set = <K extends keyof CardData>(k: K, v: CardData[K]) => setCard((c) => ({ ...c, [k]: v }));
 
@@ -106,9 +122,12 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold">{card.label}</h1>
           <p className="text-xs text-muted-foreground">
-            {save === "saving" ? "Saving…" : save === "saved" ? <span className="inline-flex items-center gap-1"><Check className="h-3 w-3" />Live</span> : save === "error" ? "Not saved" : "All changes publish instantly"}
+            {save === "saving" ? "Unsaved changes" : save === "saved" ? <span className="inline-flex items-center gap-1"><Check className="h-3 w-3" />Saved — your card is live</span> : save === "error" ? <span className="font-medium text-destructive">Not saved — try again</span> : "Changes save automatically"}
           </p>
         </div>
+        <Button size="sm" onClick={() => { setSave("saving"); persist(card); }} disabled={save === "saved" || save === "idle"}>
+          {save === "saving" ? "Save now" : save === "error" ? "Retry save" : <><Check className="h-4 w-4" />Saved</>}
+        </Button>
         <Button size="sm" variant="outline" className="lg:hidden" onClick={() => setShowPreview(true)}><Eye className="h-4 w-4" />Preview</Button>
         <Button size="sm" variant="ghost" asChild><a href={`/c/${card.slug}`} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a></Button>
       </div>
