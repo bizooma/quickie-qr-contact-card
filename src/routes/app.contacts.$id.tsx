@@ -114,6 +114,19 @@ function ContactDetail() {
       });
   }, [data?.contact]);
 
+  // Warn before closing the tab while detail edits haven't been saved.
+  useEffect(() => {
+    const c = data?.contact;
+    if (!c) return;
+    const dirty = DETAIL_FIELDS.some(
+      (k) => (form[k] ?? "") !== (((c as Record<string, unknown>)[k] as string | null) ?? ""),
+    );
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [form, data?.contact]);
+
   if (!data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   const c = data.contact;
   if (!c)
