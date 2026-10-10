@@ -138,6 +138,27 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
     [persist],
   );
 
+  // On phones, switching apps or closing the installed PWA suspends the page
+  // without beforeunload or an unmount: the debounce timer never fires and the
+  // edit is lost. Flush as soon as the page goes to the background — browsers
+  // grant a grace window for requests started from these events.
+  useEffect(() => {
+    const flushIfPending = () => {
+      if (saveRef.current === "saving" || saveRef.current === "error") {
+        void persist(cardRef.current);
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushIfPending();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", flushIfPending);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", flushIfPending);
+    };
+  }, [persist]);
+
   const set = <K extends keyof CardData>(k: K, v: CardData[K]) => setCard((c) => ({ ...c, [k]: v }));
 
   async function saveSlug() {
