@@ -25,6 +25,16 @@ export async function uploadContactPhoto(userId: string, blob: Blob): Promise<st
   return path;
 }
 
+/** Stores a card's Open Graph preview image at a stable per-card path. */
+export async function uploadOgImage(userId: string, cardId: string, blob: Blob): Promise<string> {
+  const path = `${userId}/og/${cardId}.png`;
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, blob, { contentType: "image/png", upsert: true });
+  if (error) throw error;
+  return path;
+}
+
 /** Best-effort storage cleanup; callers ignore failures (orphans are harmless). */
 export async function removeMedia(paths: (string | null | undefined)[]): Promise<void> {
   const list = paths.filter((p): p is string => !!p);

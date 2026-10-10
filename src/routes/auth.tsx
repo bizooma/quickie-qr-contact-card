@@ -56,22 +56,90 @@ function AuthPage() {
     if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
   }
 
+  async function forgotPassword() {
+    const addr = email.trim();
+    if (!addr) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(addr, {
+      redirectTo: `${window.location.origin}/auth/reset`,
+    });
+    if (error) toast.error(error.message);
+    else toast.success("Check your inbox for a password reset link.");
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <img src="/brand/logo-badge.webp" alt="ContactKickstart" className="mx-auto mb-10 h-24 w-24" />
-        <h1 className="text-3xl font-bold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{mode === "signin" ? "Sign in to manage your cards." : "Your first card is one minute away."}</p>
-        <Button variant="outline" className="mt-8 h-11 w-full" onClick={google}>Continue with Google</Button>
-        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />or<div className="h-px flex-1 bg-border" /></div>
+        <img
+          src="/brand/logo-badge.webp"
+          alt="ContactKickstart"
+          className="mx-auto mb-10 h-24 w-24"
+        />
+        <h1 className="text-3xl font-bold">
+          {mode === "signin" ? "Welcome back" : "Create your account"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {mode === "signin"
+            ? "Sign in to manage your cards."
+            : "Your first card is one minute away."}
+        </p>
+        <Button variant="outline" className="mt-8 h-11 w-full" onClick={google}>
+          Continue with Google
+        </Button>
+        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          or
+          <div className="h-px flex-1 bg-border" />
+        </div>
         <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" /></div>
-          <div className="space-y-1.5"><Label htmlFor="pw">Password</Label><Input id="pw" type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" /></div>
-          <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}</Button>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="pw">Password</Label>
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  onClick={forgotPassword}
+                  className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <Input
+              id="pw"
+              type="password"
+              required
+              minLength={8}
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <Button type="submit" className="h-11 w-full" disabled={busy}>
+            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+          </Button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
-          <button className="font-semibold text-foreground underline-offset-4 hover:underline" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>
+          <button
+            className="font-semibold text-foreground underline-offset-4 hover:underline"
+            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          >
             {mode === "signin" ? "Create an account" : "Sign in"}
           </button>
         </p>

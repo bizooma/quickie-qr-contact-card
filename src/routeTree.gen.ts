@@ -17,6 +17,7 @@ import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AuthResetRouteImport } from './routes/auth_.reset'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
 import { Route as AppContactsIndexRouteImport } from './routes/app.contacts.index'
@@ -65,6 +66,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AuthResetRoute = AuthResetRouteImport.update({
+  id: '/auth_/reset',
+  path: '/auth/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
+  '/auth/reset': typeof AuthResetRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
+  '/auth/reset': typeof AuthResetRoute
   '/c/$slug': typeof CSlugRoute
   '/app': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
+  '/auth_/reset': typeof AuthResetRoute
   '/c/$slug': typeof CSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
+    | '/auth/reset'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
+    | '/auth/reset'
     | '/c/$slug'
     | '/app'
     | '/app/cards/$id'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/app/onboarding'
     | '/app/scan'
     | '/app/settings'
+    | '/auth_/reset'
     | '/c/$slug'
     | '/app/'
     | '/app/cards/$id'
@@ -209,6 +221,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  AuthResetRoute: typeof AuthResetRoute
   CSlugRoute: typeof CSlugRoute
 }
 
@@ -269,6 +282,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/auth_/reset': {
+      id: '/auth_/reset'
+      path: '/auth/reset'
+      fullPath: '/auth/reset'
+      preLoaderRoute: typeof AuthResetRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
       id: '/c/$slug'
@@ -356,6 +376,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  AuthResetRoute: AuthResetRoute,
   CSlugRoute: CSlugRoute,
 }
 export const routeTree = rootRouteImport

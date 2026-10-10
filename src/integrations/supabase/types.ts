@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           event_type: string
           id: string
+          meta: string | null
           user_id: string
         }
         Insert: {
@@ -68,6 +69,7 @@ export type Database = {
           created_at?: string
           event_type?: string
           id?: string
+          meta?: string | null
           user_id: string
         }
         Update: {
@@ -75,6 +77,7 @@ export type Database = {
           created_at?: string
           event_type?: string
           id?: string
+          meta?: string | null
           user_id?: string
         }
         Relationships: [
@@ -103,6 +106,7 @@ export type Database = {
           label: string
           location: string | null
           logo_path: string | null
+          og_path: string | null
           phones: Json
           slug: string
           template: string
@@ -125,6 +129,7 @@ export type Database = {
           label?: string
           location?: string | null
           logo_path?: string | null
+          og_path?: string | null
           phones?: Json
           slug: string
           template?: string
@@ -147,6 +152,7 @@ export type Database = {
           label?: string
           location?: string | null
           logo_path?: string | null
+          og_path?: string | null
           phones?: Json
           slug?: string
           template?: string
@@ -288,6 +294,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          contacts_seen_at: string
           created_at: string
           display_name: string | null
           id: string
@@ -296,6 +303,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          contacts_seen_at?: string
           created_at?: string
           display_name?: string | null
           id: string
@@ -304,6 +312,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          contacts_seen_at?: string
           created_at?: string
           display_name?: string | null
           id?: string
@@ -319,7 +328,7 @@ export type Database = {
     Functions: {
       get_public_card: { Args: { _slug: string }; Returns: Json }
       log_card_event: {
-        Args: { _event: string; _slug: string }
+        Args: { _event: string; _meta?: string; _slug: string }
         Returns: undefined
       }
       submit_shareback: {

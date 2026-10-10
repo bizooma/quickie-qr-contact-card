@@ -1,6 +1,8 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { BarChart3, CreditCard, ScanLine, Settings, Users, Wrench } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +39,29 @@ function AppLayout() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
+
+  // People can share their details back at any time; surface the ones that
+  // arrived since the contacts page was last opened.
+  const { data: newLeads = 0 } = useQuery({
+    queryKey: ["new-leads"],
+    enabled: !!user,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("contacts_seen_at")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (!prof) return 0;
+      const { count } = await supabase
+        .from("contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "shareback")
+        .gt("created_at", prof.contacts_seen_at);
+      return count ?? 0;
+    },
+  });
+
   if (loading || !user)
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
@@ -65,6 +90,11 @@ function AppLayout() {
             >
               <n.icon className="h-4 w-4" />
               {n.label}
+              {n.to === "/app/contacts" && newLeads > 0 && (
+                <span className="ml-auto rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white">
+                  {newLeads > 99 ? "99+" : newLeads}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -82,7 +112,14 @@ function AppLayout() {
               active(n.to, "exact" in n) && "text-brand",
             )}
           >
-            <n.icon className="h-5 w-5" />
+            <span className="relative">
+              <n.icon className="h-5 w-5" />
+              {n.to === "/app/contacts" && newLeads > 0 && (
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white">
+                  {newLeads > 99 ? "99+" : newLeads}
+                </span>
+              )}
+            </span>
             {n.label}
           </Link>
         ))}

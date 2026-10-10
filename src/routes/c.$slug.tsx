@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, Send } from "lucide-react";
+import { Download, Send, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
@@ -11,13 +11,23 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { buildVCard, contrastText, type CardData } from "@/lib/card-model";
 import { signedUrls } from "@/lib/media";
 
+// Absolute URL so crawlers accept it from any serving domain.
+const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
+
+type PublicCardData = CardData & { og_path?: string | null };
+
 async function loadCard(slug: string) {
   const { data, error } = await supabase.rpc("get_public_card", { _slug: slug });
   if (error) throw error;
   if (!data) throw notFound();
-  const card = data as unknown as CardData;
-  const urls = await signedUrls([card.headshot_path, card.logo_path]);
-  return { card, headshotUrl: card.headshot_path ? urls[card.headshot_path] ?? null : null, logoUrl: card.logo_path ? urls[card.logo_path] ?? null : null };
+  const card = data as unknown as PublicCardData;
+  const urls = await signedUrls([card.headshot_path, card.logo_path, card.og_path]);
+  return {
+    card,
+    headshotUrl: card.headshot_path ? (urls[card.headshot_path] ?? null) : null,
+    logoUrl: card.logo_path ? (urls[card.logo_path] ?? null) : null,
+    ogUrl: card.og_path ? (urls[card.og_path] ?? null) : null,
+  };
 }
 
 export const Route = createFileRoute("/c/$slug")({
@@ -27,13 +37,18 @@ export const Route = createFileRoute("/c/$slug")({
     const c = loaderData?.card;
     const title = c ? `${c.full_name}${c.company ? ` · ${c.company}` : ""}` : "Digital business card";
     const desc = c ? [c.job_title, c.company].filter(Boolean).join(" at ") || "Save my contact details" : "Digital business card";
+    const image = loaderData?.ogUrl ?? DEFAULT_OG_IMAGE;
     const meta = [
       { title },
       { name: "description", content: desc },
       { property: "og:title", content: title },
       { property: "og:description", content: desc },
       { property: "og:type", content: "profile" },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:image", content: image },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: image },
     ];
     return { meta };
   },
@@ -85,20 +100,73 @@ function PublicCard() {
     supabase.rpc("log_card_event", { _slug: slug, _event: "save" });
   }
 
+  async function shareCard() {
+    const url = window.location.href;
+    const title = `${card.full_name} — digital business card`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // Cancelled or unsupported payload — fall through to copying.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Could not copy — use your browser's share menu");
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ background: card.background_color }}>
-      <CardView card={card} headshotUrl={headshotUrl} logoUrl={logoUrl} actions={
-        <div className="grid grid-cols-2 gap-2">
-          <button onClick={saveContact} className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90" style={{ background: card.accent_color, color: accentText }}>
-            <Download className="h-4 w-4" />Save contact
-          </button>
-          <button onClick={() => setOpen(true)} className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80" style={{ borderColor: card.accent_color, color: contrastText(card.background_color) }}>
-            <Send className="h-4 w-4" />Share yours
-          </button>
-        </div>
-      } />
+      <CardView
+        card={card}
+        headshotUrl={headshotUrl}
+        logoUrl={logoUrl}
+        onLinkClick={(label) => {
+          supabase.rpc("log_card_event", { _slug: slug, _event: "click", _meta: label });
+        }}
+        actions={
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={saveContact}
+              className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ background: card.accent_color, color: accentText }}
+            >
+              <Download className="h-4 w-4" />
+              Save contact
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ borderColor: card.accent_color, color: contrastText(card.background_color) }}
+            >
+              <Send className="h-4 w-4" />
+              Share yours
+            </button>
+          </div>
+        }
+      />
+      <div className="pb-4 text-center">
+        <button
+          onClick={shareCard}
+          className="inline-flex items-center gap-1.5 text-xs font-medium opacity-60 hover:opacity-100"
+          style={{ color: contrastText(card.background_color) }}
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          Share this card
+        </button>
+      </div>
       <footer className="pb-10 text-center">
-        <Link to="/" className="text-xs opacity-60 hover:opacity-100" style={{ color: contrastText(card.background_color) }}>Create your own card · ContactKickstart</Link>
+        <Link
+          to="/"
+          className="text-xs opacity-60 hover:opacity-100"
+          style={{ color: contrastText(card.background_color) }}
+        >
+          Create your own card · ContactKickstart
+        </Link>
       </footer>
       <ShareBack slug={slug} name={card.full_name} open={open} onOpenChange={setOpen} />
     </div>
