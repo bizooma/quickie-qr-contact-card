@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { listContacts } from "@/lib/contacts-api";
 import { listCards } from "@/lib/cards-api";
+import { signedUrls } from "@/lib/media";
 import { contactsToCsv, initials } from "@/lib/card-model";
 
 export const Route = createFileRoute("/app/contacts/")({ component: ContactsPage });
@@ -28,6 +29,16 @@ function ContactsPage() {
   const [cardId, setCardId] = useState("all");
   const [range, setRange] = useState<keyof typeof RANGES>("all");
   const [addOpen, setAddOpen] = useState(false);
+
+  const photoPaths = useMemo(
+    () => contacts.map((c) => c.photo_path).filter((p): p is string => !!p),
+    [contacts],
+  );
+  const { data: photoUrls = {} } = useQuery({
+    queryKey: ["contact-photos", photoPaths],
+    enabled: photoPaths.length > 0,
+    queryFn: () => signedUrls(photoPaths),
+  });
 
   const cardLabel = useMemo(() => Object.fromEntries(cards.map((c) => [c.id, c.label])), [cards]);
   const allTags = useMemo(() => Array.from(new Set(contacts.flatMap((c) => c.tags))).sort(), [contacts]);
@@ -71,7 +82,15 @@ function ContactsPage() {
           {filtered.map((c) => (
             <li key={c.id}>
               <Link to="/app/contacts/$id" params={{ id: c.id }} className="flex items-center gap-4 px-4 py-3.5 hover:bg-muted/50">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-accent-foreground">{initials(c.full_name)}</div>
+                {c.photo_path && photoUrls[c.photo_path] ? (
+                  <img
+                    src={photoUrls[c.photo_path]}
+                    alt=""
+                    className="h-11 w-11 shrink-0 rounded-full border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-accent-foreground">{initials(c.full_name)}</div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{c.full_name}</p>
                   <p className="truncate text-sm text-muted-foreground">{[c.job_title, c.company].filter(Boolean).join(" · ") || c.email || c.phone}</p>

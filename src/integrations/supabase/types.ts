@@ -233,6 +233,7 @@ export type Database = {
           met_at: string | null
           note: string | null
           phone: string | null
+          photo_path: string | null
           source: string
           updated_at: string
           user_id: string
@@ -250,6 +251,7 @@ export type Database = {
           met_at?: string | null
           note?: string | null
           phone?: string | null
+          photo_path?: string | null
           source?: string
           updated_at?: string
           user_id: string
@@ -267,6 +269,7 @@ export type Database = {
           met_at?: string | null
           note?: string | null
           phone?: string | null
+          photo_path?: string | null
           source?: string
           updated_at?: string
           user_id?: string
