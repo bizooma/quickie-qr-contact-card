@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronRight, LogOut, Sparkles } from "lucide-react";
+import { Building2, ChevronRight, LogOut, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +98,14 @@ function Settings() {
         <Button onClick={saveProfile}>Save</Button>
       </section>
       <PlanSection />
+      <section>
+        <h2 className="mb-3 text-lg font-bold">Team</h2>
+        <Link to="/app/org" className="surface flex items-center gap-3 px-4 py-3 hover:bg-muted/50">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <span className="flex-1 text-sm font-medium">Manage your team</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      </section>
       <section>
         <h2 className="mb-3 text-lg font-bold">Cards</h2>
         <ul className="surface divide-y">

@@ -155,6 +155,7 @@ export type Database = {
           location: string | null
           logo_path: string | null
           og_path: string | null
+          org_id: string | null
           phones: Json
           slug: string
           template: string
@@ -178,6 +179,7 @@ export type Database = {
           location?: string | null
           logo_path?: string | null
           og_path?: string | null
+          org_id?: string | null
           phones?: Json
           slug: string
           template?: string
@@ -201,6 +203,7 @@ export type Database = {
           location?: string | null
           logo_path?: string | null
           og_path?: string | null
+          org_id?: string | null
           phones?: Json
           slug?: string
           template?: string
@@ -342,6 +345,115 @@ export type Database = {
           },
         ]
       }
+      org_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          org_id: string
+          role: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          org_id: string
+          role?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          org_id?: string
+          role?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          created_at: string
+          org_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          org_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orgs: {
+        Row: {
+          accent_color: string | null
+          background_color: string | null
+          created_at: string
+          id: string
+          lock_brand: boolean
+          logo_path: string | null
+          name: string
+          owner_id: string
+          share_contacts: boolean
+        }
+        Insert: {
+          accent_color?: string | null
+          background_color?: string | null
+          created_at?: string
+          id?: string
+          lock_brand?: boolean
+          logo_path?: string | null
+          name: string
+          owner_id: string
+          share_contacts?: boolean
+        }
+        Update: {
+          accent_color?: string | null
+          background_color?: string | null
+          created_at?: string
+          id?: string
+          lock_brand?: boolean
+          logo_path?: string | null
+          name?: string
+          owner_id?: string
+          share_contacts?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -349,6 +461,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_admin: boolean
           onboarded: boolean
           plan: string
           stripe_customer_id: string | null
@@ -362,6 +475,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_admin?: boolean
           onboarded?: boolean
           plan?: string
           stripe_customer_id?: string | null
@@ -375,6 +489,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_admin?: boolean
           onboarded?: boolean
           plan?: string
           stripe_customer_id?: string | null
@@ -416,6 +531,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_overview: { Args: Record<PropertyKey, never>; Returns: Json }
       get_public_card: { Args: { _slug: string }; Returns: Json }
       log_card_event: {
         Args: {

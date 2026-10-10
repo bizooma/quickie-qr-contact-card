@@ -29,16 +29,41 @@ export async function getCard(id: string) {
   return { card, links: (links ?? []).map((l) => ({ id: l.id, label: l.label, url: l.url, icon: l.icon })) };
 }
 
-/** Create a card with a unique slug, retrying with a numeric suffix on collision. */
-export async function createCard(userId: string, input: { label: string; full_name: string; job_title?: string | undefined; company?: string | undefined; email?: string | undefined }) {
+/** Create a card with a unique slug, retrying with a numeric suffix on collision.
+ *  `orgId` (plus optional brand fields) provisions a team card for `userId` —
+ *  RLS lets org owners/admins do this for their members. */
+export async function createCard(
+  userId: string,
+  input: {
+    label: string;
+    full_name: string;
+    job_title?: string | undefined;
+    company?: string | undefined;
+    email?: string | undefined;
+    orgId?: string | undefined;
+    accentColor?: string | undefined;
+    backgroundColor?: string | undefined;
+  },
+) {
   const base = slugify(input.full_name || input.label);
   for (let attempt = 0; attempt < 6; attempt++) {
     const slug = attempt === 0 ? base : `${base.slice(0, 40)}-${Math.random().toString(36).slice(2, 6)}`;
-    const { data, error } = await supabase.from("cards").insert({
-      user_id: userId, slug, label: input.label, full_name: input.full_name,
-      job_title: input.job_title || null, company: input.company || null,
-      emails: input.email ? [{ label: "Work", value: input.email }] : [],
-    }).select().single();
+    const { data, error } = await supabase
+      .from("cards")
+      .insert({
+        user_id: userId,
+        slug,
+        label: input.label,
+        full_name: input.full_name,
+        job_title: input.job_title || null,
+        company: input.company || null,
+        emails: input.email ? [{ label: "Work", value: input.email }] : [],
+        ...(input.orgId ? { org_id: input.orgId } : {}),
+        ...(input.accentColor ? { accent_color: input.accentColor } : {}),
+        ...(input.backgroundColor ? { background_color: input.backgroundColor } : {}),
+      })
+      .select()
+      .single();
     if (!error) return data;
     if (error.code !== "23505") throw error;
   }

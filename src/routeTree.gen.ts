@@ -14,8 +14,10 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe-webhook'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
+import { Route as AppOrgRouteImport } from './routes/app.org'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AuthResetRouteImport } from './routes/auth_.reset'
@@ -23,6 +25,7 @@ import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
 import { Route as AppContactsIndexRouteImport } from './routes/app.contacts.index'
 import { Route as AppContactsIdRouteImport } from './routes/app.contacts.$id'
+import { Route as AppJoinTokenRouteImport } from './routes/app.join.$token'
 import { Route as AppToolsIndexRouteImport } from './routes/app.tools.index'
 import { Route as AppToolsBackgroundRouteImport } from './routes/app.tools.background'
 import { Route as AppToolsSignatureRouteImport } from './routes/app.tools.signature'
@@ -52,6 +55,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -60,6 +68,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrgRoute = AppOrgRouteImport.update({
+  id: '/org',
+  path: '/org',
   getParentRoute: () => AppRoute,
 } as any)
 const AppScanRoute = AppScanRouteImport.update({
@@ -97,6 +110,11 @@ const AppContactsIdRoute = AppContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppJoinTokenRoute = AppJoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
   id: '/tools/',
   path: '/tools/',
@@ -118,8 +136,10 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/org': typeof AppOrgRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/reset': typeof AuthResetRoute
@@ -127,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/join/$token': typeof AppJoinTokenRoute
   '/app/tools/background': typeof AppToolsBackgroundRoute
   '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts/': typeof AppContactsIndexRoute
@@ -136,8 +157,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/org': typeof AppOrgRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/reset': typeof AuthResetRoute
@@ -145,6 +168,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/join/$token': typeof AppJoinTokenRoute
   '/app/tools/background': typeof AppToolsBackgroundRoute
   '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts': typeof AppContactsIndexRoute
@@ -156,8 +180,10 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/org': typeof AppOrgRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth_/reset': typeof AuthResetRoute
@@ -165,6 +191,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
+  '/app/join/$token': typeof AppJoinTokenRoute
   '/app/tools/background': typeof AppToolsBackgroundRoute
   '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts/': typeof AppContactsIndexRoute
@@ -177,8 +204,10 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/api/stripe-webhook'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/onboarding'
+    | '/app/org'
     | '/app/scan'
     | '/app/settings'
     | '/auth/reset'
@@ -186,6 +215,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/cards/$id'
     | '/app/contacts/$id'
+    | '/app/join/$token'
     | '/app/tools/background'
     | '/app/tools/signature'
     | '/app/contacts/'
@@ -195,8 +225,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/api/stripe-webhook'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/onboarding'
+    | '/app/org'
     | '/app/scan'
     | '/app/settings'
     | '/auth/reset'
@@ -204,6 +236,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/cards/$id'
     | '/app/contacts/$id'
+    | '/app/join/$token'
     | '/app/tools/background'
     | '/app/tools/signature'
     | '/app/contacts'
@@ -214,8 +247,10 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/api/stripe-webhook'
+    | '/app/admin'
     | '/app/analytics'
     | '/app/onboarding'
+    | '/app/org'
     | '/app/scan'
     | '/app/settings'
     | '/auth_/reset'
@@ -223,6 +258,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/cards/$id'
     | '/app/contacts/$id'
+    | '/app/join/$token'
     | '/app/tools/background'
     | '/app/tools/signature'
     | '/app/contacts/'
@@ -275,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin': {
+      id: '/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/analytics': {
       id: '/app/analytics'
       path: '/analytics'
@@ -287,6 +330,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/app/onboarding'
       preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/org': {
+      id: '/app/org'
+      path: '/org'
+      fullPath: '/app/org'
+      preLoaderRoute: typeof AppOrgRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/scan': {
@@ -338,6 +388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/join/$token': {
+      id: '/app/join/$token'
+      path: '/join/$token'
+      fullPath: '/app/join/$token'
+      preLoaderRoute: typeof AppJoinTokenRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/tools/': {
       id: '/app/tools/'
       path: '/tools'
@@ -363,13 +420,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
+  AppOrgRoute: typeof AppOrgRoute
   AppScanRoute: typeof AppScanRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCardsIdRoute: typeof AppCardsIdRoute
   AppContactsIdRoute: typeof AppContactsIdRoute
+  AppJoinTokenRoute: typeof AppJoinTokenRoute
   AppToolsBackgroundRoute: typeof AppToolsBackgroundRoute
   AppToolsSignatureRoute: typeof AppToolsSignatureRoute
   AppContactsIndexRoute: typeof AppContactsIndexRoute
@@ -377,13 +437,16 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
+  AppOrgRoute: AppOrgRoute,
   AppScanRoute: AppScanRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCardsIdRoute: AppCardsIdRoute,
   AppContactsIdRoute: AppContactsIdRoute,
+  AppJoinTokenRoute: AppJoinTokenRoute,
   AppToolsBackgroundRoute: AppToolsBackgroundRoute,
   AppToolsSignatureRoute: AppToolsSignatureRoute,
   AppContactsIndexRoute: AppContactsIndexRoute,
