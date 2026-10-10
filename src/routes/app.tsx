@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { BarChart3, CreditCard, ScanLine, Settings, Users, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({
@@ -102,6 +103,7 @@ function AppLayout() {
       <main className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pb-10 md:pt-10">
         <Outlet />
       </main>
+      <InstallPrompt />
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background/90 backdrop-blur md:hidden">
         {NAV.map((n) => (
           <Link
