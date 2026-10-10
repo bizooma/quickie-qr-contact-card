@@ -338,31 +338,41 @@ function ContactDetail() {
         <ArrowLeft className="h-4 w-4" />
         Contacts
       </Link>
-      <div className="mb-8 flex items-center gap-4">
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt={`Photo of ${c.full_name}`}
-            className="h-16 w-16 shrink-0 rounded-full border object-cover"
-          />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-soft text-xl font-semibold text-accent-foreground">
-            {initials(c.full_name)}
+      <div className="mb-8 overflow-hidden rounded-3xl border bg-card">
+        <div className="h-24 bg-brand md:h-28" />
+        <div className="-mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={`Photo of ${c.full_name}`}
+              className="h-24 w-24 rounded-full border-4 border-card object-cover shadow md:h-28 md:w-28"
+            />
+          ) : (
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-brand-soft text-2xl font-semibold text-accent-foreground shadow md:h-28 md:w-28">
+              {initials(c.full_name)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold">{c.full_name}</h1>
+            {(c.job_title || c.company) && (
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {c.job_title}
+                {c.job_title && c.company ? " · " : ""}
+                {c.company && <span className="font-semibold text-foreground">{c.company}</span>}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              Captured {format(new Date(c.created_at), "MMM d, yyyy 'at' h:mm a")}
+              {cardLabel
+                ? ` via ${cardLabel} card`
+                : c.source === "manual"
+                  ? " · added manually"
+                  : ""}
+            </p>
           </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-bold">{c.full_name}</h1>
-          <p className="text-sm text-muted-foreground">
-            Captured {format(new Date(c.created_at), "MMM d, yyyy 'at' h:mm a")}
-            {cardLabel
-              ? ` via ${cardLabel} card`
-              : c.source === "manual"
-                ? " · added manually"
-                : ""}
-          </p>
         </div>
       </div>
-      <div className="mb-8 flex gap-2">
+      <div className="mb-8 flex flex-wrap justify-center gap-2">
         {c.email && (
           <Button variant="outline" size="sm" asChild>
             <a href={`mailto:${c.email}`}>

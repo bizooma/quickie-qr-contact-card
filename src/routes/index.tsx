@@ -22,11 +22,11 @@ export const Route = createFileRoute("/")({
 const DEMO: CardData = {
   slug: "demo",
   label: "Work",
-  full_name: "Maya Okafor",
+  full_name: "Tamzyn Williams",
   job_title: "Head of Partnerships",
   company: "Northwind",
   phones: [{ label: "Mobile", value: "+1 530-867-5309" }],
-  emails: [{ label: "Work", value: "maya@tahocity.org" }],
+  emails: [{ label: "Work", value: "TWilliams@contactkickstart.com" }],
   website: "anywebsite.com",
   location: null,
   bio: null,
@@ -95,7 +95,7 @@ function Landing() {
         <div className="flex justify-center">
           <div className="phone-frame rotate-2">
             <div className="h-full overflow-hidden rounded-[38px]">
-              <CardView card={DEMO} headshotUrl="/demo/maya.webp" />
+              <CardView card={DEMO} headshotUrl="/demo/maya.webp" logoUrl="/demo/logo.webp" />
             </div>
           </div>
         </div>
