@@ -13,7 +13,7 @@ async function loadEvents(days: number) {
   const since = startOfDay(subDays(new Date(), days - 1)).toISOString();
   const { data, error } = await supabase
     .from("card_views")
-    .select("card_id, event_type, created_at, meta")
+    .select("card_id, event_type, created_at, meta, referrer, device, visitor")
     .gte("created_at", since)
     .limit(10000);
   if (error) throw error;
@@ -32,6 +32,31 @@ function Analytics() {
   const filtered = cardId === "all" ? events : events.filter((e) => e.card_id === cardId);
   const totals = { view: 0, save: 0, shareback: 0, click: 0 } as Record<string, number>;
   for (const e of filtered) totals[e.event_type] = (totals[e.event_type] ?? 0) + 1;
+
+  // Unique visitors (views carrying a visitor id), conversion, devices, referrers.
+  const depth = useMemo(() => {
+    const visitors = new Set<string>();
+    const devices = new Map<string, number>();
+    const referrers = new Map<string, number>();
+    for (const e of filtered) {
+      if (e.event_type !== "view") continue;
+      if (e.visitor) visitors.add(e.visitor);
+      if (e.device) devices.set(e.device, (devices.get(e.device) ?? 0) + 1);
+      if (e.referrer) referrers.set(e.referrer, (referrers.get(e.referrer) ?? 0) + 1);
+    }
+    const views = filtered.filter((e) => e.event_type === "view").length;
+    const captures = filtered.filter(
+      (e) => e.event_type === "save" || e.event_type === "shareback",
+    ).length;
+    return {
+      unique: visitors.size,
+      conversion: views ? Math.round((captures / views) * 100) : 0,
+      devices: Array.from(devices.entries()).sort((a, b) => b[1] - a[1]),
+      referrers: Array.from(referrers.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6),
+    };
+  }, [filtered]);
 
   // Which links people actually tap, most-tapped first.
   const topClicks = useMemo(() => {
@@ -96,13 +121,21 @@ function Analytics() {
           </Select>
         </div>
       </div>
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {tiles.map((t) => (
           <div key={t.k} className="surface p-4">
             <p className="text-xs font-medium text-muted-foreground">{t.label}</p>
             <p className="mt-1 font-display text-3xl font-bold">{totals[t.k] ?? 0}</p>
           </div>
         ))}
+        <div className="surface p-4">
+          <p className="text-xs font-medium text-muted-foreground">Unique visitors</p>
+          <p className="mt-1 font-display text-3xl font-bold">{depth.unique}</p>
+        </div>
+        <div className="surface p-4">
+          <p className="text-xs font-medium text-muted-foreground">View → capture</p>
+          <p className="mt-1 font-display text-3xl font-bold">{depth.conversion}%</p>
+        </div>
       </div>
       <div className="surface p-4">
         <div className="h-72">
@@ -177,6 +210,46 @@ function Analytics() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {(depth.devices.length > 0 || depth.referrers.length > 0) && (
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {depth.devices.length > 0 && (
+            <div className="surface p-4">
+              <p className="mb-3 text-xs font-medium text-muted-foreground">Devices</p>
+              <ul className="space-y-2">
+                {depth.devices.map(([device, count]) => (
+                  <li key={device} className="flex items-center gap-3 text-sm">
+                    <span className="min-w-0 flex-1 truncate font-medium capitalize">{device}</span>
+                    <span
+                      className="h-1.5 rounded-full bg-brand/70"
+                      style={{
+                        width: `${Math.max(8, (count / (depth.devices[0]?.[1] ?? 1)) * 120)}px`,
+                      }}
+                    />
+                    <span className="w-8 text-right tabular-nums text-muted-foreground">
+                      {count}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {depth.referrers.length > 0 && (
+            <div className="surface p-4">
+              <p className="mb-3 text-xs font-medium text-muted-foreground">Top referrers</p>
+              <ul className="space-y-2">
+                {depth.referrers.map(([ref, count]) => (
+                  <li key={ref} className="flex items-center gap-3 text-sm">
+                    <span className="min-w-0 flex-1 truncate font-medium">{ref}</span>
+                    <span className="w-8 text-right tabular-nums text-muted-foreground">
+                      {count}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>

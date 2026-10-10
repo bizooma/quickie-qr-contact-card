@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { buildVCard, contrastText, type CardData } from "@/lib/card-model";
+import { submitShareback } from "@/lib/capture.functions";
 import { signedUrls } from "@/lib/media";
 
 // Absolute URL so crawlers accept it from any serving domain.
@@ -86,7 +87,37 @@ function PublicCard() {
     const key = `ss-view-${slug}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
-    supabase.rpc("log_card_event", { _slug: slug, _event: "view" });
+    // A stable per-browser id lets analytics count unique visitors without
+    // any fingerprinting; referrer is reduced to a hostname.
+    let visitor: string | null = null;
+    try {
+      visitor = localStorage.getItem("ck-visitor");
+      if (!visitor) {
+        visitor = crypto.randomUUID();
+        localStorage.setItem("ck-visitor", visitor);
+      }
+    } catch {
+      visitor = null;
+    }
+    let referrer: string | null = null;
+    try {
+      referrer = document.referrer ? new URL(document.referrer).hostname : null;
+      if (referrer === window.location.hostname) referrer = null;
+    } catch {
+      referrer = null;
+    }
+    const device = /ipad|tablet/i.test(navigator.userAgent)
+      ? "tablet"
+      : /mobi|android|iphone/i.test(navigator.userAgent)
+        ? "mobile"
+        : "desktop";
+    supabase.rpc("log_card_event", {
+      _slug: slug,
+      _event: "view",
+      ...(referrer ? { _referrer: referrer } : {}),
+      _device: device,
+      ...(visitor ? { _visitor: visitor } : {}),
+    });
   }, [slug]);
 
   async function saveContact() {
@@ -182,10 +213,24 @@ function ShareBack({ slug, name, open, onOpenChange }: { slug: string; name: str
     e.preventDefault();
     if (!f.email.trim() && !f.phone.trim()) { toast.error("Add an email or phone number"); return; }
     setBusy(true);
-    const { error } = await supabase.rpc("submit_shareback", { _slug: slug, _name: f.name, _email: f.email, _phone: f.phone, _company: f.company, _note: f.note });
-    setBusy(false);
-    if (error) { toast.error("Couldn't send your details. Please try again."); return; }
-    setDone(true);
+    try {
+      // Server function: saves via the same RPC, then notifies the card owner.
+      await submitShareback({
+        data: {
+          slug,
+          name: f.name,
+          email: f.email,
+          phone: f.phone,
+          company: f.company,
+          note: f.note,
+        },
+      });
+      setDone(true);
+    } catch {
+      toast.error("Couldn't send your details. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

@@ -3,7 +3,7 @@
 // files → stale-while-revalidate; page navigations → network-first with the
 // cached /app shell as the offline fallback. Data (Supabase) is cross-origin
 // and never intercepted, so nothing stale is ever shown as live data.
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `ck-shell-${VERSION}`;
 const ASSETS = `ck-assets-${VERSION}`;
 const STATIC = `ck-static-${VERSION}`;
@@ -82,6 +82,35 @@ async function navigation(request) {
     );
   }
 }
+
+// Pushes arrive without a payload (no encryption needed server-side), so the
+// notification text is generic; tapping it opens the contacts list.
+self.addEventListener("push", (event) => {
+  event.waitUntil(
+    self.registration.showNotification("New contact captured 🎉", {
+      body: "Someone just shared their details with you. Tap to see who.",
+      icon: "/brand/icon-192.png",
+      badge: "/brand/icon-192.png",
+      tag: "ck-shareback",
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      const target = "/app/contacts";
+      for (const w of wins) {
+        if (new URL(w.url).pathname.startsWith("/app")) {
+          w.navigate(target);
+          return w.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
+});
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
