@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 const DEMO: CardData = {
   slug: "demo",
   label: "Work",
-  full_name: "Maya Okafor",
+  full_name: "Tamzyn Williams",
   job_title: "Head of Partnerships",
   company: "Northwind",
   phones: [{ label: "Mobile", value: "+1 530-867-5309" }],
