@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AB_STORAGE_KEY, variantMeta, type HeadlineVariant } from "@/lib/ab";
+import { logSiteEvent } from "@/lib/site-events";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -37,8 +39,22 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/app` } });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/app` },
+        });
         if (error) throw error;
+        // Attribute the signup to the landing headline variant (A/B test);
+        // visitors who never saw the landing page stay unattributed.
+        let ab: HeadlineVariant | null = null;
+        try {
+          const stored = localStorage.getItem(AB_STORAGE_KEY);
+          if (stored === "a" || stored === "c") ab = stored;
+        } catch {
+          // storage blocked — leave unattributed
+        }
+        logSiteEvent("signup", variantMeta("auth", ab));
         if (!data.session) toast.success("Check your inbox to confirm your email.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

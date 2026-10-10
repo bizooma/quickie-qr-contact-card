@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type SiteEvent = "cta_click" | "demo_click" | "pricing_view";
+export type SiteEvent = "cta_click" | "demo_click" | "pricing_view" | "signup";
 
 /** Fire-and-forget landing page event. The .then() matters: PostgREST builders
  *  are lazy and never execute unless awaited or .then()-ed. */
