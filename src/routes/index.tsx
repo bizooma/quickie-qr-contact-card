@@ -23,8 +23,12 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   annualFreeMonths,
   PLAN_LIMITS,
+  PREMIUM_ANNUAL_PRICE_LABEL,
+  PREMIUM_ANNUAL_USD,
   PREMIUM_PRICE_LABEL,
+  premiumAnnualFreeMonths,
   PRO_ANNUAL_PRICE_LABEL,
+  PRO_ANNUAL_USD,
   PRO_PRICE_LABEL,
 } from "@/lib/plans";
 import {
@@ -125,11 +129,17 @@ function Cta({
   );
 }
 
+/** "$6.67/mo" style equivalent for an annual price. */
+function perMonth(annualUsd: number): string {
+  return `$${(annualUsd / 12).toFixed(2).replace(/\.00$/, "")}/mo`;
+}
+
 function Landing() {
   const { user } = useAuth();
   const free = PLAN_LIMITS.free;
   const ab = useHeadlineVariant();
   const headline = HEADLINES[ab ?? "a"];
+  const [period, setPeriod] = useState<"monthly" | "annual">("monthly");
   useRevealOnScroll();
   return (
     <div className="min-h-screen overflow-x-clip">
@@ -540,7 +550,34 @@ function Landing() {
             A box of 500 paper cards runs $20–40, gets thrown away, and tells you nothing. Start
             free; upgrade when it pays for itself.
           </p>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="mt-8 inline-flex items-center rounded-full border bg-surface p-1 shadow-soft">
+            <button
+              type="button"
+              onClick={() => setPeriod("monthly")}
+              className={
+                period === "monthly"
+                  ? "rounded-full bg-foreground px-5 py-2 text-sm font-bold text-background"
+                  : "rounded-full px-5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              }
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriod("annual")}
+              className={
+                period === "annual"
+                  ? "inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2 text-sm font-bold text-background"
+                  : "inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              }
+            >
+              Annual
+              <span className="rounded-full bg-pop-amber-soft px-2 py-0.5 text-[10px] font-bold text-foreground">
+                {annualFreeMonths()} months free
+              </span>
+            </button>
+          </div>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
             <div data-reveal="0" className="surface card-lift p-7">
               <h3 className="text-lg font-bold">Free</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">$0</p>
@@ -549,7 +586,7 @@ function Landing() {
                 {[
                   "1 digital card with QR code & your own link",
                   "Share-back contact capture, unlimited",
-                  "10 Card scans / month",
+                  `${free.scan} Card scans / month`,
                   "Views, saves & click analytics",
                   "Push & webhook notifications",
                 ].map((t) => (
@@ -568,11 +605,27 @@ function Landing() {
                 Most popular
               </span>
               <h3 className="text-lg font-bold">Pro</h3>
-              <p className="mt-1 font-display text-4xl font-extrabold">{PRO_PRICE_LABEL}</p>
+              <p className="mt-1 font-display text-4xl font-extrabold">
+                {period === "annual" ? PRO_ANNUAL_PRICE_LABEL : PRO_PRICE_LABEL}
+              </p>
               <p className="text-xs text-muted-foreground">
-                or {PRO_ANNUAL_PRICE_LABEL} —{" "}
-                <span className="font-semibold text-brand">{annualFreeMonths()} months free</span>
-                {" · cancel anytime"}
+                {period === "annual" ? (
+                  <>
+                    {perMonth(PRO_ANNUAL_USD)} equivalent —{" "}
+                    <span className="font-semibold text-brand">
+                      {annualFreeMonths()} months free
+                    </span>
+                    {" · cancel anytime"}
+                  </>
+                ) : (
+                  <>
+                    or {PRO_ANNUAL_PRICE_LABEL} —{" "}
+                    <span className="font-semibold text-brand">
+                      {annualFreeMonths()} months free
+                    </span>
+                    {" · cancel anytime"}
+                  </>
+                )}
               </p>
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
@@ -593,8 +646,28 @@ function Landing() {
             </div>
             <div data-reveal="2" className="surface card-lift border border-pop-amber/60 p-7">
               <h3 className="text-lg font-bold">Premium</h3>
-              <p className="mt-1 font-display text-4xl font-extrabold">{PREMIUM_PRICE_LABEL}</p>
-              <p className="text-xs text-muted-foreground">cancel anytime</p>
+              <p className="mt-1 font-display text-4xl font-extrabold">
+                {period === "annual" ? PREMIUM_ANNUAL_PRICE_LABEL : PREMIUM_PRICE_LABEL}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {period === "annual" ? (
+                  <>
+                    {perMonth(PREMIUM_ANNUAL_USD)} equivalent —{" "}
+                    <span className="font-semibold text-brand">
+                      {premiumAnnualFreeMonths()} months free
+                    </span>
+                    {" · cancel anytime"}
+                  </>
+                ) : (
+                  <>
+                    or {PREMIUM_ANNUAL_PRICE_LABEL} —{" "}
+                    <span className="font-semibold text-brand">
+                      {premiumAnnualFreeMonths()} months free
+                    </span>
+                    {" · cancel anytime"}
+                  </>
+                )}
+              </p>
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
                   "Unlimited personal cards",

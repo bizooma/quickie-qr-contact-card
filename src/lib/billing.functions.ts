@@ -27,6 +27,7 @@ export type BillingState = {
   stripeConfigured: boolean;
   annualConfigured: boolean;
   premiumConfigured: boolean;
+  premiumAnnualConfigured: boolean;
   hasSubscription: boolean;
   credits: { scan: number; follow_up: number }; // one-time starter-pack credits
   usage: Record<UsageKind, { used: number; limit: number | null }>; // null limit = unlimited
@@ -60,6 +61,7 @@ export const getBillingState = createServerFn({ method: "POST" })
       stripeConfigured: isStripeConfigured(),
       annualConfigured: isStripeConfigured() && !!stripeEnv().annualPriceId,
       premiumConfigured: isStripeConfigured() && !!stripeEnv().premiumPriceId,
+      premiumAnnualConfigured: isStripeConfigured() && !!stripeEnv().premiumAnnualPriceId,
       hasSubscription: !!profile?.stripe_subscription_id,
       credits,
       usage,
@@ -98,14 +100,16 @@ export const createCheckout = createServerFn({ method: "POST" })
     const env = stripeEnv();
     const price =
       data.plan === "premium"
-        ? env.premiumPriceId
+        ? data.interval === "year"
+          ? env.premiumAnnualPriceId
+          : env.premiumPriceId
         : data.interval === "year"
           ? env.annualPriceId
           : env.priceId;
     if (!price) {
       throw new Error(
         data.plan === "premium"
-          ? "The Premium plan isn't configured yet — add STRIPE_PRICE_ID_PREMIUM first."
+          ? `The Premium plan isn't configured yet — add STRIPE_PRICE_ID_PREMIUM${data.interval === "year" ? "_ANNUAL" : ""} first.`
           : "The annual plan isn't configured yet — add STRIPE_PRICE_ID_ANNUAL first.",
       );
     }

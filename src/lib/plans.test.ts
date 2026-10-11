@@ -9,7 +9,9 @@ import {
   monthlyLimit,
   normalizePlan,
   PLAN_LIMITS,
+  PREMIUM_ANNUAL_PRICE_LABEL,
   PREMIUM_PRICE_LABEL,
+  premiumAnnualFreeMonths,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   remaining,
@@ -37,11 +39,11 @@ describe("effectivePlan", () => {
 
 describe("limits", () => {
   it("free is capped, paid tiers are unlimited on AI", () => {
-    expect(monthlyLimit("free", "scan")).toBe(10);
+    expect(monthlyLimit("free", "scan")).toBe(5);
     expect(monthlyLimit("pro", "scan")).toBe(Infinity);
     expect(monthlyLimit("premium", "scan")).toBe(Infinity);
-    expect(isWithinLimit("free", "scan", 9)).toBe(true);
-    expect(isWithinLimit("free", "scan", 10)).toBe(false);
+    expect(isWithinLimit("free", "scan", 4)).toBe(true);
+    expect(isWithinLimit("free", "scan", 5)).toBe(false);
     expect(isWithinLimit("pro", "scan", 1_000_000)).toBe(true);
   });
   it("cards: 1 free, 3 pro, unlimited premium", () => {
@@ -78,12 +80,14 @@ describe("limitReachedMessage", () => {
 });
 
 describe("annual pricing", () => {
-  it("the '2 months free' claim matches the actual prices", () => {
+  it("the '2 months free' claims match the actual prices", () => {
     expect(annualFreeMonths()).toBe(2);
+    expect(premiumAnnualFreeMonths()).toBe(2);
   });
   it("labels derive from the numeric prices", () => {
     expect(PRO_PRICE_LABEL).toBe("$8/mo");
     expect(PRO_ANNUAL_PRICE_LABEL).toBe("$80/yr");
     expect(PREMIUM_PRICE_LABEL).toBe("$12/mo");
+    expect(PREMIUM_ANNUAL_PRICE_LABEL).toBe("$120/yr");
   });
 });

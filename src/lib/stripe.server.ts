@@ -11,6 +11,7 @@ export function stripeEnv() {
     priceId: process.env["STRIPE_PRICE_ID"] ?? "",
     annualPriceId: process.env["STRIPE_PRICE_ID_ANNUAL"] ?? "",
     premiumPriceId: process.env["STRIPE_PRICE_ID_PREMIUM"] ?? "",
+    premiumAnnualPriceId: process.env["STRIPE_PRICE_ID_PREMIUM_ANNUAL"] ?? "",
     webhookSecret: process.env["STRIPE_WEBHOOK_SECRET"] ?? "",
   };
 }
