@@ -151,7 +151,9 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -180,4 +182,180 @@
 
 @utility safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Landing: color pops, conversation motif, motion ──────────────────── */
+
+:root {
+  --pop-amber: oklch(0.76 0.145 75);
+  --pop-teal: oklch(0.58 0.11 190);
+  --pop-rose: oklch(0.6 0.19 15);
+  --pop-amber-soft: oklch(0.76 0.145 75 / 16%);
+  --pop-teal-soft: oklch(0.58 0.11 190 / 12%);
+  --pop-rose-soft: oklch(0.6 0.19 15 / 11%);
+  --ink: oklch(0.21 0.02 260);
+}
+
+.dark {
+  --pop-amber: oklch(0.82 0.14 80);
+  --pop-teal: oklch(0.72 0.11 190);
+  --pop-rose: oklch(0.7 0.16 15);
+  --pop-amber-soft: oklch(0.82 0.14 80 / 18%);
+  --pop-teal-soft: oklch(0.72 0.11 190 / 16%);
+  --pop-rose-soft: oklch(0.7 0.16 15 / 15%);
+  --ink: oklch(0.17 0.015 260);
+}
+
+@theme inline {
+  --color-pop-amber: var(--pop-amber);
+  --color-pop-teal: var(--pop-teal);
+  --color-pop-rose: var(--pop-rose);
+  --color-pop-amber-soft: var(--pop-amber-soft);
+  --color-pop-teal-soft: var(--pop-teal-soft);
+  --color-pop-rose-soft: var(--pop-rose-soft);
+  --color-ink: var(--ink);
+}
+
+@utility text-gradient-brand {
+  background-image: linear-gradient(
+    92deg,
+    var(--brand) 0%,
+    var(--pop-rose) 58%,
+    var(--pop-amber) 115%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility card-lift {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-float);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+/* Speech bubbles around the hero phone — a conversation being kickstarted. */
+@utility chat-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  border-bottom-left-radius: 0.25rem;
+  box-shadow: var(--shadow-soft);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+@utility chat-bubble-brand {
+  background: var(--brand);
+  border-radius: 1rem;
+  border-bottom-right-radius: 0.25rem;
+  box-shadow: var(--shadow-soft);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+@keyframes ck-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) translateY(10px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes ck-float {
+  0%,
+  100% {
+    transform: rotate(2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-10px);
+  }
+}
+
+@keyframes ck-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes ck-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(4%, 7%) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bubble-pop {
+    opacity: 0;
+    animation: ck-pop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: var(--pop-delay, 0.4s);
+  }
+  .phone-float {
+    animation: ck-float 7s ease-in-out infinite;
+  }
+  .typing-dot {
+    animation: ck-dot 1.3s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.18s;
+  }
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.36s;
+  }
+  .aurora-blob {
+    animation: ck-drift 16s ease-in-out infinite;
+  }
+  .aurora-blob:nth-child(2) {
+    animation-delay: -6s;
+  }
+  .aurora-blob:nth-child(3) {
+    animation-delay: -11s;
+  }
+
+  /* Scroll reveal: elements are visible in plain HTML; the hook adds
+     .reveal-pre on mount and .reveal-in when they enter the viewport. */
+  .reveal-pre {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .reveal-pre.reveal-in {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--reveal-delay, 0) * 90ms);
+  }
 }
