@@ -38,7 +38,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { removeMedia, signedUrls } from "@/lib/media";
 import { SUGGESTED_TAGS } from "@/lib/contacts-api";
-import { buildContactVCard, initials } from "@/lib/card-model";
+import { buildContactVCard, companyDomain, companyLogoUrl, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 import { draftFollowUp, enrichContact, summarizeNote } from "@/lib/ai.functions";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
@@ -328,6 +328,9 @@ function ContactDetail() {
   }
 
   const cardLabel = (c as { cards?: { label: string } | null }).cards?.label;
+  // Their company's logo, derived from the scanned card's website or work
+  // email — no upload needed, it just appears on the banner.
+  const logoDomain = companyDomain({ website: c.website, email: c.email });
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -339,7 +342,21 @@ function ContactDetail() {
         Contacts
       </Link>
       <div className="mb-8 overflow-hidden rounded-3xl border bg-card">
-        <div className="h-24 bg-brand md:h-28" />
+        <div className="relative h-24 bg-brand md:h-28">
+          {logoDomain && (
+            <span className="absolute right-4 top-1/2 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl bg-white/95 shadow-md">
+              <img
+                src={companyLogoUrl(logoDomain)}
+                alt={`${c.company || logoDomain} logo`}
+                className="h-9 w-9 rounded object-contain"
+                loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget.parentElement as HTMLElement).style.display = "none";
+                }}
+              />
+            </span>
+          )}
+        </div>
         <div className="-mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
           {photoUrl ? (
             <img

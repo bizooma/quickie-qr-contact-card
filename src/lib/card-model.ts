@@ -294,3 +294,63 @@ export function initials(name: string): string {
       .join("") || "?"
   );
 }
+
+// Personal-mail providers whose domain says nothing about a company.
+const FREE_MAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "ymail.com",
+  "hotmail.com",
+  "outlook.com",
+  "live.com",
+  "msn.com",
+  "icloud.com",
+  "me.com",
+  "mac.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+  "pm.me",
+  "mail.com",
+  "gmx.com",
+  "gmx.net",
+  "zoho.com",
+  "fastmail.com",
+  "hey.com",
+  "mailinator.com",
+  "comcast.net",
+  "att.net",
+  "verizon.net",
+  "sbcglobal.net",
+]);
+
+/** The company web domain behind a contact — from their website when given,
+ *  else from a work email's domain. Personal-mail domains don't count. */
+export function companyDomain(opts: {
+  website?: string | null;
+  email?: string | null;
+}): string | null {
+  const site = (opts.website ?? "").trim();
+  if (site) {
+    try {
+      const host = new URL(normalizeUrl(site)).hostname.replace(/^www\./i, "").toLowerCase();
+      if (host.includes(".")) return host;
+    } catch {
+      // Not a parseable URL — fall through to the email domain.
+    }
+  }
+  const email = (opts.email ?? "").trim().toLowerCase();
+  const at = email.lastIndexOf("@");
+  if (at > 0) {
+    const domain = email.slice(at + 1);
+    if (domain.includes(".") && !FREE_MAIL_DOMAINS.has(domain)) return domain;
+  }
+  return null;
+}
+
+/** Public favicon lookup — the closest thing to "the company's logo" that
+ *  needs no scraping, API keys, or storage. */
+export function companyLogoUrl(domain: string, size = 128): string {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
+}
