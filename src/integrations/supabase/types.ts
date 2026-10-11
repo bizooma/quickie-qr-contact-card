@@ -467,6 +467,8 @@ export type Database = {
           avatar_url: string | null
           contacts_seen_at: string
           created_at: string
+          credit_follow_up: number
+          credit_scan: number
           display_name: string | null
           id: string
           is_admin: boolean
@@ -482,6 +484,8 @@ export type Database = {
           avatar_url?: string | null
           contacts_seen_at?: string
           created_at?: string
+          credit_follow_up?: number
+          credit_scan?: number
           display_name?: string | null
           id: string
           is_admin?: boolean
@@ -497,6 +501,8 @@ export type Database = {
           avatar_url?: string | null
           contacts_seen_at?: string
           created_at?: string
+          credit_follow_up?: number
+          credit_scan?: number
           display_name?: string | null
           id?: string
           is_admin?: boolean
@@ -507,6 +513,48 @@ export type Database = {
           stripe_subscription_id?: string | null
           updated_at?: string
           webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      purchase_entitlements: {
+        Row: {
+          amount_cents: number | null
+          applied_at: string | null
+          applied_to: string | null
+          created_at: string
+          email: string
+          id: string
+          is_test: boolean
+          kind: string
+          order_number: number | null
+          payload: Json | null
+          pinball_order_id: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          applied_at?: string | null
+          applied_to?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          is_test?: boolean
+          kind: string
+          order_number?: number | null
+          payload?: Json | null
+          pinball_order_id: string
+        }
+        Update: {
+          amount_cents?: number | null
+          applied_at?: string | null
+          applied_to?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_test?: boolean
+          kind?: string
+          order_number?: number | null
+          payload?: Json | null
+          pinball_order_id?: string
         }
         Relationships: []
       }
@@ -537,12 +585,41 @@ export type Database = {
         }
         Relationships: []
       }
+      site_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          meta: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          meta?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          meta?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       admin_overview: { Args: never; Returns: Json }
+      apply_purchase_entitlements: {
+        Args: { _email: string; _user: string }
+        Returns: undefined
+      }
+      consume_starter_credit: {
+        Args: { _kind: string; _user: string }
+        Returns: undefined
+      }
       get_public_card: { Args: { _slug: string }; Returns: Json }
       in_same_org_as: { Args: { _user: string }; Returns: boolean }
       log_card_event: {
@@ -557,24 +634,25 @@ export type Database = {
         Returns: undefined
       }
       log_site_event: {
-        Args: { _event_type: string; _meta?: string | null }
+        Args: { _event_type: string; _meta?: string }
         Returns: undefined
       }
+      org_role_of: { Args: { _org: string }; Returns: string }
+      org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
       record_app_purchase: {
         Args: {
-          _order_id: string
-          _order_number: number | null
-          _event: string
-          _email: string
-          _kind: string
           _amount_cents: number
+          _email: string
+          _event: string
           _is_test: boolean
+          _kind: string
+          _order_id: string
+          _order_number: number
           _payload: Json
         }
         Returns: Json
       }
-      org_role_of: { Args: { _org: string }; Returns: string }
-      org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
+      restore_entitlement_plan: { Args: { _user: string }; Returns: undefined }
       submit_shareback: {
         Args: {
           _company: string
