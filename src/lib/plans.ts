@@ -16,7 +16,7 @@ export const KIND_LABELS: Record<UsageKind, string> = {
 
 /** Monthly allowances; Infinity = unlimited. Cards is a total, not monthly. */
 export const PLAN_LIMITS: Record<PlanId, { cards: number } & Record<UsageKind, number>> = {
-  free: { cards: 1, scan: 10, enrich: 5, follow_up: 15, summarize: 15 },
+  free: { cards: 1, scan: 5, enrich: 5, follow_up: 15, summarize: 15 },
   pro: { cards: 3, scan: Infinity, enrich: Infinity, follow_up: Infinity, summarize: Infinity },
   premium: {
     cards: Infinity,
@@ -34,12 +34,19 @@ export const PRO_ANNUAL_USD = 80;
 export const PRO_PRICE_LABEL = `$${PRO_MONTHLY_USD}/mo`;
 export const PRO_ANNUAL_PRICE_LABEL = `$${PRO_ANNUAL_USD}/yr`;
 export const PREMIUM_MONTHLY_USD = 12;
+export const PREMIUM_ANNUAL_USD = 120;
 export const PREMIUM_PRICE_LABEL = `$${PREMIUM_MONTHLY_USD}/mo`;
+export const PREMIUM_ANNUAL_PRICE_LABEL = `$${PREMIUM_ANNUAL_USD}/yr`;
 
 /** Whole months of Pro the annual discount covers — the "2 months free" claim.
  *  Derived from the prices so the marketing line can never drift from reality. */
 export function annualFreeMonths(): number {
   return Math.floor((12 * PRO_MONTHLY_USD - PRO_ANNUAL_USD) / PRO_MONTHLY_USD);
+}
+
+/** Same claim for Premium: $120/yr vs 12 × $12. */
+export function premiumAnnualFreeMonths(): number {
+  return Math.floor((12 * PREMIUM_MONTHLY_USD - PREMIUM_ANNUAL_USD) / PREMIUM_MONTHLY_USD);
 }
 
 export function normalizePlan(plan: string | null | undefined): PlanId {

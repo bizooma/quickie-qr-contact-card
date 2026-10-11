@@ -111,14 +111,14 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "What's free, forever",
-        "One card with QR and link, unlimited share-back capture, analytics, notifications, and 10 AI card scans a month. No credit card to start.",
+        "One card with QR and link, unlimited share-back capture, analytics, notifications, and 5 AI card scans a month. No credit card to start.",
       ],
       [
         "What Pro adds ($8/mo, or $80/yr)",
         "Up to 3 cards and unlimited AI scanning, enrichment, follow-ups and summaries. Upgrade from Settings; cancel anytime and it runs to the end of the period.",
       ],
       [
-        "What Premium adds ($12/mo)",
+        "What Premium adds ($12/mo, or $120/yr)",
         "Everything in Pro, plus unlimited personal cards, Teams, the email signature builder, and advanced analytics with contact CSV export.",
       ],
       [

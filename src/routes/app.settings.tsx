@@ -38,7 +38,9 @@ import {
   creditEligible,
   KIND_LABELS,
   PLAN_NAMES,
+  PREMIUM_ANNUAL_PRICE_LABEL,
   PREMIUM_PRICE_LABEL,
+  premiumAnnualFreeMonths,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   USAGE_KINDS,
@@ -311,22 +313,35 @@ function PlanSection() {
                 Manage billing / switch plan
               </Button>
             ) : (
-              <Button
-                variant={billing.plan === "pro" ? "default" : "outline"}
-                disabled={busy || !billing.premiumConfigured}
-                onClick={() => upgrade("premium")}
-                className={billing.plan === "pro" ? undefined : "border-brand"}
-              >
-                <Sparkles className="h-4 w-4" />
-                Go Premium — {PREMIUM_PRICE_LABEL}
-              </Button>
+              <>
+                <Button
+                  variant={billing.plan === "pro" ? "default" : "outline"}
+                  disabled={busy || !billing.premiumConfigured}
+                  onClick={() => upgrade("premium")}
+                  className={billing.plan === "pro" ? undefined : "border-brand"}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Go Premium — {PREMIUM_PRICE_LABEL}
+                </Button>
+                {billing.premiumAnnualConfigured && (
+                  <Button
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => upgrade("premium", "year")}
+                    className="border-brand"
+                  >
+                    {PREMIUM_ANNUAL_PRICE_LABEL} — {premiumAnnualFreeMonths()} months free
+                  </Button>
+                )}
+              </>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
             Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
             free): unlimited AI scans, enrichment, follow-ups and summaries, plus up to 3 cards.
-            Premium ({PREMIUM_PRICE_LABEL}): everything in Pro, plus unlimited personal cards,
-            teams, email signatures, and advanced analytics with CSV export.
+            Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
+            {premiumAnnualFreeMonths()} months free): everything in Pro, plus unlimited personal
+            cards, teams, email signatures, and advanced analytics with CSV export.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">
