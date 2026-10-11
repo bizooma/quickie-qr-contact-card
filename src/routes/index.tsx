@@ -576,7 +576,7 @@ function Landing() {
               </p>
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
-                  `Up to ${PLAN_LIMITS.pro.cards} cards — one per audience`,
+                  "Up to 3 digital cards ",
                   "Unlimited AI card scanning",
                   "Unlimited AI enrichment, follow-ups & summaries",
                   "Everything in Free",
