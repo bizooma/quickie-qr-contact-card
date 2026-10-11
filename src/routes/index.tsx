@@ -35,6 +35,7 @@ import {
   type HeadlineVariant,
 } from "@/lib/ab";
 import { logSiteEvent } from "@/lib/site-events";
+import { useRevealOnScroll } from "@/hooks/use-reveal";
 import type { CardData } from "@/lib/card-model";
 
 export const Route = createFileRoute("/")({
@@ -109,7 +110,7 @@ function Cta({
   from: string;
   ab: HeadlineVariant | null;
   size?: "lg" | "default";
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "secondary";
 }) {
   const { user } = useAuth();
   return (
@@ -129,8 +130,9 @@ function Landing() {
   const free = PLAN_LIMITS.free;
   const ab = useHeadlineVariant();
   const headline = HEADLINES[ab ?? "a"];
+  useRevealOnScroll();
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-clip">
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
         <img
           src="/brand/logo-wordmark.webp"
@@ -138,18 +140,22 @@ function Landing() {
           className="h-16 w-auto md:h-24"
         />
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
-          <a href="#how" className="hover:text-foreground">
-            How it works
-          </a>
-          <a href="#teams" className="hover:text-foreground">
-            Teams
-          </a>
-          <a href="#pricing" className="hover:text-foreground">
-            Pricing
-          </a>
-          <a href="#faq" className="hover:text-foreground">
-            FAQ
-          </a>
+          {(
+            [
+              ["#how", "How it works"],
+              ["#teams", "Teams"],
+              ["#pricing", "Pricing"],
+              ["#faq", "FAQ"],
+            ] as const
+          ).map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              className="relative transition-colors after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand after:transition-all after:duration-300 hover:text-foreground hover:after:w-full"
+            >
+              {label}
+            </a>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
           <Button asChild size="sm" variant="ghost">
@@ -166,26 +172,41 @@ function Landing() {
       </header>
 
       {/* 2 · Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-16 px-6 pb-16 pt-10 lg:grid-cols-[1.1fr_1fr]">
+      <section className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 pb-16 pt-10 lg:grid-cols-[1.1fr_1fr]">
+        {/* Soft aurora wash behind the hero — color without noise. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <div className="aurora-blob absolute -left-24 -top-16 h-80 w-80 rounded-full bg-brand-soft blur-3xl" />
+          <div className="aurora-blob absolute right-0 top-8 h-96 w-96 rounded-full bg-pop-amber-soft blur-3xl" />
+          <div className="aurora-blob absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-pop-teal-soft blur-3xl" />
+        </div>
         <div>
-          <p className="mb-4 inline-block rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-accent-foreground">
+          <p
+            data-reveal="0"
+            className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand-soft px-3.5 py-1 text-xs font-semibold text-accent-foreground"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
             Digital business cards
           </p>
-          <h1 className="text-4xl font-extrabold leading-[1.05] md:text-6xl">
+          <h1 data-reveal="1" className="text-4xl font-extrabold leading-[1.05] md:text-6xl">
             {headline.lines[0]}
-            <span className="text-brand">{headline.lines[1]}</span>
+            <span className="text-gradient-brand">{headline.lines[1]}</span>
           </h1>
-          <p className="mt-6 max-w-md text-lg text-muted-foreground">{headline.sub}</p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <p data-reveal="2" className="mt-6 max-w-md text-lg text-muted-foreground">
+            {headline.sub}
+          </p>
+          <div data-reveal="3" className="mt-8 flex flex-wrap items-center gap-4">
             <Cta label="Create your free card" from="hero" ab={ab} />
             <LiveCardDialog from={variantMeta("hero", ab)}>
               <LiveCardButton />
             </LiveCardDialog>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p data-reveal="4" className="mt-3 text-xs text-muted-foreground">
             Free plan forever · No credit card · Ready in 2 minutes
           </p>
-          <div className="mt-10 flex max-w-md flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <div
+            data-reveal="5"
+            className="mt-10 flex max-w-md flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground"
+          >
             {["No app to install", "iPhone & Android", "Edits go live instantly"].map((t) => (
               <span key={t} className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-brand" />
@@ -194,10 +215,38 @@ function Landing() {
             ))}
           </div>
         </div>
-        <div className="flex justify-center">
-          <div className="phone-frame rotate-2">
+        <div className="relative flex justify-center">
+          <div className="phone-frame phone-float rotate-2">
             <div className="h-full overflow-hidden rounded-[38px]">
               <CardView card={DEMO} headshotUrl="/demo/maya.webp" logoUrl="/demo/logo.webp" />
+            </div>
+          </div>
+          {/* The conversation, kickstarted. Decorative — screen readers skip it. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 hidden sm:block">
+            <div
+              className="chat-bubble bubble-pop absolute -left-2 top-10 max-w-[180px] lg:-left-12"
+              style={{ "--pop-delay": "0.5s" } as React.CSSProperties}
+            >
+              Great meeting you today! 👋
+            </div>
+            <div
+              className="chat-bubble-brand bubble-pop absolute -right-2 top-36 lg:-right-10"
+              style={{ "--pop-delay": "1.1s" } as React.CSSProperties}
+            >
+              Saved to contacts ✓
+            </div>
+            <div
+              className="chat-bubble bubble-pop absolute -left-1 bottom-20 lg:-left-8"
+              style={{ "--pop-delay": "1.7s" } as React.CSSProperties}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                Coffee Tuesday?
+                <span className="inline-flex items-end gap-0.5 pb-0.5">
+                  <span className="typing-dot h-1 w-1 rounded-full bg-pop-teal" />
+                  <span className="typing-dot h-1 w-1 rounded-full bg-pop-teal" />
+                  <span className="typing-dot h-1 w-1 rounded-full bg-pop-teal" />
+                </span>
+              </span>
             </div>
           </div>
         </div>
@@ -222,9 +271,11 @@ function Landing() {
               t: "Every event leaks leads",
               d: "Great conversations, a stack of cards, and no idea who was who by Monday.",
             },
-          ].map(({ i: I, t, d }) => (
-            <div key={t}>
-              <I className="mb-3 h-6 w-6 text-brand" />
+          ].map(({ i: I, t, d }, idx) => (
+            <div key={t} data-reveal={idx}>
+              <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-pop-rose-soft">
+                <I className="h-5 w-5 text-pop-rose" />
+              </span>
               <h2 className="text-base font-bold">{t}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{d}</p>
             </div>
@@ -235,6 +286,7 @@ function Landing() {
       {/* 4 · How it works */}
       <section id="how" className="mx-auto max-w-6xl scroll-mt-6 px-6 py-20">
         <h2 className="text-3xl font-extrabold md:text-4xl">How it works</h2>
+        <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
         <div className="mt-10 grid gap-10 md:grid-cols-3">
           {[
             {
@@ -252,9 +304,15 @@ function Landing() {
               t: "Their details come back to you",
               d: "A “Share yours” button on your card sends their name, email and phone to your contact list — with a notification the moment it happens.",
             },
-          ].map(({ n, t, d }) => (
-            <div key={n} className={n === "3" ? "rounded-2xl bg-brand-soft p-6 -m-6 md:m-0" : ""}>
-              <span className="font-display text-4xl font-extrabold text-brand">{n}</span>
+          ].map(({ n, t, d }, idx) => (
+            <div
+              key={n}
+              data-reveal={idx}
+              className={n === "3" ? "rounded-2xl bg-brand-soft p-6 -m-6 md:m-0" : ""}
+            >
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand),var(--pop-rose))] font-display text-xl font-extrabold text-white shadow-soft">
+                {n}
+              </span>
               <h3 className="mt-3 text-lg font-bold">{t}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{d}</p>
             </div>
@@ -272,6 +330,7 @@ function Landing() {
       <section className="border-y bg-muted/40">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-3xl font-extrabold md:text-4xl">More than a card — a workflow</h2>
+          <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-teal),var(--brand))]" />
           <div className="mt-10 grid gap-8 sm:grid-cols-2">
             {[
               {
@@ -294,13 +353,26 @@ function Landing() {
                 t: "Know the moment they share back",
                 d: "Push notifications on your phone, plus webhooks into Make, Zapier or your CRM when a new contact arrives.",
               },
-            ].map(({ i: I, t, d }) => (
-              <div key={t} className="surface p-6">
-                <I className="mb-3 h-6 w-6 text-brand" />
-                <h3 className="text-lg font-bold">{t}</h3>
-                <p className="mt-1.5 text-sm text-muted-foreground">{d}</p>
-              </div>
-            ))}
+            ].map(({ i: I, t, d }, idx) => {
+              const tones = [
+                ["bg-brand-soft", "text-brand"],
+                ["bg-pop-amber-soft", "text-pop-amber"],
+                ["bg-pop-teal-soft", "text-pop-teal"],
+                ["bg-pop-rose-soft", "text-pop-rose"],
+              ] as const;
+              const [chip, icon] = tones[idx % tones.length]!;
+              return (
+                <div key={t} data-reveal={idx} className="surface card-lift p-6">
+                  <span
+                    className={`mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl ${chip}`}
+                  >
+                    <I className={`h-5 w-5 ${icon}`} />
+                  </span>
+                  <h3 className="text-lg font-bold">{t}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{d}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -308,6 +380,7 @@ function Landing() {
       {/* 6 · Who it's for */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="text-3xl font-extrabold md:text-4xl">Built for people who meet people</h2>
+        <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-amber),var(--pop-rose))]" />
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {(
             [
@@ -324,14 +397,23 @@ function Landing() {
                 null,
               ],
             ] as const
-          ).map(([t, d, slug]) =>
-            slug ? (
+          ).map(([t, d, slug], idx) => {
+            const bars = ["var(--brand)", "var(--pop-teal)", "var(--pop-amber)", "var(--pop-rose)"];
+            const bar = (
+              <span
+                className="mb-3 block h-1 w-9 rounded-full"
+                style={{ background: bars[idx % bars.length] }}
+              />
+            );
+            return slug ? (
               <Link
                 key={t}
                 to="/for/$audience"
                 params={{ audience: slug }}
-                className="surface group block p-5 transition-colors hover:border-brand"
+                data-reveal={idx}
+                className="surface card-lift group block p-5 hover:border-brand"
               >
+                {bar}
                 <h3 className="text-base font-bold">{t}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{d}</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand">
@@ -340,49 +422,65 @@ function Landing() {
                 </span>
               </Link>
             ) : (
-              <div key={t} className="p-5">
+              <div key={t} data-reveal={idx} className="p-5">
+                {bar}
                 <h3 className="text-base font-bold">{t}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{d}</p>
               </div>
-            ),
-          )}
+            );
+          })}
         </div>
       </section>
 
-      {/* 7 · Teams */}
-      <section id="teams" className="border-y bg-muted/40">
-        <div className="mx-auto max-w-6xl scroll-mt-6 px-6 py-20">
-          <div className="max-w-2xl">
+      {/* 7 · Teams — a deep-ink panel for contrast */}
+      <section id="teams" className="mx-auto max-w-6xl scroll-mt-6 px-6 py-10">
+        <div
+          data-reveal="0"
+          className="relative overflow-hidden rounded-[2rem] bg-ink px-6 py-14 text-white shadow-float md:px-12"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="aurora-blob absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand/25 blur-3xl" />
+            <div className="aurora-blob absolute -bottom-24 left-1/4 h-64 w-64 rounded-full bg-pop-teal/20 blur-3xl" />
+          </div>
+          <div className="relative max-w-2xl">
             <h2 className="text-3xl font-extrabold md:text-4xl">Put your whole team on-brand</h2>
-            <p className="mt-4 text-muted-foreground">
+            <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
+            <p className="mt-4 text-white/70">
               Invite your team with a link, provision branded cards for every member, and lock your
               colors and logo so no card drifts off-brand. Opt in to shared contacts and see
               team-wide analytics in one place.
             </p>
           </div>
-          <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          <div className="relative mt-8 grid gap-6 sm:grid-cols-3">
             {[
-              { i: Palette, t: "Brand lock", d: "Your colors and logo on every card, enforced." },
+              {
+                i: Palette,
+                t: "Brand lock",
+                d: "Your colors and logo on every card, enforced.",
+                c: "text-pop-amber",
+              },
               {
                 i: Users,
                 t: "Shared contacts",
                 d: "Every captured lead visible to the team — if you turn it on.",
+                c: "text-pop-teal",
               },
               {
                 i: Building2,
                 t: "Team analytics",
                 d: "Views, saves and share-backs across all team cards.",
+                c: "text-brand",
               },
-            ].map(({ i: I, t, d }) => (
-              <div key={t} className="surface p-5">
-                <I className="mb-2 h-5 w-5 text-brand" />
+            ].map(({ i: I, t, d, c }) => (
+              <div key={t} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <I className={`mb-2 h-5 w-5 ${c}`} />
                 <h3 className="text-sm font-bold">{t}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+                <p className="mt-1 text-sm text-white/60">{d}</p>
               </div>
             ))}
           </div>
-          <div className="mt-8">
-            <Cta label="Set up your team" from="teams" ab={ab} />
+          <div className="relative mt-8">
+            <Cta label="Set up your team" from="teams" ab={ab} variant="secondary" />
           </div>
         </div>
       </section>
@@ -412,14 +510,23 @@ function Landing() {
               </button>
             </LiveCardDialog>
           </div>
-          <div className="surface p-6">
-            <p className="text-sm leading-relaxed text-muted-foreground">
+          <div data-reveal="1" className="surface card-lift relative p-7">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -top-4 left-5 font-serif text-7xl leading-none text-brand/25"
+            >
+              “
+            </span>
+            <p className="relative font-serif text-lg italic leading-relaxed text-foreground/85">
               “We built ContactKickstart after one conference too many: a pocket full of other
               people's cards, no idea who half of them were, and no clue what happened to the
               hundred cards we'd handed out. A card should work in both directions — share who you
               are, and keep who you meet. That's the whole product.”
             </p>
-            <p className="mt-3 text-sm font-semibold">— the ContactKickstart team</p>
+            <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
+              <span className="h-1 w-6 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
+              — the ContactKickstart team
+            </p>
           </div>
         </div>
       </section>
@@ -428,12 +535,13 @@ function Landing() {
       <section id="pricing" className="border-y bg-muted/40">
         <div className="mx-auto max-w-6xl scroll-mt-6 px-6 py-20">
           <h2 className="text-3xl font-extrabold md:text-4xl">Simple pricing</h2>
+          <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-rose))]" />
           <p className="mt-3 max-w-2xl text-muted-foreground">
             A box of 500 paper cards runs $20–40, gets thrown away, and tells you nothing. Start
             free; upgrade when it pays for itself.
           </p>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            <div className="surface p-7">
+            <div data-reveal="0" className="surface card-lift p-7">
               <h3 className="text-lg font-bold">Free</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">$0</p>
               <p className="text-xs text-muted-foreground">forever</p>
@@ -455,7 +563,10 @@ function Landing() {
                 <Cta label="Start free" from="pricing-free" ab={ab} size="default" />
               </div>
             </div>
-            <div className="surface border-2 border-brand p-7">
+            <div data-reveal="1" className="surface card-lift relative border-2 border-brand p-7">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-rose))] px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-soft">
+                Most popular
+              </span>
               <h3 className="text-lg font-bold">Pro</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">{PRO_PRICE_LABEL}</p>
               <p className="text-xs text-muted-foreground">
@@ -480,7 +591,7 @@ function Landing() {
                 <Cta label="Start free, upgrade in-app" from="pricing-pro" ab={ab} size="default" />
               </div>
             </div>
-            <div className="surface p-7">
+            <div data-reveal="2" className="surface card-lift border border-pop-amber/60 p-7">
               <h3 className="text-lg font-bold">Premium</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">{PREMIUM_PRICE_LABEL}</p>
               <p className="text-xs text-muted-foreground">cancel anytime</p>
@@ -514,6 +625,7 @@ function Landing() {
       {/* 10 · FAQ */}
       <section id="faq" className="mx-auto max-w-3xl scroll-mt-6 px-6 py-20">
         <h2 className="text-3xl font-extrabold md:text-4xl">Questions, answered</h2>
+        <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-teal),var(--pop-amber))]" />
         <div className="mt-8 space-y-3">
           {[
             [
@@ -541,7 +653,10 @@ function Landing() {
               "Yes. Premium includes teams: invite members with a link, provision branded cards for each of them, lock your brand colors, and see shared contacts and team analytics in one view.",
             ],
           ].map(([q, a]) => (
-            <details key={q} className="surface group px-5 py-4">
+            <details
+              key={q}
+              className="surface group px-5 py-4 transition-colors hover:border-brand/40"
+            >
               <summary className="cursor-pointer list-none text-sm font-bold marker:content-none">
                 {q}
               </summary>
@@ -552,8 +667,16 @@ function Landing() {
       </section>
 
       {/* 11 · Final CTA + footer */}
-      <section className="bg-brand">
-        <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+      <section className="relative overflow-hidden bg-[linear-gradient(130deg,oklch(0.64_0.21_35),oklch(0.5_0.2_18))]">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-16 top-6 h-48 w-48 rounded-full border border-white/15" />
+          <div className="absolute -right-10 bottom-0 h-64 w-64 rounded-full border border-white/10" />
+          <QrCode className="absolute right-[12%] top-8 h-10 w-10 text-white/15" />
+          <div className="absolute left-[10%] bottom-10 rounded-2xl rounded-bl-sm border border-white/20 px-4 py-2 text-xs font-semibold text-white/40">
+            Great meeting you! 👋
+          </div>
+        </div>
+        <div className="relative mx-auto max-w-6xl px-6 py-16 text-center">
           <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-white md:text-4xl">
             The next person you meet should never have to type your name.
           </h2>
