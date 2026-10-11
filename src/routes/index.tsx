@@ -549,7 +549,7 @@ function Landing() {
                 {[
                   "1 digital card with QR code & your own link",
                   "Share-back contact capture, unlimited",
-                  `${free.scan} AI card scans / month`,
+                  "10 Card scans / month",
                   "Views, saves & click analytics",
                   "Push & webhook notifications",
                 ].map((t) => (
@@ -577,7 +577,7 @@ function Landing() {
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
                   "Up to 3 digital cards ",
-                  "Unlimited AI card scanning",
+                  "Unlimited  card scanning",
                   "Unlimited AI enrichment, follow-ups & summaries",
                   "Everything in Free",
                 ].map((t) => (
