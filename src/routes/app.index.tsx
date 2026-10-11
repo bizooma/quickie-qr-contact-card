@@ -38,7 +38,7 @@ function CardsPage() {
   return (
     <div>
       <div className="mb-8 flex items-end justify-between">
-        <div><h1 className="text-3xl font-bold">Your cards</h1><p className="mt-1 text-sm text-muted-foreground">{"Tap a card to edit.\nChanges go live instantly."}</p></div>
+        <div><h1 className="text-3xl font-bold">Your cards</h1><p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{"Tap a card to edit.\nChanges go live instantly."}</p></div>
         <Button onClick={() => setNewOpen(true)}><Plus className="h-4 w-4" />New card</Button>
       </div>
       {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : (
