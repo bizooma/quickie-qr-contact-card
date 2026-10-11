@@ -339,7 +339,7 @@ function Landing() {
       {/* 5 · Beyond the card */}
       <section className="border-y bg-muted/40">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="text-3xl font-extrabold md:text-4xl">More than a card — a workflow</h2>
+          <h2 className="text-3xl font-extrabold md:text-4xl">More than a card, it's a workflow</h2>
           <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-teal),var(--brand))]" />
           <div className="mt-10 grid gap-8 sm:grid-cols-2">
             {[
