@@ -19,7 +19,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { CardView } from "@/components/card/CardView";
 import { useAuth } from "@/hooks/use-auth";
-import { PLAN_LIMITS, PRO_PRICE_LABEL } from "@/lib/plans";
+import {
+  annualFreeMonths,
+  PLAN_LIMITS,
+  PRO_ANNUAL_PRICE_LABEL,
+  PRO_PRICE_LABEL,
+} from "@/lib/plans";
 import {
   AB_STORAGE_KEY,
   HEADLINES,
@@ -429,7 +434,11 @@ function Landing() {
             <div className="surface border-2 border-brand p-7">
               <h3 className="text-lg font-bold">Pro</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">{PRO_PRICE_LABEL}</p>
-              <p className="text-xs text-muted-foreground">cancel anytime</p>
+              <p className="text-xs text-muted-foreground">
+                or {PRO_ANNUAL_PRICE_LABEL} —{" "}
+                <span className="font-semibold text-brand">{annualFreeMonths()} months free</span>
+                {" · cancel anytime"}
+              </p>
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
                   `Up to ${PLAN_LIMITS.pro.cards} cards — one per audience`,

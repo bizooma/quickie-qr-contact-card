@@ -9,6 +9,7 @@ export function stripeEnv() {
   return {
     secretKey: process.env["STRIPE_SECRET_KEY"] ?? "",
     priceId: process.env["STRIPE_PRICE_ID"] ?? "",
+    annualPriceId: process.env["STRIPE_PRICE_ID_ANNUAL"] ?? "",
     webhookSecret: process.env["STRIPE_WEBHOOK_SECRET"] ?? "",
   };
 }
