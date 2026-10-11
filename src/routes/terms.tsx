@@ -13,12 +13,30 @@ export const Route = createFileRoute("/terms")({
 
 function Terms() {
   return (
-    <LegalPage title="Terms of Service" updated="October 10, 2026">
+    <LegalPage title="Terms of Service" updated="October 11, 2026">
       <h2>The service</h2>
       <p>
         ContactKickstart lets you create digital business cards, share them, and manage the contacts
-        you collect. The free plan is free; paid plans (Pro and Premium) are billed monthly or
-        annually and can be cancelled anytime, taking effect at the end of the billing period.
+        you collect. The free plan is free; paid plans (Pro and Premium) are subscriptions billed
+        monthly or annually.
+      </p>
+      <h2>Billing, renewal & cancellation</h2>
+      <p>
+        All paid subscriptions renew automatically — monthly plans each month, annual plans each
+        year — until you cancel. You can cancel anytime from Settings → Manage billing.
+      </p>
+      <p>
+        Cancelling stops the next renewal; it does not end your current term. You keep full access
+        to everything you paid for until the end of the current billing period (the month, or the
+        year, you've already paid), and you are not charged again after that. Payments already made
+        are non-refundable: cancelling an annual plan mid-year does not refund the remainder of the
+        year — you simply keep the service through the end of that year and it doesn't renew.
+      </p>
+      <p>
+        Founding offers purchased outside the app (the Founding Lifetime and Founding Year passes)
+        are one-time payments, never auto-renew, and carry the money-back guarantee stated where
+        they are sold. A Founding Year pass simply ends 12 months after purchase unless you choose
+        to continue on a subscription.
       </p>
       <h2>Your content</h2>
       <p>

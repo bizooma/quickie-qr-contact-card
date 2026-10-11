@@ -122,6 +122,10 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         "Everything in Pro, plus unlimited personal cards, Teams, the email signature builder, and advanced analytics with contact CSV export.",
       ],
       [
+        "Auto-renewal & cancelling",
+        "Paid plans renew automatically (monthly plans each month, annual plans each year). Cancel anytime from Settings → Manage billing: you keep full access to the end of the period you've paid for, then the plan simply doesn't renew. Annual plans aren't refunded mid-term.",
+      ],
+      [
         "Founding offers (lifetime & year)",
         "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically — lifetime deals never expire, year passes run 12 months from purchase.",
       ],
