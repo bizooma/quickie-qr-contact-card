@@ -22,6 +22,7 @@ function CardsPage() {
   const [qrCard, setQrCard] = useState<CardRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [label, setLabel] = useState("");
+  const [creating, setCreating] = useState(false);
 
   // Signed URLs for each card's headshot and logo (private bucket).
   const mediaPaths = useMemo(
@@ -41,7 +42,8 @@ function CardsPage() {
 
   async function addCard(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !label.trim()) return;
+    if (!user || !label.trim() || creating) return;
+    setCreating(true);
     try {
       const first = cards?.[0];
       const c = await createCard(user.id, {
@@ -53,6 +55,8 @@ function CardsPage() {
       navigate({ to: "/app/cards/$id", params: { id: c.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create card");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -158,7 +162,7 @@ function CardsPage() {
               onChange={(e) => setLabel(e.target.value)}
               maxLength={40}
             />
-            <Button type="submit" className="w-full" disabled={!label.trim()}>
+            <Button type="submit" className="w-full" disabled={!label.trim() || creating}>
               Create card
             </Button>
           </form>

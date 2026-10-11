@@ -32,7 +32,9 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { if (user) navigate({ to: "/app" }); }, [user, navigate]);
+  useEffect(() => {
+    if (user) navigate({ to: "/app" });
+  }, [user, navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,8 +70,13 @@ function AuthPage() {
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    if (busy) return;
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
     if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
+    setBusy(false);
   }
 
   async function forgotPassword() {
