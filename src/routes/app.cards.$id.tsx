@@ -192,12 +192,27 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-3">
-        <Link to="/app" className="rounded-full p-2 hover:bg-muted" aria-label="Back">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-bold">{card.label}</h1>
+      <div className="mb-6 space-y-2">
+        {/* Row 1: back · centered card title · open-live-card. The two edge
+            controls keep the title visually centered on phones. */}
+        <div className="flex items-center gap-2">
+          <Link to="/app" className="shrink-0 rounded-full p-2 hover:bg-muted" aria-label="Back">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="min-w-0 flex-1 truncate text-center text-2xl font-bold">{card.label}</h1>
+          <Button size="sm" variant="ghost" asChild className="shrink-0">
+            <a
+              href={`/c/${card.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open live card"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+        {/* Row 2: save status + actions, wrapping as one centered line. */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
           <p className="text-xs text-muted-foreground">
             {save === "saving" ? (
               "Unsaved changes"
@@ -212,40 +227,37 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
               "Changes save automatically"
             )}
           </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => {
+                setSave("saving");
+                persist(card);
+              }}
+              disabled={save === "saved" || save === "idle"}
+            >
+              {save === "saving" ? (
+                "Save now"
+              ) : save === "error" ? (
+                "Retry save"
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Saved
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="lg:hidden"
+              onClick={() => setShowPreview(true)}
+            >
+              <Eye className="h-4 w-4" />
+              Preview
+            </Button>
+          </div>
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setSave("saving");
-            persist(card);
-          }}
-          disabled={save === "saved" || save === "idle"}
-        >
-          {save === "saving" ? (
-            "Save now"
-          ) : save === "error" ? (
-            "Retry save"
-          ) : (
-            <>
-              <Check className="h-4 w-4" />
-              Saved
-            </>
-          )}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="lg:hidden"
-          onClick={() => setShowPreview(true)}
-        >
-          <Eye className="h-4 w-4" />
-          Preview
-        </Button>
-        <Button size="sm" variant="ghost" asChild>
-          <a href={`/c/${card.slug}`} target="_blank" rel="noreferrer">
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </Button>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_360px]">

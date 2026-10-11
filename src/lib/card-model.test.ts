@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildContactVCard,
   buildVCard,
+  companyDomain,
+  companyLogoUrl,
   contactsToCsv,
   contactsToVcf,
   guessIcon,
@@ -102,5 +104,28 @@ describe("slugs and icons", () => {
   it("detects social icons from URLs", () => {
     expect(guessIcon("https://x.com/kale")).toBe("x");
     expect(guessIcon("https://calendly.com/kale")).toBe("calendar");
+  });
+});
+
+describe("companyDomain", () => {
+  it("prefers the website and strips www", () => {
+    expect(companyDomain({ website: "www.Northwind.com", email: "t@gmail.com" })).toBe(
+      "northwind.com",
+    );
+    expect(companyDomain({ website: "https://app.acme.io/about" })).toBe("app.acme.io");
+  });
+  it("falls back to a work email domain", () => {
+    expect(companyDomain({ email: "kale@belayreports.com" })).toBe("belayreports.com");
+  });
+  it("ignores personal-mail domains and garbage", () => {
+    expect(companyDomain({ email: "someone@gmail.com" })).toBeNull();
+    expect(companyDomain({ email: "someone@icloud.com" })).toBeNull();
+    expect(companyDomain({ email: "not-an-email" })).toBeNull();
+    expect(companyDomain({})).toBeNull();
+  });
+  it("builds a favicon url for the domain", () => {
+    expect(companyLogoUrl("belayreports.com")).toBe(
+      "https://www.google.com/s2/favicons?domain=belayreports.com&sz=128",
+    );
   });
 });
