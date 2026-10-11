@@ -513,24 +513,78 @@ function Landing() {
           </p>
         </div>
       </section>
-      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-2">
+      <footer className="border-t">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 sm:grid-cols-3">
+          <div className="text-sm text-muted-foreground">
+            <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-14 w-auto" />
+            <p className="mt-3 max-w-xs">
+              Digital business cards that capture every contact you meet.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold">Product</h3>
+            <ul className="mt-3 space-y-2.5 text-sm text-muted-foreground">
+              <li>
+                <a href="#how" className="hover:text-foreground">
+                  How it works
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" className="hover:text-foreground">
+                  Pricing
+                </a>
+              </li>
+              <li>
+                <Link to="/help" className="hover:text-foreground">
+                  Help
+                </Link>
+              </li>
+              <li>
+                <a href="#faq" className="hover:text-foreground">
+                  FAQ
+                </a>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-foreground">
+                  Privacy policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-foreground">
+                  Terms of service
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold">Get started</h3>
+            <ul className="mt-3 space-y-2.5 text-sm text-muted-foreground">
+              <li>
+                <Link to="/auth" className="hover:text-foreground">
+                  Create your free card
+                </Link>
+              </li>
+              <li>
+                <a href={DEMO_CARD_PATH} className="hover:text-foreground">
+                  See a live card
+                </a>
+              </li>
+              <li>
+                <Link to="/auth" className="hover:text-foreground">
+                  Sign in
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:support@myaisummit.dev" className="hover:text-foreground">
+                  Contact support
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="mx-auto flex max-w-6xl items-center gap-2 border-t px-6 py-5 text-xs text-muted-foreground">
           <QrCode className="h-4 w-4" />© {new Date().getFullYear()} ContactKickstart
-        </span>
-        <nav className="flex flex-wrap gap-5">
-          <Link to="/privacy" className="hover:text-foreground">
-            Privacy
-          </Link>
-          <Link to="/terms" className="hover:text-foreground">
-            Terms
-          </Link>
-          <a href="mailto:support@myaisummit.dev" className="hover:text-foreground">
-            Contact
-          </a>
-          <Link to="/auth" className="hover:text-foreground">
-            Sign in
-          </Link>
-        </nav>
+        </div>
       </footer>
     </div>
   );
