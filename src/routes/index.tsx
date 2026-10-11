@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardView } from "@/components/card/CardView";
+import { DEMO_CARD_PATH, LiveCardButton, LiveCardDialog } from "@/components/LiveCardDialog";
 import { useAuth } from "@/hooks/use-auth";
 import {
   annualFreeMonths,
@@ -78,8 +79,6 @@ const DEMO: CardData = {
     { label: "Book a call", url: "x", icon: "calendar" },
   ],
 };
-
-const DEMO_CARD_PATH = "/c/tamzyn";
 
 /** Sticky 50/50 headline assignment. SSR and first paint render variant A;
  *  the stored (or freshly drawn) variant applies after hydration. */
@@ -178,13 +177,9 @@ function Landing() {
           <p className="mt-6 max-w-md text-lg text-muted-foreground">{headline.sub}</p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Cta label="Create your free card" from="hero" ab={ab} />
-            <a
-              href={DEMO_CARD_PATH}
-              onClick={() => logSiteEvent("demo_click", variantMeta("hero", ab))}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
-            >
-              See a live card <ExternalLink className="h-4 w-4" />
-            </a>
+            <LiveCardDialog from={variantMeta("hero", ab)}>
+              <LiveCardButton />
+            </LiveCardDialog>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             Free plan forever · No credit card · Ready in 2 minutes
@@ -313,20 +308,43 @@ function Landing() {
       <section className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="text-3xl font-extrabold md:text-4xl">Built for people who meet people</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ["Sales teams", "Every rep on-brand, every lead captured to one pipeline."],
-            ["Realtors", "Your card on every yard sign and open-house table."],
-            ["Recruiters", "Candidates share their details back before they leave the booth."],
+          {(
             [
-              "Founders & freelancers",
-              "Look established from day one — and never reprint a title change.",
-            ],
-          ].map(([t, d]) => (
-            <div key={t}>
-              <h3 className="text-base font-bold">{t}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-            </div>
-          ))}
+              ["Sales teams", "Every rep on-brand, every lead captured to one pipeline.", "teams"],
+              ["Realtors", "Your card on every yard sign and open-house table.", "realtors"],
+              [
+                "Recruiters",
+                "Candidates share their details back before they leave the booth.",
+                "recruiters",
+              ],
+              [
+                "Founders & freelancers",
+                "Look established from day one — and never reprint a title change.",
+                null,
+              ],
+            ] as const
+          ).map(([t, d, slug]) =>
+            slug ? (
+              <Link
+                key={t}
+                to="/for/$audience"
+                params={{ audience: slug }}
+                className="surface group block p-5 transition-colors hover:border-brand"
+              >
+                <h3 className="text-base font-bold">{t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand">
+                  Learn more{" "}
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            ) : (
+              <div key={t} className="p-5">
+                <h3 className="text-base font-bold">{t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+              </div>
+            ),
+          )}
         </div>
       </section>
 
@@ -380,13 +398,18 @@ function Landing() {
               live right now: save it to your phone, tap the links, try the “Share yours” button.
               Everything you see is what the people you meet will see.
             </p>
-            <a
-              href={DEMO_CARD_PATH}
-              onClick={() => logSiteEvent("demo_click", variantMeta("proof", ab))}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-            >
-              Open Tamzyn's live card <ExternalLink className="h-4 w-4" />
-            </a>
+            <LiveCardDialog from={variantMeta("proof", ab)}>
+              <button
+                type="button"
+                className="mt-6 inline-flex items-center gap-2.5 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.03]"
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75 motion-reduce:animate-none" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+                </span>
+                Open Tamzyn's live card
+              </button>
+            </LiveCardDialog>
           </div>
           <div className="surface p-6">
             <p className="text-sm leading-relaxed text-muted-foreground">
