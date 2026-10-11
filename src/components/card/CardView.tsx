@@ -25,6 +25,9 @@ export function CardView({
   const muted = fg === "#FFFFFF" ? "rgba(255,255,255,0.65)" : "rgba(17,17,17,0.6)";
   const tile = fg === "#FFFFFF" ? "rgba(255,255,255,0.08)" : "rgba(17,17,17,0.04)";
   const t = card.template;
+  // Cards without an uploaded logo carry the ContactKickstart badge until
+  // the owner replaces it in the editor.
+  const logo = logoUrl || "/brand/logo-badge.webp";
 
   const avatar = (size: number, ring = false) => (
     <div
@@ -117,13 +120,11 @@ export function CardView({
     >
       {t === "banner" && (
         <div className="relative h-36" style={{ background: accent }}>
-          {logoUrl && (
-            <img
-              src={logoUrl}
-              alt=""
-              className="absolute right-4 top-4 h-9 max-w-[96px] rounded-md object-contain"
-            />
-          )}
+          <img
+            src={logo}
+            alt=""
+            className="absolute right-4 top-4 h-9 max-w-[96px] rounded-md object-contain"
+          />
         </div>
       )}
       <div className="mx-auto max-w-md px-6 pb-10">
@@ -136,7 +137,7 @@ export function CardView({
           <div className="flex flex-col gap-5 pt-10">
             <div className="flex items-center justify-between">
               {avatar(72)}
-              {logoUrl && <img src={logoUrl} alt="" className="h-9 max-w-[110px] object-contain" />}
+              <img src={logo} alt="" className="h-9 max-w-[110px] object-contain" />
             </div>
             <div className="h-1 w-10 rounded-full" style={{ background: accent }} />
             {header}
@@ -145,7 +146,7 @@ export function CardView({
           <div className="flex flex-col items-center gap-4 pt-10">
             {avatar(112)}
             {header}
-            {logoUrl && <img src={logoUrl} alt="" className="h-8 max-w-[120px] object-contain" />}
+            <img src={logo} alt="" className="h-8 max-w-[120px] object-contain" />
           </div>
         )}
 

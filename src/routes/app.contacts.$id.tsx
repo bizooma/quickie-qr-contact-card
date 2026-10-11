@@ -105,6 +105,7 @@ function ContactDetail() {
   const [drafting, setDrafting] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
+  const [logoError, setLogoError] = useState(false);
   const [enrichSummary, setEnrichSummary] = useState("");
 
   useEffect(() => {
@@ -329,8 +330,13 @@ function ContactDetail() {
 
   const cardLabel = (c as { cards?: { label: string } | null }).cards?.label;
   // Their company's logo, derived from the scanned card's website or work
-  // email — no upload needed, it just appears on the banner.
+  // email — no upload needed, it becomes the banner. Contacts without a
+  // company domain (manual entries, share-backs from personal emails) get
+  // the ContactKickstart badge until an edit or enrichment adds one.
   const logoDomain = companyDomain({ website: c.website, email: c.email });
+  const hasCompanyLogo = !!logoDomain && !logoError;
+  const bannerLogo = hasCompanyLogo ? companyLogoUrl(logoDomain, 256) : "/brand/logo-badge.webp";
+  const bannerAlt = hasCompanyLogo ? `${c.company || logoDomain} logo` : "ContactKickstart logo";
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -342,20 +348,24 @@ function ContactDetail() {
         Contacts
       </Link>
       <div className="mb-8 overflow-hidden rounded-3xl border bg-card">
-        <div className="relative h-24 bg-brand md:h-28">
-          {logoDomain && (
-            <span className="absolute right-4 top-1/2 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl bg-white/95 shadow-md">
-              <img
-                src={companyLogoUrl(logoDomain)}
-                alt={`${c.company || logoDomain} logo`}
-                className="h-9 w-9 rounded object-contain"
-                loading="lazy"
-                onError={(e) => {
-                  (e.currentTarget.parentElement as HTMLElement).style.display = "none";
-                }}
-              />
-            </span>
-          )}
+        <div className="relative h-24 overflow-hidden bg-brand md:h-28">
+          <img
+            src={bannerLogo}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full scale-150 object-cover opacity-25 blur-2xl"
+            loading="lazy"
+          />
+          <span className="absolute right-4 top-1/2 flex h-16 w-16 -translate-y-1/2 items-center justify-center rounded-2xl bg-white/95 shadow-md">
+            <img
+              key={bannerLogo}
+              src={bannerLogo}
+              alt={bannerAlt}
+              className="h-11 w-11 rounded object-contain"
+              loading="lazy"
+              onError={() => setLogoError(true)}
+            />
+          </span>
         </div>
         <div className="-mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
           {photoUrl ? (
