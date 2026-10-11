@@ -65,38 +65,53 @@ export const Route = createFileRoute("/api/stripe-webhook")({
           event.type === "customer.subscription.updated" ||
           event.type === "customer.subscription.deleted"
         ) {
+          // Match on the subscription id, not the customer: a late or retried
+          // event for an old subscription must not clobber a newer one the
+          // customer has since bought.
           const sub = event.data.object;
-          const customer = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
-          if (customer) {
-            const active =
-              event.type !== "customer.subscription.deleted" &&
-              (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due");
-            if (active) {
+          const active =
+            event.type !== "customer.subscription.deleted" &&
+            (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due");
+          if (active) {
+            // The live price decides the tier — a portal price switch changes
+            // the price but keeps the checkout-time metadata forever.
+            const env = stripeEnv();
+            const item = sub.items?.data?.[0];
+            const priceId = item?.price?.id;
+            const pricePlan =
+              priceId === env.teamPriceId || priceId === env.teamAnnualPriceId
+                ? "team"
+                : priceId === env.premiumPriceId || priceId === env.premiumAnnualPriceId
+                  ? "premium"
+                  : priceId === env.priceId || priceId === env.annualPriceId
+                    ? "pro"
+                    : null;
+            const ckPlan = pricePlan ?? sub.metadata?.["ck_plan"] ?? "pro";
+            await supabaseAdmin
+              .from("profiles")
+              .update({
+                plan: ckPlan === "premium" || ckPlan === "team" ? "premium" : "pro",
+                plan_expires_at: null,
+                // Seat changes (portal quantity updates) land here.
+                team_seats:
+                  ckPlan === "team" && item?.quantity && item.quantity > 0 ? item.quantity : 0,
+              })
+              .eq("stripe_subscription_id", sub.id);
+          } else {
+            // Fall back to whatever lifetime/year purchase entitlements the
+            // user still holds instead of a hard downgrade to free. Skip
+            // silently when the sub id no longer matches (stale event).
+            const { data: profile } = await supabaseAdmin
+              .from("profiles")
+              .select("id")
+              .eq("stripe_subscription_id", sub.id)
+              .maybeSingle();
+            if (profile?.id) {
               await supabaseAdmin
                 .from("profiles")
-                .update({
-                  plan: tierOf(sub.metadata),
-                  plan_expires_at: null,
-                  // Seat changes (portal quantity updates) land here.
-                  team_seats: seatsOf(sub.metadata, sub.items?.data?.[0]?.quantity ?? null),
-                  stripe_subscription_id: sub.id,
-                })
-                .eq("stripe_customer_id", customer);
-            } else {
-              // Fall back to whatever lifetime/year purchase entitlements the
-              // user still holds instead of a hard downgrade to free.
-              const { data: profile } = await supabaseAdmin
-                .from("profiles")
-                .select("id")
-                .eq("stripe_customer_id", customer)
-                .maybeSingle();
-              if (profile?.id) {
-                await supabaseAdmin
-                  .from("profiles")
-                  .update({ stripe_subscription_id: null, team_seats: 0 })
-                  .eq("id", profile.id);
-                await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id });
-              }
+                .update({ stripe_subscription_id: null, team_seats: 0 })
+                .eq("id", profile.id);
+              await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id });
             }
           }
         }

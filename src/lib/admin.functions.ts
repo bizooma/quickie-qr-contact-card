@@ -69,7 +69,8 @@ export const setUserPlan = createServerFn({ method: "POST" })
     const admin = await assertPlatformAdmin(context.userId);
     const { error } = await admin
       .from("profiles")
-      .update({ plan: data.plan })
+      // Clear any old expiry, or a lapsed date would override the new plan.
+      .update({ plan: data.plan, plan_expires_at: null })
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };

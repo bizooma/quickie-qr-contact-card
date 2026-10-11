@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { monthlyLimit, normalizePlan, USAGE_KINDS, type PlanId, type UsageKind } from "./plans";
+import { effectivePlan, monthlyLimit, USAGE_KINDS, type PlanId, type UsageKind } from "./plans";
 
 // Billing server functions. SDK and admin imports stay inside handlers —
 // this file ships to the client bundle.
@@ -93,10 +93,11 @@ export const createCheckout = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("plan, stripe_customer_id, stripe_subscription_id")
+      .select("plan, plan_expires_at, stripe_customer_id, stripe_subscription_id")
       .eq("id", context.userId)
       .maybeSingle();
-    const current = normalizePlan(profile?.plan);
+    // Effective plan, so a lapsed dated entitlement doesn't block re-buying.
+    const current = effectivePlan(profile?.plan, profile?.plan_expires_at);
     if (data.plan !== "team" && current === "premium")
       throw new Error("You're already on Premium.");
     if (data.plan === "pro" && current === "pro") throw new Error("You're already on Pro.");

@@ -84,7 +84,11 @@ function ContactDetail() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { data, refetch } = useQuery({ queryKey: ["contact", id], queryFn: () => loadContact(id) });
+  const {
+    data,
+    refetch,
+    isError: loadFailed,
+  } = useQuery({ queryKey: ["contact", id], queryFn: () => loadContact(id) });
   const photoPath = data?.contact?.photo_path ?? null;
   const { data: photoUrl } = useQuery({
     queryKey: ["contact-photo", photoPath],
@@ -137,6 +141,15 @@ function ContactDetail() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [form, data?.contact]);
 
+  if (loadFailed && !data)
+    return (
+      <p className="text-sm text-muted-foreground">
+        Couldn’t load this contact.{" "}
+        <button type="button" onClick={() => refetch()} className="underline">
+          Try again
+        </button>
+      </p>
+    );
   if (!data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   const c = data.contact;
   if (!c)

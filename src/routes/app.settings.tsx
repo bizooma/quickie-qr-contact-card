@@ -200,7 +200,11 @@ function ThemePicker() {
 function PlanSection() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
+  const {
+    data: billing,
+    isError: billingFailed,
+    refetch: refetchBilling,
+  } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
   const [seats, setSeats] = useState(TEAM_MIN_SEATS);
 
   // Back from Stripe Checkout: thank the user and refetch until the webhook
@@ -249,6 +253,18 @@ function PlanSection() {
     }
   }
 
+  if (billingFailed && !billing)
+    return (
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Plan & usage</h2>
+        <p className="text-sm text-muted-foreground">
+          Couldn’t load your plan.{" "}
+          <button type="button" onClick={() => refetchBilling()} className="underline">
+            Try again
+          </button>
+        </p>
+      </section>
+    );
   if (!billing) return null;
   const paid = billing.plan !== "free";
   return (
