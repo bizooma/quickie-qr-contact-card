@@ -6,6 +6,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { listCards } from "@/lib/cards-api";
+import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
 
 export const Route = createFileRoute("/app/analytics")({ component: Analytics });
 
@@ -23,6 +24,7 @@ async function loadEvents(days: number) {
 function Analytics() {
   const [days, setDays] = useState(30);
   const [cardId, setCardId] = useState("all");
+  const { isPremium } = usePlan();
   const { data: cards = [] } = useQuery({ queryKey: ["cards"], queryFn: listCards });
   const { data: events = [] } = useQuery({
     queryKey: ["events", days],
@@ -128,14 +130,18 @@ function Analytics() {
             <p className="mt-1 font-display text-3xl font-bold">{totals[t.k] ?? 0}</p>
           </div>
         ))}
-        <div className="surface p-4">
-          <p className="text-xs font-medium text-muted-foreground">Unique visitors</p>
-          <p className="mt-1 font-display text-3xl font-bold">{depth.unique}</p>
-        </div>
-        <div className="surface p-4">
-          <p className="text-xs font-medium text-muted-foreground">View → capture</p>
-          <p className="mt-1 font-display text-3xl font-bold">{depth.conversion}%</p>
-        </div>
+        {isPremium && (
+          <>
+            <div className="surface p-4">
+              <p className="text-xs font-medium text-muted-foreground">Unique visitors</p>
+              <p className="mt-1 font-display text-3xl font-bold">{depth.unique}</p>
+            </div>
+            <div className="surface p-4">
+              <p className="text-xs font-medium text-muted-foreground">View → capture</p>
+              <p className="mt-1 font-display text-3xl font-bold">{depth.conversion}%</p>
+            </div>
+          </>
+        )}
       </div>
       <div className="surface p-4">
         <div className="h-72">
@@ -195,7 +201,12 @@ function Analytics() {
           </ResponsiveContainer>
         </div>
       </div>
-      {topClicks.length > 0 && (
+      {!isPremium && (
+        <div className="mt-6">
+          <PremiumUpsell feature="Advanced analytics — unique visitors, view-to-capture conversion, devices, referrers and most-tapped links —" />
+        </div>
+      )}
+      {isPremium && topClicks.length > 0 && (
         <div className="surface mt-6 p-4">
           <p className="mb-3 text-xs font-medium text-muted-foreground">Most-tapped links</p>
           <ul className="space-y-2">
@@ -212,7 +223,7 @@ function Analytics() {
           </ul>
         </div>
       )}
-      {(depth.devices.length > 0 || depth.referrers.length > 0) && (
+      {isPremium && (depth.devices.length > 0 || depth.referrers.length > 0) && (
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           {depth.devices.length > 0 && (
             <div className="surface p-4">

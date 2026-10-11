@@ -16,6 +16,8 @@ import { listContacts } from "@/lib/contacts-api";
 import { listCards } from "@/lib/cards-api";
 import { signedUrls } from "@/lib/media";
 import { contactsToCsv, initials } from "@/lib/card-model";
+import { usePlan } from "@/components/PremiumGate";
+import { PREMIUM_PRICE_LABEL } from "@/lib/plans";
 
 export const Route = createFileRoute("/app/contacts/")({ component: ContactsPage });
 
@@ -77,7 +79,15 @@ function ContactsPage() {
     return true;
   });
 
+  const { isPremium } = usePlan();
+
   function exportCsv() {
+    if (!isPremium) {
+      toast("CSV export is a Premium feature", {
+        description: `Upgrade in Settings (${PREMIUM_PRICE_LABEL}) to export your contacts as a spreadsheet.`,
+      });
+      return;
+    }
     const csv = contactsToCsv(
       filtered.map((c) => ({
         ...c,

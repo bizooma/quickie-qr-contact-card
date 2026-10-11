@@ -36,7 +36,7 @@ function AdminPage() {
   if (!me.is_admin) return <p className="text-sm text-muted-foreground">Not available.</p>;
   if (isLoading || !data) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
-  async function changePlan(userId: string, plan: "free" | "pro") {
+  async function changePlan(userId: string, plan: "free" | "pro" | "premium") {
     try {
       await setUserPlan({ data: { userId, plan } });
       toast.success("Plan updated");
@@ -48,7 +48,7 @@ function AdminPage() {
 
   const tiles = [
     { label: "Users", value: data.users },
-    { label: "Pro users", value: data.plans["pro"] ?? 0 },
+    { label: "Paid users", value: (data.plans["pro"] ?? 0) + (data.plans["premium"] ?? 0) },
     { label: "Cards", value: data.cards },
     { label: "Contacts", value: data.contacts },
     { label: "Teams", value: data.orgs },
@@ -100,15 +100,16 @@ function AdminPage() {
                   <td className="px-4 py-2 text-right tabular-nums">{u.ai_month}</td>
                   <td className="px-4 py-2">
                     <Select
-                      value={u.plan === "pro" ? "pro" : "free"}
-                      onValueChange={(v) => changePlan(u.id, v as "free" | "pro")}
+                      value={u.plan === "pro" || u.plan === "premium" ? u.plan : "free"}
+                      onValueChange={(v) => changePlan(u.id, v as "free" | "pro" | "premium")}
                     >
-                      <SelectTrigger className="h-8 w-24 text-xs">
+                      <SelectTrigger className="h-8 w-28 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="free">Free</SelectItem>
                         <SelectItem value="pro">Pro</SelectItem>
+                        <SelectItem value="premium">Premium</SelectItem>
                       </SelectContent>
                     </Select>
                   </td>

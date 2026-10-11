@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   annualFreeMonths,
   PLAN_LIMITS,
+  PREMIUM_PRICE_LABEL,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
 } from "@/lib/plans";
@@ -425,13 +426,13 @@ function Landing() {
 
       {/* 9 · Pricing */}
       <section id="pricing" className="border-y bg-muted/40">
-        <div className="mx-auto max-w-4xl scroll-mt-6 px-6 py-20">
+        <div className="mx-auto max-w-6xl scroll-mt-6 px-6 py-20">
           <h2 className="text-3xl font-extrabold md:text-4xl">Simple pricing</h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
             A box of 500 paper cards runs $20–40, gets thrown away, and tells you nothing. Start
             free; upgrade when it pays for itself.
           </p>
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
             <div className="surface p-7">
               <h3 className="text-lg font-bold">Free</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">$0</p>
@@ -467,7 +468,6 @@ function Landing() {
                   `Up to ${PLAN_LIMITS.pro.cards} cards — one per audience`,
                   "Unlimited AI card scanning",
                   "Unlimited AI enrichment, follow-ups & summaries",
-                  "Teams: branded cards, invites, shared contacts",
                   "Everything in Free",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
@@ -478,6 +478,33 @@ function Landing() {
               </ul>
               <div className="mt-6">
                 <Cta label="Start free, upgrade in-app" from="pricing-pro" ab={ab} size="default" />
+              </div>
+            </div>
+            <div className="surface p-7">
+              <h3 className="text-lg font-bold">Premium</h3>
+              <p className="mt-1 font-display text-4xl font-extrabold">{PREMIUM_PRICE_LABEL}</p>
+              <p className="text-xs text-muted-foreground">cancel anytime</p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  "Unlimited personal cards",
+                  "Teams: branded cards, invites, shared contacts",
+                  "Advanced analytics + CSV export",
+                  "Email signature builder",
+                  "Everything in Pro",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <Cta
+                  label="Start free, go Premium in-app"
+                  from="pricing-premium"
+                  ab={ab}
+                  size="default"
+                />
               </div>
             </div>
           </div>
@@ -503,7 +530,7 @@ function Landing() {
             ],
             [
               "What happens to my data and my contacts?",
-              "They're yours. Export contacts as CSV or vCard anytime, and delete your account — and everything in it — from Settings with one button.",
+              "They're yours. Every contact can be saved to your phone as a vCard, Premium adds one-click CSV export of everything, and you can delete your account — and everything in it — from Settings with one button.",
             ],
             [
               "What does the free plan include, forever?",
@@ -511,7 +538,7 @@ function Landing() {
             ],
             [
               "Can my whole team use it?",
-              "Yes. Pro includes teams: invite members with a link, provision branded cards for each of them, lock your brand colors, and see shared contacts and team analytics in one view.",
+              "Yes. Premium includes teams: invite members with a link, provision branded cards for each of them, lock your brand colors, and see shared contacts and team analytics in one view.",
             ],
           ].map(([q, a]) => (
             <details key={q} className="surface group px-5 py-4">

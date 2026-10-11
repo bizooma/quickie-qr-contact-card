@@ -93,7 +93,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "Create a team",
-        "On the Pro plan, open Team and name your team. Invite members with a single-use link (14-day expiry) as members or admins.",
+        "On the Premium plan, open Team and name your team. Invite members with a single-use link (14-day expiry) as members or admins.",
       ],
       [
         "Branded cards for everyone",
@@ -114,8 +114,16 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         "One card with QR and link, unlimited share-back capture, analytics, notifications, and 10 AI card scans a month. No credit card to start.",
       ],
       [
-        "What Pro adds ($8/mo)",
-        "Up to 50 cards, unlimited AI scanning, unlimited AI enrichment, follow-ups and summaries, and Teams. Upgrade from Settings; cancel anytime and it runs to the end of the period.",
+        "What Pro adds ($8/mo, or $80/yr)",
+        "Up to 3 cards and unlimited AI scanning, enrichment, follow-ups and summaries. Upgrade from Settings; cancel anytime and it runs to the end of the period.",
+      ],
+      [
+        "What Premium adds ($12/mo)",
+        "Everything in Pro, plus unlimited personal cards, Teams, the email signature builder, and advanced analytics with contact CSV export.",
+      ],
+      [
+        "Founding offers (lifetime & year)",
+        "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically — lifetime deals never expire, year passes run 12 months from purchase.",
       ],
     ],
   },

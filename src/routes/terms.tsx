@@ -17,8 +17,8 @@ function Terms() {
       <h2>The service</h2>
       <p>
         ContactKickstart lets you create digital business cards, share them, and manage the contacts
-        you collect. The free plan is free; Pro is billed monthly and can be cancelled anytime,
-        taking effect at the end of the billing period.
+        you collect. The free plan is free; paid plans (Pro and Premium) are billed monthly or
+        annually and can be cancelled anytime, taking effect at the end of the billing period.
       </p>
       <h2>Your content</h2>
       <p>

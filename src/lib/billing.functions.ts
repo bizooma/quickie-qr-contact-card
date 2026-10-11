@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { monthlyLimit, normalizePlan, USAGE_KINDS, type UsageKind } from "./plans";
+import { monthlyLimit, normalizePlan, USAGE_KINDS, type PlanId, type UsageKind } from "./plans";
 
 // Billing server functions. SDK and admin imports stay inside handlers —
 // this file ships to the client bundle.
@@ -23,9 +23,12 @@ function requestOrigin(): string {
 }
 
 export type BillingState = {
-  plan: "free" | "pro";
+  plan: PlanId;
   stripeConfigured: boolean;
   annualConfigured: boolean;
+  premiumConfigured: boolean;
+  hasSubscription: boolean;
+  credits: { scan: number; follow_up: number }; // one-time starter-pack credits
   usage: Record<UsageKind, { used: number; limit: number | null }>; // null limit = unlimited
 };
 
@@ -33,12 +36,19 @@ export type BillingState = {
 export const getBillingState = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<BillingState> => {
-    const { getPlan, countUsageThisMonth } = await import("./usage.server");
+    const { getPlan, countUsageThisMonth, getStarterCredits } = await import("./usage.server");
     const { isStripeConfigured, stripeEnv } = await import("./stripe.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const plan = await getPlan(context.userId);
     const counts = await Promise.all(
       USAGE_KINDS.map((k) => countUsageThisMonth(context.userId, k)),
     );
+    const credits = await getStarterCredits(context.userId);
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("stripe_subscription_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const usage = Object.fromEntries(
       USAGE_KINDS.map((k, i) => {
         const limit = monthlyLimit(plan, k);
@@ -49,14 +59,20 @@ export const getBillingState = createServerFn({ method: "POST" })
       plan,
       stripeConfigured: isStripeConfigured(),
       annualConfigured: isStripeConfigured() && !!stripeEnv().annualPriceId,
+      premiumConfigured: isStripeConfigured() && !!stripeEnv().premiumPriceId,
+      hasSubscription: !!profile?.stripe_subscription_id,
+      credits,
       usage,
     };
   });
 
-const CheckoutSchema = z.object({ interval: z.enum(["month", "year"]).default("month") });
+const CheckoutSchema = z.object({
+  plan: z.enum(["pro", "premium"]).default("pro"),
+  interval: z.enum(["month", "year"]).default("month"),
+});
 
-/** Starts a Stripe Checkout subscription for Pro (monthly or annual);
- *  returns the redirect URL. */
+/** Starts a Stripe Checkout subscription for Pro (monthly or annual) or
+ *  Premium (monthly); returns the redirect URL. */
 export const createCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(CheckoutSchema)
@@ -68,15 +84,30 @@ export const createCheckout = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("plan, stripe_customer_id")
+      .select("plan, stripe_customer_id, stripe_subscription_id")
       .eq("id", context.userId)
       .maybeSingle();
-    if (normalizePlan(profile?.plan) === "pro") throw new Error("You're already on Pro.");
+    const current = normalizePlan(profile?.plan);
+    if (current === "premium") throw new Error("You're already on Premium.");
+    if (data.plan === "pro" && current === "pro") throw new Error("You're already on Pro.");
+    if (profile?.stripe_subscription_id) {
+      // One subscription per account: switching tiers goes through the portal.
+      throw new Error("You already have a subscription — use Manage billing to change plans.");
+    }
 
     const env = stripeEnv();
-    const price = data.interval === "year" ? env.annualPriceId : env.priceId;
+    const price =
+      data.plan === "premium"
+        ? env.premiumPriceId
+        : data.interval === "year"
+          ? env.annualPriceId
+          : env.priceId;
     if (!price) {
-      throw new Error("The annual plan isn't configured yet — add STRIPE_PRICE_ID_ANNUAL first.");
+      throw new Error(
+        data.plan === "premium"
+          ? "The Premium plan isn't configured yet — add STRIPE_PRICE_ID_PREMIUM first."
+          : "The annual plan isn't configured yet — add STRIPE_PRICE_ID_ANNUAL first.",
+      );
     }
 
     const origin = requestOrigin();
@@ -85,6 +116,9 @@ export const createCheckout = createServerFn({ method: "POST" })
       mode: "subscription",
       line_items: [{ price, quantity: 1 }],
       client_reference_id: context.userId,
+      // The webhook reads the tier from metadata (session + subscription).
+      metadata: { ck_plan: data.plan },
+      subscription_data: { metadata: { ck_plan: data.plan } },
       ...(profile?.stripe_customer_id
         ? { customer: profile.stripe_customer_id }
         : email

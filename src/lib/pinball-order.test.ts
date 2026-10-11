@@ -29,10 +29,11 @@ describe("entitlementsForItems", () => {
     expect(
       entitlementsForItems([
         { product_id: LIFETIME_ID },
-        { product_id: "01m4gpdrbtr88tr7yfd6myt22w" }, // $7 front end — no app entitlement
+        { product_id: "01m4gpdrbtr88tr7yfd6myt22w" }, // $7 front end — starter pack
         { product_id: YEAR_ID },
+        { product_id: "01m4hts98nyxs8k0cmw7gt10f5" }, // course bump — no app entitlement
       ]),
-    ).toEqual(["lifetime", "year"]);
+    ).toEqual(["lifetime", "starter", "year"]);
   });
   it("dedupes and handles empty", () => {
     expect(entitlementsForItems([{ product_id: YEAR_ID }, { product_id: YEAR_ID }])).toEqual([
