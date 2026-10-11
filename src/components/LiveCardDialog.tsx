@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { forwardRef, type ComponentPropsWithoutRef, type ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { logSiteEvent } from "@/lib/site-events";
@@ -35,10 +35,17 @@ export function LiveCardDialog({ from, children }: { from: string; children: Rea
 }
 
 /** The flashy trigger: a live-dot button that begs to be tapped. */
-export function LiveCardButton({ label = "See a live card" }: { label?: string }) {
+export const LiveCardButton = forwardRef<
+  HTMLButtonElement,
+  ComponentPropsWithoutRef<"button"> & { label?: string }
+>(function LiveCardButton({ label = "See a live card", ...props }, ref) {
+  // Radix's DialogTrigger asChild injects onClick/aria props and a ref;
+  // spreading them is what makes the trigger actually open the dialog.
   return (
     <button
+      ref={ref}
       type="button"
+      {...props}
       className="inline-flex items-center gap-2.5 rounded-xl border-2 border-brand bg-brand-soft/60 px-4 py-2.5 text-sm font-bold text-foreground transition-transform hover:scale-[1.03] hover:bg-brand-soft"
     >
       <span className="relative flex h-2.5 w-2.5">
@@ -48,4 +55,4 @@ export function LiveCardButton({ label = "See a live card" }: { label?: string }
       {label}
     </button>
   );
-}
+});
