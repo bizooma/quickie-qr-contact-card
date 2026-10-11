@@ -35,7 +35,10 @@ import { useTheme, type ThemePref } from "@/hooks/use-theme";
 import { createBillingPortal, createCheckout, getBillingState } from "@/lib/billing.functions";
 import {
   annualFreeMonths,
+  creditEligible,
   KIND_LABELS,
+  PLAN_NAMES,
+  PREMIUM_PRICE_LABEL,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   USAGE_KINDS,
@@ -211,10 +214,10 @@ function PlanSection() {
     return;
   }, [qc]);
 
-  async function upgrade(interval: "month" | "year") {
+  async function upgrade(plan: "pro" | "premium", interval: "month" | "year" = "month") {
     setBusy(true);
     try {
-      const { url } = await createCheckout({ data: { interval } });
+      const { url } = await createCheckout({ data: { plan, interval } });
       window.location.href = url;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not start checkout");
@@ -234,27 +237,29 @@ function PlanSection() {
   }
 
   if (!billing) return null;
-  const pro = billing.plan === "pro";
+  const paid = billing.plan !== "free";
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-bold">Plan & usage</h2>
         <span
-          className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${pro ? "bg-brand text-white" : "bg-muted text-muted-foreground"}`}
+          className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${paid ? "bg-brand text-white" : "bg-muted text-muted-foreground"}`}
         >
-          {pro ? "Pro" : "Free"}
+          {PLAN_NAMES[billing.plan]}
         </span>
       </div>
       <div className="surface space-y-3 p-4">
         {USAGE_KINDS.map((k) => {
           const u = billing.usage[k];
           const pct = u.limit ? Math.min(100, Math.round((u.used / u.limit) * 100)) : 0;
+          const bonus = creditEligible(k) ? billing.credits[k] : 0;
           return (
             <div key={k}>
               <div className="flex items-baseline justify-between text-sm">
                 <span className="font-medium">{KIND_LABELS[k]}</span>
                 <span className="text-xs tabular-nums text-muted-foreground">
                   {u.limit === null ? `${u.used} · unlimited` : `${u.used} / ${u.limit} this month`}
+                  {u.limit !== null && bonus > 0 && ` · +${bonus} bonus credits`}
                 </span>
               </div>
               {u.limit !== null && (
@@ -269,31 +274,59 @@ function PlanSection() {
           );
         })}
       </div>
-      {pro ? (
+      {billing.plan === "premium" ? (
         <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
           Manage billing
         </Button>
       ) : (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            <Button disabled={busy || !billing.stripeConfigured} onClick={() => upgrade("month")}>
-              <Sparkles className="h-4 w-4" />
-              Upgrade to Pro — {PRO_PRICE_LABEL}
-            </Button>
-            {billing.annualConfigured && (
+            {billing.plan === "free" && (
+              <>
+                <Button
+                  disabled={busy || !billing.stripeConfigured}
+                  onClick={() => upgrade("pro", "month")}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Upgrade to Pro — {PRO_PRICE_LABEL}
+                </Button>
+                {billing.annualConfigured && (
+                  <Button
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => upgrade("pro", "year")}
+                    className="border-brand"
+                  >
+                    {PRO_ANNUAL_PRICE_LABEL} — {annualFreeMonths()} months free
+                  </Button>
+                )}
+              </>
+            )}
+            {billing.hasSubscription ? (
               <Button
                 variant="outline"
-                disabled={busy}
-                onClick={() => upgrade("year")}
-                className="border-brand"
+                disabled={busy || !billing.stripeConfigured}
+                onClick={manage}
               >
-                {PRO_ANNUAL_PRICE_LABEL} — {annualFreeMonths()} months free
+                Manage billing / switch plan
+              </Button>
+            ) : (
+              <Button
+                variant={billing.plan === "pro" ? "default" : "outline"}
+                disabled={busy || !billing.premiumConfigured}
+                onClick={() => upgrade("premium")}
+                className={billing.plan === "pro" ? undefined : "border-brand"}
+              >
+                <Sparkles className="h-4 w-4" />
+                Go Premium — {PREMIUM_PRICE_LABEL}
               </Button>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Pro: unlimited AI scans, enrichment, follow-ups and summaries, plus up to 50 cards.
-            Annual billing ({PRO_ANNUAL_PRICE_LABEL}) gets you {annualFreeMonths()} months free.
+            Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
+            free): unlimited AI scans, enrichment, follow-ups and summaries, plus up to 3 cards.
+            Premium ({PREMIUM_PRICE_LABEL}): everything in Pro, plus unlimited personal cards,
+            teams, email signatures, and advanced analytics with CSV export.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

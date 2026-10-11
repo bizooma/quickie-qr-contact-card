@@ -8,15 +8,17 @@
 // Body: { event, timestamp, data: { order, customer, items } }.
 // Test-mode orders carry a `test_mode_…` payment intent id.
 
-export type EntitlementKind = "lifetime" | "year";
+export type EntitlementKind = "lifetime" | "year" | "starter";
 
 /** Entitlement granted per Pinball product. The webhook NEVER trusts the
  *  payload for what was bought beyond these allowlisted product ids. */
 export const ENTITLEMENT_BY_PINBALL_PRODUCT: Readonly<Record<string, EntitlementKind>> = {
-  // "ContactKickstart App — Founding Lifetime" ($55 LTD upsell)
+  // "ContactKickstart App — Founding Lifetime" ($65 LTD upsell)
   "01m4gpdvhfqcsjj4m8re40t8r9": "lifetime",
   // "ContactKickstart App — Founding Year" (downsell)
   "01m4gpdx4b8ar3641cm3fwa3rd": "year",
+  // $7 front end — app starter pack (one-time AI credits)
+  "01m4gpdrbtr88tr7yfd6myt22w": "starter",
 };
 
 export interface PinballItem {

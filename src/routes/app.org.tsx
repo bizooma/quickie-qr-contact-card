@@ -151,7 +151,7 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
       <h1 className="text-2xl font-bold">Create your team</h1>
       <p className="text-sm text-muted-foreground">
         Invite teammates with a link, provision branded cards for them, and see team analytics in
-        one place. Creating a team requires a Pro plan; members can be on any plan.
+        one place. Creating a team requires a Premium plan; members can be on any plan.
       </p>
       <div className="space-y-2 text-left">
         <Label htmlFor="team-name">Team name</Label>

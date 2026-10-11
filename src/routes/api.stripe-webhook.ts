@@ -35,6 +35,10 @@ export const Route = createFileRoute("/api/stripe-webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+        // Which paid tier a session/subscription buys; set by createCheckout.
+        const tierOf = (meta: Stripe.Metadata | null | undefined) =>
+          meta?.["ck_plan"] === "premium" ? "premium" : "pro";
+
         if (event.type === "checkout.session.completed") {
           const session = event.data.object;
           const userId = session.client_reference_id;
@@ -42,7 +46,8 @@ export const Route = createFileRoute("/api/stripe-webhook")({
             await supabaseAdmin
               .from("profiles")
               .update({
-                plan: "pro",
+                plan: tierOf(session.metadata),
+                plan_expires_at: null, // the subscription is the source of truth now
                 stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
                 stripe_subscription_id:
                   typeof session.subscription === "string" ? session.subscription : null,
@@ -59,13 +64,31 @@ export const Route = createFileRoute("/api/stripe-webhook")({
             const active =
               event.type !== "customer.subscription.deleted" &&
               (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due");
-            await supabaseAdmin
-              .from("profiles")
-              .update({
-                plan: active ? "pro" : "free",
-                stripe_subscription_id: active ? sub.id : null,
-              })
-              .eq("stripe_customer_id", customer);
+            if (active) {
+              await supabaseAdmin
+                .from("profiles")
+                .update({
+                  plan: tierOf(sub.metadata),
+                  plan_expires_at: null,
+                  stripe_subscription_id: sub.id,
+                })
+                .eq("stripe_customer_id", customer);
+            } else {
+              // Fall back to whatever lifetime/year purchase entitlements the
+              // user still holds instead of a hard downgrade to free.
+              const { data: profile } = await supabaseAdmin
+                .from("profiles")
+                .select("id")
+                .eq("stripe_customer_id", customer)
+                .maybeSingle();
+              if (profile?.id) {
+                await supabaseAdmin
+                  .from("profiles")
+                  .update({ stripe_subscription_id: null })
+                  .eq("id", profile.id);
+                await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id });
+              }
+            }
           }
         }
 

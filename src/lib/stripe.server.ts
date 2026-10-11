@@ -10,6 +10,7 @@ export function stripeEnv() {
     secretKey: process.env["STRIPE_SECRET_KEY"] ?? "",
     priceId: process.env["STRIPE_PRICE_ID"] ?? "",
     annualPriceId: process.env["STRIPE_PRICE_ID_ANNUAL"] ?? "",
+    premiumPriceId: process.env["STRIPE_PRICE_ID_PREMIUM"] ?? "",
     webhookSecret: process.env["STRIPE_WEBHOOK_SECRET"] ?? "",
   };
 }

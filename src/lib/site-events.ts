@@ -6,6 +6,6 @@ export type SiteEvent = "cta_click" | "demo_click" | "pricing_view" | "signup";
  *  are lazy and never execute unless awaited or .then()-ed. */
 export function logSiteEvent(event: SiteEvent, meta?: string) {
   supabase
-    .rpc("log_site_event", { _event_type: event, _meta: meta ?? null })
+    .rpc("log_site_event", { _event_type: event, ...(meta ? { _meta: meta } : {}) })
     .then(undefined, () => {});
 }

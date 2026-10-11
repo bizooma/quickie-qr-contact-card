@@ -50,7 +50,7 @@ export const getAdminOverview = createServerFn({ method: "POST" })
 
 const SetPlanSchema = z.object({
   userId: z.string().uuid(),
-  plan: z.enum(["free", "pro"]),
+  plan: z.enum(["free", "pro", "premium"]),
 });
 
 /** Comp or downgrade an account by hand (Stripe subscriptions stay untouched). */
