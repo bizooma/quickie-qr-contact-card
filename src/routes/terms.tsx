@@ -17,8 +17,8 @@ function Terms() {
       <h2>The service</h2>
       <p>
         ContactKickstart lets you create digital business cards, share them, and manage the contacts
-        you collect. The free plan is free; paid plans (Pro and Premium) are subscriptions billed
-        monthly or annually.
+        you collect. The free plan is free; paid plans (Pro, Premium and Teams) are subscriptions
+        billed monthly or annually — Teams per seat, with a 3-seat minimum.
       </p>
       <h2>Billing, renewal & cancellation</h2>
       <p>

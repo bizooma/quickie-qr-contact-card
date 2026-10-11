@@ -93,7 +93,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "Create a team",
-        "On the Premium plan, open Team and name your team. Invite members with a single-use link (14-day expiry) as members or admins.",
+        "On the Teams plan ($10 per user/month, 3-seat minimum), open Team and name your team. Invite members with a single-use link (14-day expiry) as members or admins — every member gets full Premium features, and the owner uses one seat.",
       ],
       [
         "Branded cards for everyone",
@@ -119,7 +119,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "What Premium adds ($12/mo, or $120/yr)",
-        "Everything in Pro, plus unlimited personal cards, Teams, the email signature builder, and advanced analytics with contact CSV export.",
+        "Everything in Pro, plus unlimited personal cards, the email signature builder, and advanced analytics with contact CSV export.",
+      ],
+      [
+        "What Teams adds ($10/user/mo, or $100/user/yr)",
+        "A shared workspace billed per seat (3-seat minimum, owner included): every member gets full Premium features, plus brand lock, shared contacts and team-wide analytics. Add or remove seats anytime from Manage billing.",
       ],
       [
         "Auto-renewal & cancelling",

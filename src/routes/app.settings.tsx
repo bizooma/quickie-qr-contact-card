@@ -43,6 +43,10 @@ import {
   premiumAnnualFreeMonths,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
+  TEAM_MIN_SEATS,
+  TEAM_SEAT_ANNUAL_PRICE_LABEL,
+  TEAM_SEAT_PRICE_LABEL,
+  teamAnnualFreeMonths,
   USAGE_KINDS,
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
@@ -197,6 +201,7 @@ function PlanSection() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
+  const [seats, setSeats] = useState(TEAM_MIN_SEATS);
 
   // Back from Stripe Checkout: thank the user and refetch until the webhook
   // has flipped the plan (it usually lands within a few seconds).
@@ -216,10 +221,16 @@ function PlanSection() {
     return;
   }, [qc]);
 
-  async function upgrade(plan: "pro" | "premium", interval: "month" | "year" = "month") {
+  async function upgrade(
+    plan: "pro" | "premium" | "team",
+    interval: "month" | "year" = "month",
+    seats?: number,
+  ) {
     setBusy(true);
     try {
-      const { url } = await createCheckout({ data: { plan, interval } });
+      const { url } = await createCheckout({
+        data: { plan, interval, ...(seats ? { seats } : {}) },
+      });
       window.location.href = url;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not start checkout");
@@ -336,14 +347,61 @@ function PlanSection() {
               </>
             )}
           </div>
+          {billing.teamConfigured && !billing.hasSubscription && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex items-center gap-1 rounded-xl border px-2 py-1">
+                <button
+                  type="button"
+                  className="px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
+                  onClick={() => setSeats((n) => Math.max(TEAM_MIN_SEATS, n - 1))}
+                  aria-label="Fewer seats"
+                >
+                  −
+                </button>
+                <span className="w-14 text-center text-sm font-semibold tabular-nums">
+                  {seats} seats
+                </span>
+                <button
+                  type="button"
+                  className="px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
+                  onClick={() => setSeats((n) => Math.min(500, n + 1))}
+                  aria-label="More seats"
+                >
+                  +
+                </button>
+              </div>
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => upgrade("team", "month", seats)}
+              >
+                Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo
+              </Button>
+              {billing.teamAnnualConfigured && (
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => upgrade("team", "year", seats)}
+                >
+                  {TEAM_SEAT_ANNUAL_PRICE_LABEL} — {teamAnnualFreeMonths()} months free
+                </Button>
+              )}
+            </div>
+          )}
+          {billing.teamSeats >= TEAM_MIN_SEATS && (
+            <p className="text-xs font-medium text-brand">
+              Teams plan active: {billing.teamSeats} seats. Manage seats from Manage billing.
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
             free): unlimited AI scans, enrichment, follow-ups and summaries, plus up to 3 cards.
             Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
             {premiumAnnualFreeMonths()} months free): everything in Pro, plus unlimited personal
-            cards, teams, email signatures, and advanced analytics with CSV export. Plans
-            auto-renew; cancelling stops the renewal and your plan runs to the end of the period
-            you've paid for.
+            cards, email signatures, and advanced analytics with CSV export. Teams (
+            {TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with
+            everything in Premium for every member. Plans auto-renew; cancelling stops the renewal
+            and your plan runs to the end of the period you've paid for.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

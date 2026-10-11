@@ -22,7 +22,11 @@ export async function getPlan(userId: string): Promise<PlanId> {
     .select("plan, plan_expires_at")
     .eq("id", userId)
     .maybeSingle();
-  return effectivePlan(data?.plan, data?.plan_expires_at);
+  const own = effectivePlan(data?.plan, data?.plan_expires_at);
+  if (own === "premium") return own;
+  // Members of a funded team get Premium-level features (Teams tier).
+  const { data: covered } = await supabaseAdmin.rpc("has_team_seat", { _user: userId });
+  return covered ? "premium" : own;
 }
 
 export async function countUsageThisMonth(userId: string, kind: UsageKind): Promise<number> {

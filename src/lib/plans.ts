@@ -38,6 +38,19 @@ export const PREMIUM_ANNUAL_USD = 120;
 export const PREMIUM_PRICE_LABEL = `$${PREMIUM_MONTHLY_USD}/mo`;
 export const PREMIUM_ANNUAL_PRICE_LABEL = `$${PREMIUM_ANNUAL_USD}/yr`;
 
+// Teams: per-seat billing on the org owner; every member gets Premium-level
+// features. The 3-seat floor keeps a "team" from undercutting solo Premium.
+export const TEAM_SEAT_MONTHLY_USD = 10;
+export const TEAM_SEAT_ANNUAL_USD = 100;
+export const TEAM_MIN_SEATS = 3;
+export const TEAM_SEAT_PRICE_LABEL = `$${TEAM_SEAT_MONTHLY_USD}/user`;
+export const TEAM_SEAT_ANNUAL_PRICE_LABEL = `$${TEAM_SEAT_ANNUAL_USD}/user/yr`;
+
+/** And the same derived "2 months free" claim for Teams annual seats. */
+export function teamAnnualFreeMonths(): number {
+  return Math.floor((12 * TEAM_SEAT_MONTHLY_USD - TEAM_SEAT_ANNUAL_USD) / TEAM_SEAT_MONTHLY_USD);
+}
+
 /** Whole months of Pro the annual discount covers — the "2 months free" claim.
  *  Derived from the prices so the marketing line can never drift from reality. */
 export function annualFreeMonths(): number {

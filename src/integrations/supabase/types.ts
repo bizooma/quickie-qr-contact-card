@@ -489,6 +489,7 @@ export type Database = {
           plan_expires_at: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          team_seats: number
           updated_at: string
           webhook_url: string | null
         }
@@ -506,6 +507,7 @@ export type Database = {
           plan_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          team_seats?: number
           updated_at?: string
           webhook_url?: string | null
         }
@@ -523,6 +525,7 @@ export type Database = {
           plan_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          team_seats?: number
           updated_at?: string
           webhook_url?: string | null
         }
@@ -633,6 +636,7 @@ export type Database = {
         Returns: undefined
       }
       get_public_card: { Args: { _slug: string }; Returns: Json }
+      has_team_seat: { Args: { _user: string }; Returns: boolean }
       in_same_org_as: { Args: { _user: string }; Returns: boolean }
       log_card_event: {
         Args: {

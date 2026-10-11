@@ -36,8 +36,14 @@ export const Route = createFileRoute("/api/stripe-webhook")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // Which paid tier a session/subscription buys; set by createCheckout.
+        // A Teams purchase grants the OWNER premium features plus N seats.
         const tierOf = (meta: Stripe.Metadata | null | undefined) =>
-          meta?.["ck_plan"] === "premium" ? "premium" : "pro";
+          meta?.["ck_plan"] === "premium" || meta?.["ck_plan"] === "team" ? "premium" : "pro";
+        const seatsOf = (meta: Stripe.Metadata | null | undefined, quantity?: number | null) => {
+          if (meta?.["ck_plan"] !== "team") return 0;
+          const q = quantity ?? Number(meta?.["ck_seats"] ?? 0);
+          return Number.isFinite(q) && q > 0 ? q : 0;
+        };
 
         if (event.type === "checkout.session.completed") {
           const session = event.data.object;
@@ -48,6 +54,7 @@ export const Route = createFileRoute("/api/stripe-webhook")({
               .update({
                 plan: tierOf(session.metadata),
                 plan_expires_at: null, // the subscription is the source of truth now
+                team_seats: seatsOf(session.metadata),
                 stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
                 stripe_subscription_id:
                   typeof session.subscription === "string" ? session.subscription : null,
@@ -70,6 +77,8 @@ export const Route = createFileRoute("/api/stripe-webhook")({
                 .update({
                   plan: tierOf(sub.metadata),
                   plan_expires_at: null,
+                  // Seat changes (portal quantity updates) land here.
+                  team_seats: seatsOf(sub.metadata, sub.items?.data?.[0]?.quantity ?? null),
                   stripe_subscription_id: sub.id,
                 })
                 .eq("stripe_customer_id", customer);
@@ -84,7 +93,7 @@ export const Route = createFileRoute("/api/stripe-webhook")({
               if (profile?.id) {
                 await supabaseAdmin
                   .from("profiles")
-                  .update({ stripe_subscription_id: null })
+                  .update({ stripe_subscription_id: null, team_seats: 0 })
                   .eq("id", profile.id);
                 await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id });
               }
