@@ -472,6 +472,7 @@ export type Database = {
           is_admin: boolean
           onboarded: boolean
           plan: string
+          plan_expires_at: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
@@ -486,6 +487,7 @@ export type Database = {
           is_admin?: boolean
           onboarded?: boolean
           plan?: string
+          plan_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
@@ -500,6 +502,7 @@ export type Database = {
           is_admin?: boolean
           onboarded?: boolean
           plan?: string
+          plan_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
@@ -556,6 +559,19 @@ export type Database = {
       log_site_event: {
         Args: { _event_type: string; _meta?: string | null }
         Returns: undefined
+      }
+      record_app_purchase: {
+        Args: {
+          _order_id: string
+          _order_number: number | null
+          _event: string
+          _email: string
+          _kind: string
+          _amount_cents: number
+          _is_test: boolean
+          _payload: Json
+        }
+        Returns: Json
       }
       org_role_of: { Args: { _org: string }; Returns: string }
       org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
