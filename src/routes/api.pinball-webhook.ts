@@ -50,7 +50,8 @@ export const Route = createFileRoute("/api/pinball-webhook")({
         for (const kind of order.entitlements) {
           const { data, error } = await supabaseAdmin.rpc("record_app_purchase", {
             _order_id: order.orderId,
-            _order_number: order.orderNumber,
+            // The SQL arg is a nullable bigint; the generated types say number.
+            _order_number: order.orderNumber as unknown as number,
             _event: order.event,
             _email: order.email,
             _kind: kind,
