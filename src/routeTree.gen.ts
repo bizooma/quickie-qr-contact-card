@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ApiPinballWebhookRouteImport } from './routes/api.pinball-webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe-webhook'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
@@ -62,6 +63,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPinballWebhookRoute = ApiPinballWebhookRouteImport.update({
+  id: '/api/pinball-webhook',
+  path: '/api/pinball-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/api/pinball-webhook': typeof ApiPinballWebhookRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/api/pinball-webhook': typeof ApiPinballWebhookRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/api/pinball-webhook': typeof ApiPinballWebhookRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/api/pinball-webhook'
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/api/pinball-webhook'
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/api/pinball-webhook'
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
@@ -320,6 +332,7 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  ApiPinballWebhookRoute: typeof ApiPinballWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   AuthResetRoute: typeof AuthResetRoute
   CSlugRoute: typeof CSlugRoute
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pinball-webhook': {
+      id: '/api/pinball-webhook'
+      path: '/api/pinball-webhook'
+      fullPath: '/api/pinball-webhook'
+      preLoaderRoute: typeof ApiPinballWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe-webhook': {
@@ -542,6 +562,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  ApiPinballWebhookRoute: ApiPinballWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   AuthResetRoute: AuthResetRoute,
   CSlugRoute: CSlugRoute,

@@ -17,9 +17,13 @@ import {
 export async function getPlan(userId: string): Promise<PlanId> {
   const { data } = await supabaseAdmin
     .from("profiles")
-    .select("plan")
+    .select("plan, plan_expires_at")
     .eq("id", userId)
     .maybeSingle();
+  // A dated plan (Founding Year entitlement) lapses back to free on expiry.
+  if (data?.plan_expires_at && new Date(data.plan_expires_at).getTime() <= Date.now()) {
+    return "free";
+  }
   return normalizePlan(data?.plan);
 }
 
