@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -19,6 +20,13 @@ import { Button } from "@/components/ui/button";
 import { CardView } from "@/components/card/CardView";
 import { useAuth } from "@/hooks/use-auth";
 import { PLAN_LIMITS, PRO_PRICE_LABEL } from "@/lib/plans";
+import {
+  AB_STORAGE_KEY,
+  HEADLINES,
+  pickVariant,
+  variantMeta,
+  type HeadlineVariant,
+} from "@/lib/ab";
 import { logSiteEvent } from "@/lib/site-events";
 import type { CardData } from "@/lib/card-model";
 
@@ -68,22 +76,43 @@ const DEMO: CardData = {
 
 const DEMO_CARD_PATH = "/c/tamzyn";
 
-/** Primary signup CTA; every instance logs where on the page it was clicked. */
+/** Sticky 50/50 headline assignment. SSR and first paint render variant A;
+ *  the stored (or freshly drawn) variant applies after hydration. */
+function useHeadlineVariant(): HeadlineVariant | null {
+  const [ab, setAb] = useState<HeadlineVariant | null>(null);
+  useEffect(() => {
+    try {
+      const v = pickVariant(localStorage.getItem(AB_STORAGE_KEY), Math.random());
+      localStorage.setItem(AB_STORAGE_KEY, v);
+      setAb(v);
+    } catch {
+      setAb(pickVariant(null, Math.random()));
+    }
+  }, []);
+  return ab;
+}
+
+/** Primary signup CTA; every instance logs where it was clicked + the headline variant. */
 function Cta({
   label,
   from,
+  ab,
   size = "lg",
   variant = "default",
 }: {
   label: string;
   from: string;
+  ab: HeadlineVariant | null;
   size?: "lg" | "default";
   variant?: "default" | "outline";
 }) {
   const { user } = useAuth();
   return (
     <Button asChild size={size} variant={variant}>
-      <Link to={user ? "/app" : "/auth"} onClick={() => logSiteEvent("cta_click", from)}>
+      <Link
+        to={user ? "/app" : "/auth"}
+        onClick={() => logSiteEvent("cta_click", variantMeta(from, ab))}
+      >
         {label} <ArrowRight className="h-4 w-4" />
       </Link>
     </Button>
@@ -93,6 +122,8 @@ function Cta({
 function Landing() {
   const { user } = useAuth();
   const free = PLAN_LIMITS.free;
+  const ab = useHeadlineVariant();
+  const headline = HEADLINES[ab ?? "a"];
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
@@ -121,7 +152,7 @@ function Landing() {
           </Button>
           {!user && (
             <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/auth" onClick={() => logSiteEvent("cta_click", "nav")}>
+              <Link to="/auth" onClick={() => logSiteEvent("cta_click", variantMeta("nav", ab))}>
                 Get started free
               </Link>
             </Button>
@@ -136,17 +167,15 @@ function Landing() {
             Digital business cards
           </p>
           <h1 className="text-4xl font-extrabold leading-[1.05] md:text-6xl">
-            Never lose another lead to a <span className="text-brand">paper card.</span>
+            {headline.lines[0]}
+            <span className="text-brand">{headline.lines[1]}</span>
           </h1>
-          <p className="mt-6 max-w-md text-lg text-muted-foreground">
-            Share your card with one QR scan — and capture their details back, automatically. No app
-            for them to install.
-          </p>
+          <p className="mt-6 max-w-md text-lg text-muted-foreground">{headline.sub}</p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Cta label="Create your free card" from="hero" />
+            <Cta label="Create your free card" from="hero" ab={ab} />
             <a
               href={DEMO_CARD_PATH}
-              onClick={() => logSiteEvent("demo_click", "hero")}
+              onClick={() => logSiteEvent("demo_click", variantMeta("hero", ab))}
               className="inline-flex items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
             >
               See a live card <ExternalLink className="h-4 w-4" />
@@ -234,7 +263,7 @@ function Landing() {
           Step 3 is the one paper can't do — the card works in both directions.
         </p>
         <div className="mt-8">
-          <Cta label="Make my card free" from="how-it-works" />
+          <Cta label="Make my card free" from="how-it-works" ab={ab} />
         </div>
       </section>
 
@@ -329,7 +358,7 @@ function Landing() {
             ))}
           </div>
           <div className="mt-8">
-            <Cta label="Set up your team" from="teams" />
+            <Cta label="Set up your team" from="teams" ab={ab} />
           </div>
         </div>
       </section>
@@ -348,7 +377,7 @@ function Landing() {
             </p>
             <a
               href={DEMO_CARD_PATH}
-              onClick={() => logSiteEvent("demo_click", "proof")}
+              onClick={() => logSiteEvent("demo_click", variantMeta("proof", ab))}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
             >
               Open Tamzyn's live card <ExternalLink className="h-4 w-4" />
@@ -394,7 +423,7 @@ function Landing() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Cta label="Start free" from="pricing-free" size="default" />
+                <Cta label="Start free" from="pricing-free" ab={ab} size="default" />
               </div>
             </div>
             <div className="surface border-2 border-brand p-7">
@@ -416,7 +445,7 @@ function Landing() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Cta label="Start free, upgrade in-app" from="pricing-pro" size="default" />
+                <Cta label="Start free, upgrade in-app" from="pricing-pro" ab={ab} size="default" />
               </div>
             </div>
           </div>
@@ -471,7 +500,10 @@ function Landing() {
           </h2>
           <div className="mt-8 flex justify-center">
             <Button asChild size="lg" variant="secondary">
-              <Link to={user ? "/app" : "/auth"} onClick={() => logSiteEvent("cta_click", "final")}>
+              <Link
+                to={user ? "/app" : "/auth"}
+                onClick={() => logSiteEvent("cta_click", variantMeta("final", ab))}
+              >
                 Create your free card <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
