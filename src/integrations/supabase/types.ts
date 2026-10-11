@@ -600,6 +600,42 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_grants: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string
+          grant_months: number | null
+          id: string
+          match_email: string | null
+          match_name: string | null
+          note: string | null
+          plan: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          grant_months?: number | null
+          id?: string
+          match_email?: string | null
+          match_name?: string | null
+          note?: string | null
+          plan: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string
+          grant_months?: number | null
+          id?: string
+          match_email?: string | null
+          match_name?: string | null
+          note?: string | null
+          plan?: string
+        }
+        Relationships: []
+      }
       site_events: {
         Row: {
           created_at: string
