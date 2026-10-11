@@ -5,6 +5,7 @@ import {
   BarChart3,
   Building2,
   CreditCard,
+  QrCode,
   ScanLine,
   Settings,
   ShieldCheck,
@@ -43,7 +44,11 @@ const NAV = [
 
 // Sidebar-only extras: the mobile bottom bar stays at six items, so Team (and
 // Admin for platform admins) are reached from Settings on small screens.
-const SIDEBAR_EXTRA = [{ to: "/app/org", label: "Team", icon: Building2 }] as const;
+// My QR has its own floating button on mobile instead.
+const SIDEBAR_EXTRA = [
+  { to: "/app/qr", label: "My QR", icon: QrCode },
+  { to: "/app/org", label: "Team", icon: Building2 },
+] as const;
 
 function AppLayout() {
   const { user, loading } = useAuth();
@@ -141,6 +146,16 @@ function AppLayout() {
         <Outlet />
       </main>
       <InstallPrompt />
+      {/* One-tap "scan me" from anywhere in the app on a phone. */}
+      {pathname !== "/app/qr" && (
+        <Link
+          to="/app/qr"
+          aria-label="Show my QR code"
+          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float transition-transform active:scale-95 md:hidden"
+        >
+          <QrCode className="h-6 w-6" />
+        </Link>
+      )}
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background/90 backdrop-blur md:hidden">
         {NAV.map((n) => (
           <Link
