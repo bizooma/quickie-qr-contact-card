@@ -20,7 +20,8 @@ export function PremiumUpsell({ feature, children }: { feature: string; children
         Premium feature
       </span>
       <p className="text-sm text-muted-foreground">
-        {feature} is part of Premium ({PREMIUM_PRICE_LABEL}), alongside unlimited cards and teams.
+        {feature} is part of Premium ({PREMIUM_PRICE_LABEL}), alongside unlimited personal cards and
+        advanced analytics.
       </p>
       {children}
       <Link

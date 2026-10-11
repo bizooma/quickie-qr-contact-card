@@ -10,8 +10,14 @@ import {
   normalizePlan,
   PLAN_LIMITS,
   PREMIUM_ANNUAL_PRICE_LABEL,
+  PREMIUM_MONTHLY_USD,
   PREMIUM_PRICE_LABEL,
   premiumAnnualFreeMonths,
+  TEAM_MIN_SEATS,
+  TEAM_SEAT_ANNUAL_PRICE_LABEL,
+  TEAM_SEAT_MONTHLY_USD,
+  TEAM_SEAT_PRICE_LABEL,
+  teamAnnualFreeMonths,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   remaining,
@@ -83,11 +89,17 @@ describe("annual pricing", () => {
   it("the '2 months free' claims match the actual prices", () => {
     expect(annualFreeMonths()).toBe(2);
     expect(premiumAnnualFreeMonths()).toBe(2);
+    expect(teamAnnualFreeMonths()).toBe(2);
+  });
+  it("the smallest team never undercuts solo Premium", () => {
+    expect(TEAM_MIN_SEATS * TEAM_SEAT_MONTHLY_USD).toBeGreaterThan(PREMIUM_MONTHLY_USD);
   });
   it("labels derive from the numeric prices", () => {
     expect(PRO_PRICE_LABEL).toBe("$8/mo");
     expect(PRO_ANNUAL_PRICE_LABEL).toBe("$80/yr");
     expect(PREMIUM_PRICE_LABEL).toBe("$12/mo");
     expect(PREMIUM_ANNUAL_PRICE_LABEL).toBe("$120/yr");
+    expect(TEAM_SEAT_PRICE_LABEL).toBe("$10/user");
+    expect(TEAM_SEAT_ANNUAL_PRICE_LABEL).toBe("$100/user/yr");
   });
 });

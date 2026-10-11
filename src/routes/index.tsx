@@ -30,6 +30,12 @@ import {
   PRO_ANNUAL_PRICE_LABEL,
   PRO_ANNUAL_USD,
   PRO_PRICE_LABEL,
+  TEAM_MIN_SEATS,
+  TEAM_SEAT_ANNUAL_PRICE_LABEL,
+  TEAM_SEAT_ANNUAL_USD,
+  TEAM_SEAT_MONTHLY_USD,
+  TEAM_SEAT_PRICE_LABEL,
+  teamAnnualFreeMonths,
 } from "@/lib/plans";
 import {
   AB_STORAGE_KEY,
@@ -577,7 +583,7 @@ function Landing() {
               </span>
             </button>
           </div>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             <div data-reveal="0" className="surface card-lift p-7">
               <h3 className="text-lg font-bold">Free</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">$0</p>
@@ -671,7 +677,6 @@ function Landing() {
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
                   "Unlimited personal cards",
-                  "Teams: branded cards, invites, shared contacts",
                   "Advanced analytics + CSV export",
                   "Email signature builder",
                   "Everything in Pro",
@@ -691,12 +696,57 @@ function Landing() {
                 />
               </div>
             </div>
+            <div data-reveal="3" className="surface card-lift border border-pop-teal/60 p-7">
+              <h3 className="text-lg font-bold">Teams</h3>
+              <p className="mt-1 font-display text-4xl font-extrabold">
+                {period === "annual" ? TEAM_SEAT_ANNUAL_PRICE_LABEL : `${TEAM_SEAT_PRICE_LABEL}/mo`}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {TEAM_MIN_SEATS}-seat minimum — from{" "}
+                {period === "annual"
+                  ? `$${TEAM_MIN_SEATS * TEAM_SEAT_ANNUAL_USD}/yr`
+                  : `$${TEAM_MIN_SEATS * TEAM_SEAT_MONTHLY_USD}/mo`}
+                {period === "annual" && (
+                  <>
+                    {" — "}
+                    <span className="font-semibold text-brand">
+                      {teamAnnualFreeMonths()} months free
+                    </span>
+                  </>
+                )}
+                {" · auto-renews, cancel anytime"}
+              </p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  "Everything in Premium — for every member",
+                  "Brand lock: your colors & logo on every card",
+                  "Shared contacts: one team pipeline",
+                  "Team-wide analytics",
+                  "Add seats anytime as you grow",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <Cta
+                  label="Start free, add your team in-app"
+                  from="pricing-teams"
+                  ab={ab}
+                  size="default"
+                />
+              </div>
+            </div>
           </div>
           <p className="mt-6 max-w-3xl text-xs text-muted-foreground">
             Paid plans renew automatically — monthly plans each month, annual plans each year.
             Cancel anytime from Settings: you keep full access until the end of the month or year
             you've paid for, and you're simply not billed again. Annual plans aren't refunded
-            mid-term; they just don't renew.
+            mid-term; they just don't renew. Teams are billed per seat ({TEAM_SEAT_PRICE_LABEL}
+            /mo or {TEAM_SEAT_ANNUAL_PRICE_LABEL}, minimum {TEAM_MIN_SEATS} seats; the owner uses
+            one) and seats can be added or reduced anytime from billing.
           </p>
         </div>
       </section>
@@ -733,7 +783,7 @@ function Landing() {
             ],
             [
               "Can my whole team use it?",
-              "Yes. Premium includes teams: invite members with a link, provision branded cards for each of them, lock your brand colors, and see shared contacts and team analytics in one view.",
+              "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, and see shared contacts and team analytics in one view.",
             ],
           ].map(([q, a]) => (
             <details

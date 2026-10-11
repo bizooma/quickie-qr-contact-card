@@ -28,7 +28,10 @@ export type BillingState = {
   annualConfigured: boolean;
   premiumConfigured: boolean;
   premiumAnnualConfigured: boolean;
+  teamConfigured: boolean;
+  teamAnnualConfigured: boolean;
   hasSubscription: boolean;
+  teamSeats: number; // seats this user has purchased (0 = not a team owner)
   credits: { scan: number; follow_up: number }; // one-time starter-pack credits
   usage: Record<UsageKind, { used: number; limit: number | null }>; // null limit = unlimited
 };
@@ -47,7 +50,7 @@ export const getBillingState = createServerFn({ method: "POST" })
     const credits = await getStarterCredits(context.userId);
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("stripe_subscription_id")
+      .select("stripe_subscription_id, team_seats")
       .eq("id", context.userId)
       .maybeSingle();
     const usage = Object.fromEntries(
@@ -62,19 +65,23 @@ export const getBillingState = createServerFn({ method: "POST" })
       annualConfigured: isStripeConfigured() && !!stripeEnv().annualPriceId,
       premiumConfigured: isStripeConfigured() && !!stripeEnv().premiumPriceId,
       premiumAnnualConfigured: isStripeConfigured() && !!stripeEnv().premiumAnnualPriceId,
+      teamConfigured: isStripeConfigured() && !!stripeEnv().teamPriceId,
+      teamAnnualConfigured: isStripeConfigured() && !!stripeEnv().teamAnnualPriceId,
       hasSubscription: !!profile?.stripe_subscription_id,
+      teamSeats: profile?.team_seats ?? 0,
       credits,
       usage,
     };
   });
 
 const CheckoutSchema = z.object({
-  plan: z.enum(["pro", "premium"]).default("pro"),
+  plan: z.enum(["pro", "premium", "team"]).default("pro"),
   interval: z.enum(["month", "year"]).default("month"),
+  seats: z.number().int().min(3).max(500).optional(), // team plan only
 });
 
-/** Starts a Stripe Checkout subscription for Pro (monthly or annual) or
- *  Premium (monthly); returns the redirect URL. */
+/** Starts a Stripe Checkout subscription — Pro or Premium (monthly/annual,
+ *  one seat) or Teams (per-seat quantity, 3-seat minimum). Returns the URL. */
 export const createCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(CheckoutSchema)
@@ -90,7 +97,8 @@ export const createCheckout = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const current = normalizePlan(profile?.plan);
-    if (current === "premium") throw new Error("You're already on Premium.");
+    if (data.plan !== "team" && current === "premium")
+      throw new Error("You're already on Premium.");
     if (data.plan === "pro" && current === "pro") throw new Error("You're already on Pro.");
     if (profile?.stripe_subscription_id) {
       // One subscription per account: switching tiers goes through the portal.
@@ -99,30 +107,37 @@ export const createCheckout = createServerFn({ method: "POST" })
 
     const env = stripeEnv();
     const price =
-      data.plan === "premium"
+      data.plan === "team"
         ? data.interval === "year"
-          ? env.premiumAnnualPriceId
-          : env.premiumPriceId
-        : data.interval === "year"
-          ? env.annualPriceId
-          : env.priceId;
+          ? env.teamAnnualPriceId
+          : env.teamPriceId
+        : data.plan === "premium"
+          ? data.interval === "year"
+            ? env.premiumAnnualPriceId
+            : env.premiumPriceId
+          : data.interval === "year"
+            ? env.annualPriceId
+            : env.priceId;
     if (!price) {
-      throw new Error(
-        data.plan === "premium"
-          ? `The Premium plan isn't configured yet — add STRIPE_PRICE_ID_PREMIUM${data.interval === "year" ? "_ANNUAL" : ""} first.`
-          : "The annual plan isn't configured yet — add STRIPE_PRICE_ID_ANNUAL first.",
-      );
+      const name =
+        data.plan === "team"
+          ? `STRIPE_PRICE_ID_TEAM${data.interval === "year" ? "_ANNUAL" : ""}`
+          : data.plan === "premium"
+            ? `STRIPE_PRICE_ID_PREMIUM${data.interval === "year" ? "_ANNUAL" : ""}`
+            : "STRIPE_PRICE_ID_ANNUAL";
+      throw new Error(`That plan isn't configured yet — add ${name} first.`);
     }
+    const seats = data.plan === "team" ? Math.max(3, data.seats ?? 3) : 1;
 
     const origin = requestOrigin();
     const email = typeof context.claims["email"] === "string" ? context.claims["email"] : undefined;
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price, quantity: 1 }],
+      line_items: [{ price, quantity: seats }],
       client_reference_id: context.userId,
       // The webhook reads the tier from metadata (session + subscription).
-      metadata: { ck_plan: data.plan },
-      subscription_data: { metadata: { ck_plan: data.plan } },
+      metadata: { ck_plan: data.plan, ck_seats: String(seats) },
+      subscription_data: { metadata: { ck_plan: data.plan, ck_seats: String(seats) } },
       ...(profile?.stripe_customer_id
         ? { customer: profile.stripe_customer_id }
         : email
