@@ -615,7 +615,7 @@ function Landing() {
                     <span className="font-semibold text-brand">
                       {annualFreeMonths()} months free
                     </span>
-                    {" · cancel anytime"}
+                    {" · auto-renews, cancel anytime"}
                   </>
                 ) : (
                   <>
@@ -623,7 +623,7 @@ function Landing() {
                     <span className="font-semibold text-brand">
                       {annualFreeMonths()} months free
                     </span>
-                    {" · cancel anytime"}
+                    {" · auto-renews, cancel anytime"}
                   </>
                 )}
               </p>
@@ -656,7 +656,7 @@ function Landing() {
                     <span className="font-semibold text-brand">
                       {premiumAnnualFreeMonths()} months free
                     </span>
-                    {" · cancel anytime"}
+                    {" · auto-renews, cancel anytime"}
                   </>
                 ) : (
                   <>
@@ -664,7 +664,7 @@ function Landing() {
                     <span className="font-semibold text-brand">
                       {premiumAnnualFreeMonths()} months free
                     </span>
-                    {" · cancel anytime"}
+                    {" · auto-renews, cancel anytime"}
                   </>
                 )}
               </p>
@@ -692,6 +692,12 @@ function Landing() {
               </div>
             </div>
           </div>
+          <p className="mt-6 max-w-3xl text-xs text-muted-foreground">
+            Paid plans renew automatically — monthly plans each month, annual plans each year.
+            Cancel anytime from Settings: you keep full access until the end of the month or year
+            you've paid for, and you're simply not billed again. Annual plans aren't refunded
+            mid-term; they just don't renew.
+          </p>
         </div>
       </section>
 
@@ -720,6 +726,10 @@ function Landing() {
             [
               "What does the free plan include, forever?",
               `One card with QR and link, unlimited share-back capture, analytics, notifications, and ${free.scan} AI card scans a month. No credit card to start, no trial clock.`,
+            ],
+            [
+              "What happens if I cancel a paid plan?",
+              "Your plan runs to the end of the month or year you've already paid for — you lose nothing you paid for — and it simply doesn't renew after that. Annual plans aren't refunded mid-term; cancelling just turns off the renewal.",
             ],
             [
               "Can my whole team use it?",

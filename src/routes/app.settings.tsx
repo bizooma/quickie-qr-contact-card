@@ -341,7 +341,9 @@ function PlanSection() {
             free): unlimited AI scans, enrichment, follow-ups and summaries, plus up to 3 cards.
             Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
             {premiumAnnualFreeMonths()} months free): everything in Pro, plus unlimited personal
-            cards, teams, email signatures, and advanced analytics with CSV export.
+            cards, teams, email signatures, and advanced analytics with CSV export. Plans
+            auto-renew; cancelling stops the renewal and your plan runs to the end of the period
+            you've paid for.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">
