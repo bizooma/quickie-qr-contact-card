@@ -292,7 +292,7 @@ function Landing() {
             {
               n: "1",
               t: "Build your card in 2 minutes",
-              d: "Name, photo, links, brand colors. It lives at your own link and updates instantly — print nothing, ever again.",
+              d: "Name, photo, links, brand colors. It lives at your own link and updates instantly, print nothing, ever again.",
             },
             {
               n: "2",
