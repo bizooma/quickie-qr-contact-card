@@ -13,7 +13,7 @@ export const HEADLINES: Record<
   a: {
     lines: ["Never lose another lead to a ", "paper card."],
     accented: "second",
-    sub: "Share your card with one QR scan — and capture their details back, automatically. No app for them to install.",
+    sub: "Share your card with one QR scan and capture their details back, automatically. No app for them to install.",
   },
   // C — the original brand rhythm, with the meaning restored in the subhead
   c: {
