@@ -500,7 +500,7 @@ function Landing() {
         <div className="grid items-center gap-10 md:grid-cols-2">
           <div>
             <h2 className="text-3xl font-extrabold md:text-4xl">
-              Don't take our word for it — tap one
+              Don't take our word for it, tap one now!
             </h2>
             <p className="mt-4 text-muted-foreground">
               The fastest way to understand ContactKickstart is to open a real card. This one is
