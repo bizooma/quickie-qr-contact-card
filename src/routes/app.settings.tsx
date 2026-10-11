@@ -33,7 +33,13 @@ import {
 } from "@/components/ui/select";
 import { useTheme, type ThemePref } from "@/hooks/use-theme";
 import { createBillingPortal, createCheckout, getBillingState } from "@/lib/billing.functions";
-import { KIND_LABELS, PRO_PRICE_LABEL, USAGE_KINDS } from "@/lib/plans";
+import {
+  annualFreeMonths,
+  KIND_LABELS,
+  PRO_ANNUAL_PRICE_LABEL,
+  PRO_PRICE_LABEL,
+  USAGE_KINDS,
+} from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
 
 export const Route = createFileRoute("/app/settings")({ component: Settings });
@@ -205,10 +211,10 @@ function PlanSection() {
     return;
   }, [qc]);
 
-  async function upgrade() {
+  async function upgrade(interval: "month" | "year") {
     setBusy(true);
     try {
-      const { url } = await createCheckout();
+      const { url } = await createCheckout({ data: { interval } });
       window.location.href = url;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not start checkout");
@@ -269,12 +275,25 @@ function PlanSection() {
         </Button>
       ) : (
         <div className="space-y-2">
-          <Button disabled={busy || !billing.stripeConfigured} onClick={upgrade}>
-            <Sparkles className="h-4 w-4" />
-            Upgrade to Pro — {PRO_PRICE_LABEL}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={busy || !billing.stripeConfigured} onClick={() => upgrade("month")}>
+              <Sparkles className="h-4 w-4" />
+              Upgrade to Pro — {PRO_PRICE_LABEL}
+            </Button>
+            {billing.annualConfigured && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => upgrade("year")}
+                className="border-brand"
+              >
+                {PRO_ANNUAL_PRICE_LABEL} — {annualFreeMonths()} months free
+              </Button>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">
             Pro: unlimited AI scans, enrichment, follow-ups and summaries, plus up to 50 cards.
+            Annual billing ({PRO_ANNUAL_PRICE_LABEL}) gets you {annualFreeMonths()} months free.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

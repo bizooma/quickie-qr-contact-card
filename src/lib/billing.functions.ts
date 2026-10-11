@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { monthlyLimit, normalizePlan, USAGE_KINDS, type UsageKind } from "./plans";
 
@@ -24,6 +25,7 @@ function requestOrigin(): string {
 export type BillingState = {
   plan: "free" | "pro";
   stripeConfigured: boolean;
+  annualConfigured: boolean;
   usage: Record<UsageKind, { used: number; limit: number | null }>; // null limit = unlimited
 };
 
@@ -32,7 +34,7 @@ export const getBillingState = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<BillingState> => {
     const { getPlan, countUsageThisMonth } = await import("./usage.server");
-    const { isStripeConfigured } = await import("./stripe.server");
+    const { isStripeConfigured, stripeEnv } = await import("./stripe.server");
     const plan = await getPlan(context.userId);
     const counts = await Promise.all(
       USAGE_KINDS.map((k) => countUsageThisMonth(context.userId, k)),
@@ -43,13 +45,22 @@ export const getBillingState = createServerFn({ method: "POST" })
         return [k, { used: counts[i] ?? 0, limit: limit === Infinity ? null : limit }];
       }),
     ) as BillingState["usage"];
-    return { plan, stripeConfigured: isStripeConfigured(), usage };
+    return {
+      plan,
+      stripeConfigured: isStripeConfigured(),
+      annualConfigured: isStripeConfigured() && !!stripeEnv().annualPriceId,
+      usage,
+    };
   });
 
-/** Starts a Stripe Checkout subscription for Pro; returns the redirect URL. */
+const CheckoutSchema = z.object({ interval: z.enum(["month", "year"]).default("month") });
+
+/** Starts a Stripe Checkout subscription for Pro (monthly or annual);
+ *  returns the redirect URL. */
 export const createCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator(CheckoutSchema)
+  .handler(async ({ data, context }) => {
     const { getStripe, isStripeConfigured, stripeEnv } = await import("./stripe.server");
     if (!isStripeConfigured()) {
       throw new Error("Billing isn't configured yet — add the Stripe secrets first.");
@@ -62,11 +73,17 @@ export const createCheckout = createServerFn({ method: "POST" })
       .maybeSingle();
     if (normalizePlan(profile?.plan) === "pro") throw new Error("You're already on Pro.");
 
+    const env = stripeEnv();
+    const price = data.interval === "year" ? env.annualPriceId : env.priceId;
+    if (!price) {
+      throw new Error("The annual plan isn't configured yet — add STRIPE_PRICE_ID_ANNUAL first.");
+    }
+
     const origin = requestOrigin();
     const email = typeof context.claims["email"] === "string" ? context.claims["email"] : undefined;
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price: stripeEnv().priceId, quantity: 1 }],
+      line_items: [{ price, quantity: 1 }],
       client_reference_id: context.userId,
       ...(profile?.stripe_customer_id
         ? { customer: profile.stripe_customer_id }

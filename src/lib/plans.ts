@@ -20,7 +20,16 @@ export const PLAN_LIMITS: Record<PlanId, { cards: number } & Record<UsageKind, n
   pro: { cards: 50, scan: Infinity, enrich: Infinity, follow_up: Infinity, summarize: Infinity },
 };
 
-export const PRO_PRICE_LABEL = "$8/mo";
+export const PRO_MONTHLY_USD = 8;
+export const PRO_ANNUAL_USD = 80;
+export const PRO_PRICE_LABEL = `$${PRO_MONTHLY_USD}/mo`;
+export const PRO_ANNUAL_PRICE_LABEL = `$${PRO_ANNUAL_USD}/yr`;
+
+/** Whole months of Pro the annual discount covers — the "2 months free" claim.
+ *  Derived from the prices so the marketing line can never drift from reality. */
+export function annualFreeMonths(): number {
+  return Math.floor((12 * PRO_MONTHLY_USD - PRO_ANNUAL_USD) / PRO_MONTHLY_USD);
+}
 
 export function normalizePlan(plan: string | null | undefined): PlanId {
   return plan === "pro" ? "pro" : "free";

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  annualFreeMonths,
   isWithinLimit,
   limitReachedMessage,
   monthStartIso,
   monthlyLimit,
   normalizePlan,
+  PRO_ANNUAL_PRICE_LABEL,
+  PRO_PRICE_LABEL,
   remaining,
 } from "./plans";
 
@@ -44,5 +47,15 @@ describe("limitReachedMessage", () => {
     const msg = limitReachedMessage("scan");
     expect(msg).toContain("ai card scans");
     expect(msg).toContain("Pro");
+  });
+});
+
+describe("annual pricing", () => {
+  it("the '2 months free' claim matches the actual prices", () => {
+    expect(annualFreeMonths()).toBe(2);
+  });
+  it("labels derive from the numeric prices", () => {
+    expect(PRO_PRICE_LABEL).toBe("$8/mo");
+    expect(PRO_ANNUAL_PRICE_LABEL).toBe("$80/yr");
   });
 });
