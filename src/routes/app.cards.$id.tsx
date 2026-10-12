@@ -28,12 +28,27 @@ function EditorPage() {
   const { data, isLoading } = useQuery({ queryKey: ["card", id], queryFn: () => getCard(id) });
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.card) return <p>Card not found. <Link to="/app" className="underline">Back to cards</Link></p>;
-  return <Editor key={id} cardId={id} initial={rowToCard(data.card, data.links)} />;
+  return (
+    <Editor
+      key={id}
+      cardId={id}
+      initial={rowToCard(data.card, data.links)}
+      qrCenter={data.card.qr_center}
+    />
+  );
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
+function Editor({
+  cardId,
+  initial,
+  qrCenter,
+}: {
+  cardId: string;
+  initial: CardData;
+  qrCenter: string | null;
+}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -559,11 +574,14 @@ function Editor({ cardId, initial }: { cardId: string; initial: CardData }) {
 
           <TabsContent value="share">
             <QrPanel
+              cardId={cardId}
               slug={card.slug}
               accent={card.accent_color}
               bg={card.background_color}
               name={card.full_name}
+              headshotPath={card.headshot_path}
               logoPath={card.logo_path}
+              qrCenter={qrCenter}
             />
           </TabsContent>
         </Tabs>
