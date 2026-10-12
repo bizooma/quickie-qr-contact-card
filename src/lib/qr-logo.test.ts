@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BRAND_QR_CENTER,
   logoBox,
   parseQrCenter,
   qrCenterAllowed,
@@ -76,18 +77,28 @@ describe("parseQrCenter", () => {
 
 describe("qrCenterSource", () => {
   const paths = { headshotPath: "u/face.webp", logoPath: "u/logo.png" };
+  const brand = { kind: "brand", url: BRAND_QR_CENTER, shape: "rounded" };
   it("returns the photo as a circle and the logo as a rounded square", () => {
-    expect(qrCenterSource("photo", paths, "pro")).toEqual({ path: "u/face.webp", shape: "circle" });
+    expect(qrCenterSource("photo", paths, "pro")).toEqual({
+      kind: "stored",
+      path: "u/face.webp",
+      shape: "circle",
+    });
     expect(qrCenterSource("logo", paths, "premium")).toEqual({
+      kind: "stored",
       path: "u/logo.png",
       shape: "rounded",
     });
   });
-  it("falls back to a plain QR for free plans, no choice, or a missing image", () => {
-    expect(qrCenterSource("photo", paths, "free")).toBeNull();
-    expect(qrCenterSource(null, paths, "pro")).toBeNull();
-    expect(
-      qrCenterSource("logo", { headshotPath: "u/face.webp", logoPath: null }, "pro"),
-    ).toBeNull();
+  it("defaults to the ContactKickstart badge when nothing is chosen", () => {
+    expect(qrCenterSource(null, paths, "pro")).toEqual(brand);
+    expect(qrCenterSource(null, paths, "free")).toEqual(brand);
+  });
+  it("falls back to the badge for free plans or a missing image", () => {
+    expect(qrCenterSource("photo", paths, "free")).toEqual(brand);
+    expect(qrCenterSource("photo", paths, undefined)).toEqual(brand);
+    expect(qrCenterSource("logo", { headshotPath: "u/face.webp", logoPath: null }, "pro")).toEqual(
+      brand,
+    );
   });
 });
