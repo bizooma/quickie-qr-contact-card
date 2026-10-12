@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/use-auth";
+import { initMonitoring } from "@/lib/monitoring";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -130,6 +131,7 @@ function RootComponent() {
   // Register the PWA service worker (production only — it would fight Vite's
   // dev server and HMR otherwise).
   useEffect(() => {
+    initMonitoring();
     if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").catch(() => {
       // Offline support is progressive enhancement; the app works without it.

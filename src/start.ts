@@ -25,7 +25,26 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+// Clickjacking protection. 'self' keeps the landing page's live-card popup
+// (same-origin iframe of /c/…) working.
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const res = await next();
+  if (res instanceof Response) {
+    try {
+      if (!res.headers.has("content-security-policy")) {
+        res.headers.set("Content-Security-Policy", "frame-ancestors 'self'");
+      }
+      if (!res.headers.has("x-frame-options")) {
+        res.headers.set("X-Frame-Options", "SAMEORIGIN");
+      }
+    } catch {
+      // Immutable headers (platform-served responses) — leave as-is.
+    }
+  }
+  return res;
+});
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [errorMiddleware, csrfMiddleware, securityHeadersMiddleware],
 }));
