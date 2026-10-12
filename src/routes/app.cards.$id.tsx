@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -21,7 +22,7 @@ import { signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
 import { renderOgImage } from "@/lib/og-image";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/app/cards/$id")({ component: EditorPage });
+export const Route = createFileRoute("/app/cards/$id")({ head: appHead('Edit card', 'Edit your digital business card and see changes live.'), component: EditorPage });
 
 function EditorPage() {
   const { id } = Route.useParams();

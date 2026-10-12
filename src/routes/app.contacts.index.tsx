@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -19,7 +20,7 @@ import { contactsToCsv, initials } from "@/lib/card-model";
 import { usePlan } from "@/components/PremiumGate";
 import { PREMIUM_PRICE_LABEL } from "@/lib/plans";
 
-export const Route = createFileRoute("/app/contacts/")({ component: ContactsPage });
+export const Route = createFileRoute("/app/contacts/")({ head: appHead('Contacts', "Search, tag and export the contacts you've captured."), component: ContactsPage });
 
 const RANGES = { all: "Any time", "7": "Last 7 days", "30": "Last 30 days", "90": "Last 90 days" } as const;
 

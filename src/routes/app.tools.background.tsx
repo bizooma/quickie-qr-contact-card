@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ import {
   type QrSizeId,
 } from "@/lib/background";
 
-export const Route = createFileRoute("/app/tools/background")({ component: BackgroundPage });
+export const Route = createFileRoute("/app/tools/background")({ head: appHead('Meeting background', "Make a video-call background with your card's QR code."), component: BackgroundPage });
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {

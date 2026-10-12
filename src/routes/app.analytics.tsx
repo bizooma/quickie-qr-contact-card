@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -8,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listCards } from "@/lib/cards-api";
 import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
 
-export const Route = createFileRoute("/app/analytics")({ component: Analytics });
+export const Route = createFileRoute("/app/analytics")({ head: appHead('Analytics', 'Views, saves and share-backs for each of your cards.'), component: Analytics });
 
 async function loadEvents(days: number) {
   const since = startOfDay(subDays(new Date(), days - 1)).toISOString();

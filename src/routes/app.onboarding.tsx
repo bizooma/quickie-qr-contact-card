@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -9,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { createCard } from "@/lib/cards-api";
 
-export const Route = createFileRoute("/app/onboarding")({ component: Onboarding });
+export const Route = createFileRoute("/app/onboarding")({ head: appHead('Get started', 'Create your first digital business card.'), component: Onboarding });
 
 function Onboarding() {
   const { user } = useAuth();
