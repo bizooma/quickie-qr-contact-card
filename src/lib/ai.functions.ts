@@ -7,8 +7,11 @@ import {
   EnrichmentResultSchema,
   FollowUpDraftSchema,
   FollowUpInputSchema,
+  OwnCardScanSchema,
   ScanCardsInputSchema,
+  ScanMyCardInputSchema,
   ScanResultSchema,
+  SELF_SCANS_PER_DAY,
 } from "./ai-model";
 
 const MODEL = "claude-opus-5-5";
@@ -81,6 +84,80 @@ export const scanCards = createServerFn({ method: "POST" })
       throw new Error("Could not read the cards from these photos. Try clearer, closer shots.");
     }
     await recordUsage(context.userId, "scan");
+    return response.parsed_output;
+  });
+
+/** Reads the user's OWN paper business card (front, optionally back) to build
+ *  their digital card. Free on every plan, so it skips the monthly scan
+ *  allowance; a daily cap guards against misuse instead. */
+export const scanMyCard = createServerFn({ method: "POST" })
+  .middleware([requireActiveAuth])
+  .validator(ScanMyCardInputSchema)
+  .handler(async ({ data, context }) => {
+    const { assertSelfScanAllowance, recordSelfScan } = await import("./usage.server");
+    await assertSelfScanAllowance(context.userId, SELF_SCANS_PER_DAY);
+    const client = await getAnthropic();
+    const { betaZodOutputFormat } = await import("@anthropic-ai/sdk/helpers/beta/zod");
+
+    const response = await client.beta.messages.parse({
+      model: MODEL,
+      max_tokens: 16000,
+      // On a policy decline the API retries on a fallback model in the same call.
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system:
+        "You read a person's own paper business card so it can be turned into their " +
+        "digital business card. The photos show the front and, if given, the back of ONE " +
+        "card. Set `is_business_card` false if the photos don't show a business card.\n" +
+        "Copy text exactly as printed (correct obvious OCR-style misreads only) and use " +
+        "null or an empty list for anything not on the card — never invent a value.\n" +
+        "- phones / emails: every one printed, each with a short label from the card " +
+        '("Mobile", "Office", "Fax", "Work"…) or a sensible one if unlabeled.\n' +
+        "- website: the main company or personal site. address: the postal address as one " +
+        "line. tagline: a slogan or tagline, if printed.\n" +
+        "- social_links: social profiles or handles as full URLs (an @handle next to a " +
+        "LinkedIn icon becomes https://linkedin.com/in/handle); skip ones you can't resolve.\n" +
+        "- brand_color: the card's dominant brand color (logo, colored band or accent text) " +
+        'as "#RRGGBB"; background_color: the card stock behind the main text as "#RRGGBB".\n' +
+        "- logo: a tight box around the company logo (symbol plus wordmark when they sit " +
+        "together). headshot: a tight box around a printed photo of the person's face. " +
+        "Boxes are x/y/w/h fractions (0–1) of that photo's width and height, x/y the " +
+        "top-left corner, with image_index the zero-based photo it is on. Never box the " +
+        "whole card, a QR code, or a decorative icon; use null when unsure.",
+      messages: [
+        {
+          role: "user",
+          content: [
+            ...data.images.map(
+              (img) =>
+                ({
+                  type: "image",
+                  source: { type: "base64", media_type: img.media_type, data: img.data },
+                }) as const,
+            ),
+            {
+              type: "text",
+              text:
+                data.images.length > 1
+                  ? "Read my business card: photo 0 is the front, photo 1 the back."
+                  : "Read my business card.",
+            },
+          ],
+        },
+      ],
+      output_config: { format: betaZodOutputFormat(OwnCardScanSchema) },
+    });
+
+    if (response.stop_reason === "refusal") {
+      throw new Error("The AI declined to read this photo. Try a different shot of your card.");
+    }
+    if (!response.parsed_output) {
+      throw new Error("Could not read your card. Try a clearer, closer photo in good light.");
+    }
+    if (!response.parsed_output.is_business_card) {
+      throw new Error("That doesn't look like a business card. Try a photo of your card.");
+    }
+    await recordSelfScan(context.userId);
     return response.parsed_output;
   });
 

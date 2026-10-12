@@ -14,6 +14,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CardView } from "@/components/card/CardView";
 import { ICON_LABELS, LinkIcon } from "@/components/card/LinkIcon";
 import { QrPanel } from "@/components/card/QrPanel";
+import { ScanMyCard } from "@/components/card/ScanMyCard";
+import { mergeScannedIntoCard } from "@/lib/own-card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getCard, rowToCard, saveLinks } from "@/lib/cards-api";
@@ -286,6 +288,19 @@ function Editor({
           </TabsList>
 
           <TabsContent value="details" className="space-y-6">
+            <div className="surface flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Have a paper card? Fill everything in from a photo of it.
+              </p>
+              <ScanMyCard
+                variant="outline"
+                label="Fill from my business card"
+                onScanned={(fields) => {
+                  setCard((c) => mergeScannedIntoCard(c, fields));
+                  toast.success("Filled in from your card — review the details");
+                }}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <ImagePick
                 label="Headshot"

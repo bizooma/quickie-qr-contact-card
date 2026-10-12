@@ -65,3 +65,41 @@ export async function cropHeadshot(
     bitmap.close();
   }
 }
+
+const LOGO_PADDING = 0.06;
+const CARD_IMAGE_MAX_DIMENSION = 512;
+
+/** Crops a logo or headshot box out of a prepared photo of the user's own
+ *  card, ready to upload as a card image. Null when the box fails the same
+ *  sanity checks as headshots (specks, whole-card boxes). */
+export async function cropCardImage(
+  image: PreparedImage,
+  box: HeadshotBox | null,
+  kind: "logo" | "headshot",
+): Promise<Blob | null> {
+  if (!box) return null;
+  const bitmap = await createImageBitmap(await (await fetch(image.previewUrl)).blob());
+  try {
+    const rect = headshotCropRect(
+      bitmap.width,
+      bitmap.height,
+      box,
+      kind === "logo" ? LOGO_PADDING : undefined,
+    );
+    if (!rect) return null;
+    const scale = Math.min(1, CARD_IMAGE_MAX_DIMENSION / Math.max(rect.w, rect.h));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(rect.w * scale));
+    canvas.height = Math.max(1, Math.round(rect.h * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, rect.x, rect.y, rect.w, rect.h, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY),
+    );
+  } catch {
+    return null;
+  } finally {
+    bitmap.close();
+  }
+}

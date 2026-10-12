@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrPanel } from "@/components/card/QrPanel";
+import { ScanMyCard } from "@/components/card/ScanMyCard";
 import { useAuth } from "@/hooks/use-auth";
-import { createCard, listCards, type CardRow } from "@/lib/cards-api";
+import { createCard, createCardFromScan, listCards, type CardRow } from "@/lib/cards-api";
 import { initials } from "@/lib/card-model";
+import type { ScannedCardFields } from "@/lib/own-card";
 import { signedUrls } from "@/lib/media";
 
 export const Route = createFileRoute("/app/")({ head: appHead('My cards', 'All your digital business cards in one place.'), component: CardsPage });
@@ -40,6 +42,18 @@ function CardsPage() {
   useEffect(() => {
     if (cards && cards.length === 0) navigate({ to: "/app/onboarding" });
   }, [cards, navigate]);
+
+  async function addCardFromScan(fields: ScannedCardFields) {
+    if (!user) return;
+    try {
+      const c = await createCardFromScan(user.id, label.trim() || "Work", fields);
+      await qc.invalidateQueries({ queryKey: ["cards"] });
+      toast.success("Card created from your business card — review the details");
+      navigate({ to: "/app/cards/$id", params: { id: c.id } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create card");
+    }
+  }
 
   async function addCard(e: React.FormEvent) {
     e.preventDefault();
@@ -170,6 +184,12 @@ function CardsPage() {
               Create card
             </Button>
           </form>
+          <div className="space-y-2 border-t pt-4 text-center">
+            <p className="text-xs text-muted-foreground">
+              Or build it from your paper business card — logo, colors, photo and all.
+            </p>
+            <ScanMyCard variant="outline" className="w-full" onScanned={addCardFromScan} />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

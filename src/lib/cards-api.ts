@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { slugify, type CardData, type CardLink, type LabeledValue } from "./card-model";
+import type { ScannedCardFields } from "./own-card";
 
 export type CardRow = Tables<"cards">;
 
@@ -68,6 +69,22 @@ export async function createCard(
     if (error.code !== "23505") throw error;
   }
   throw new Error("Could not find a free card address, please try again");
+}
+
+/** Creates a fully filled card from a scan of the user's own business card
+ *  (see ScanMyCard). The plan's card limit still applies via createCard. */
+export async function createCardFromScan(userId: string, label: string, fields: ScannedCardFields) {
+  const card = await createCard(userId, {
+    label,
+    full_name: fields.full_name,
+    job_title: fields.job_title ?? undefined,
+    company: fields.company ?? undefined,
+  });
+  const { links, full_name: _n, job_title: _j, company: _c, ...rest } = fields;
+  const { error } = await supabase.from("cards").update(rest).eq("id", card.id);
+  if (error) throw error;
+  if (links.length) await saveLinks(userId, card.id, links);
+  return card;
 }
 
 /** Replace a card's links with the given ordered list (idempotent). */

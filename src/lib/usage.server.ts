@@ -81,3 +81,32 @@ export async function recordUsage(userId: string, kind: UsageKind): Promise<void
     // Swallowed on purpose.
   }
 }
+
+// ---- Own-card scans --------------------------------------------------------
+// Scanning your own business card is free on every plan, so it doesn't touch
+// the monthly scan allowance; a rolling daily cap keeps it from being used as
+// an unmetered scanner for other people's cards.
+
+export async function assertSelfScanAllowance(userId: string, perDay: number): Promise<void> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count } = await supabaseAdmin
+    .from("ai_usage")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("kind", "self_scan")
+    .gte("created_at", since);
+  if ((count ?? 0) >= perDay) {
+    throw new Error(
+      "You've scanned your own card a lot today — try again tomorrow, or edit the details by hand.",
+    );
+  }
+}
+
+/** Best-effort, like recordUsage. */
+export async function recordSelfScan(userId: string): Promise<void> {
+  try {
+    await supabaseAdmin.from("ai_usage").insert({ user_id: userId, kind: "self_scan" });
+  } catch {
+    // Swallowed on purpose.
+  }
+}
