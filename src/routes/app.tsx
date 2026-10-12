@@ -15,6 +15,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { FeatureTips } from "@/components/FeatureTip";
+import { isStandalone } from "@/hooks/use-pwa-install";
+import { consumeLaunch, getOpenOnQr, shouldOpenOnQr } from "@/lib/quick-qr";
 import { trackActivity } from "@/lib/activity.functions";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +62,23 @@ function AppLayout() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
+
+  // Opt-in (on the QR screen): launching the installed app opens My QR.
+  useEffect(() => {
+    const firstLoad = consumeLaunch();
+    if (
+      shouldOpenOnQr({
+        enabled: getOpenOnQr(),
+        standalone: isStandalone(),
+        pathname: window.location.pathname,
+        firstLoad,
+      })
+    ) {
+      navigate({ to: "/app/qr", replace: true });
+    }
+    // Once per launch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: access } = useQuery({
     queryKey: ["is-admin", user?.id],
@@ -182,9 +202,11 @@ function AppLayout() {
         </nav>
       </aside>
       <main className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pb-10 md:pt-10">
+        <FeatureTips />
         <Outlet />
       </main>
-      <InstallPrompt />
+      {/* Not over the code people are scanning; its tip covers installing. */}
+      {pathname !== "/app/qr" && <InstallPrompt />}
       {/* One-tap "scan me" from anywhere in the app on a phone. */}
       {pathname !== "/app/qr" && (
         <Link

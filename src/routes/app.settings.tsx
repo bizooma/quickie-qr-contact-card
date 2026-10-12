@@ -3,7 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, ChevronRight, LogOut, Sparkles } from "lucide-react";
+import { Building2, ChevronRight, Lightbulb, LogOut, Sparkles } from "lucide-react";
+import { useDismissedTips } from "@/components/FeatureTip";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,6 +142,7 @@ function Settings() {
           ))}
         </ul>
       </section>
+      <TipsSection />
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Install the app</h2>
         <InstallInstructions />
@@ -173,6 +175,31 @@ function Settings() {
         deleteAccount={deleteAccount}
       />
     </div>
+  );
+}
+
+/** Brings back every "how this works" tip the user turned off. */
+function TipsSection() {
+  const { dismissed, resetAll } = useDismissedTips();
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-bold">Tips</h2>
+      <p className="text-sm text-muted-foreground">
+        Each screen has a short guide — tap <strong>Tips</strong> at the top of any screen to see
+        it. {dismissed.length > 0 && `You've turned off ${dismissed.length} of them.`}
+      </p>
+      <Button
+        variant="outline"
+        disabled={!dismissed.length}
+        onClick={async () => {
+          await resetAll();
+          toast.success("Tips will show again as you visit each screen");
+        }}
+      >
+        <Lightbulb className="h-4 w-4" />
+        Show tips again
+      </Button>
+    </section>
   );
 }
 

@@ -2,9 +2,11 @@ import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Copy, Share2 } from "lucide-react";
+import { ArrowLeft, Copy, Lightbulb, Share2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { openTip } from "@/components/FeatureTip";
 import { listCards } from "@/lib/cards-api";
 import {
   publicCardUrl,
@@ -14,6 +16,13 @@ import {
 } from "@/components/card/QrPanel";
 import { usePlan } from "@/components/PremiumGate";
 import { parseQrCenter, qrCenterSource } from "@/lib/qr-logo";
+import {
+  getOpenOnQr,
+  setOpenOnQr,
+  WALLPAPER_H,
+  WALLPAPER_W,
+  wallpaperLayout,
+} from "@/lib/quick-qr";
 
 // The fastest path to "scan me": launches straight from the app-icon
 // shortcut, renders from a localStorage snapshot before any network round
@@ -40,6 +49,43 @@ function readSnapshot(): QrSnapshot | null {
     return raw ? (JSON.parse(raw) as QrSnapshot) : null;
   } catch {
     return null;
+  }
+}
+
+/** A portrait lock-screen image of the code: the card's colors, a framed QR
+ *  and "Scan to save my contact". No name or photo — just the code. */
+async function wallpaperBlob(svg: string, accent: string, bg: string): Promise<Blob> {
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Could not draw the QR code"));
+      img.src = url;
+    });
+    const c = document.createElement("canvas");
+    c.width = WALLPAPER_W;
+    c.height = WALLPAPER_H;
+    const ctx = c.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    const { panel, qr, caption } = wallpaperLayout();
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, WALLPAPER_W, WALLPAPER_H);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.roundRect(panel.x, panel.y, panel.size, panel.size, panel.radius);
+    ctx.fill();
+    ctx.drawImage(img, qr.x, qr.y, qr.size, qr.size);
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.font = `600 ${caption.size}px Helvetica, Arial, sans-serif`;
+    ctx.fillText("Scan to save my contact", caption.x, caption.y, WALLPAPER_W * 0.9);
+    return await new Promise<Blob>((resolve, reject) =>
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error("Export failed"))), "image/png"),
+    );
+  } finally {
+    URL.revokeObjectURL(url);
   }
 }
 
@@ -95,6 +141,35 @@ function QuickQr() {
     view?.center ?? null,
   );
   const url = view ? publicCardUrl(view.slug) : "";
+  const [openOnQr, setOpenOnQrState] = useState(getOpenOnQr);
+  const [savingWallpaper, setSavingWallpaper] = useState(false);
+
+  async function saveWallpaper() {
+    if (!svg || !view) return;
+    setSavingWallpaper(true);
+    try {
+      const blob = await wallpaperBlob(svg, view.accent, view.bg);
+      const file = new File([blob], `${view.slug}-qr-wallpaper.png`, { type: "image/png" });
+      // Phones: the share sheet has "Save Image" (Photos). Elsewhere: download.
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          return;
+        } catch (e) {
+          if ((e as Error).name === "AbortError") return;
+        }
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+    } catch {
+      toast.error("Could not make the wallpaper");
+    } finally {
+      setSavingWallpaper(false);
+    }
+  }
 
   async function share() {
     try {
@@ -185,10 +260,46 @@ function QuickQr() {
         </Button>
       </div>
 
-      <p className="mt-6 max-w-xs text-center text-xs text-muted-foreground">
-        Tip: with the app installed, long-press the ContactKickstart icon and tap “My QR code” to
-        land here in one step. This screen works even with no signal.
-      </p>
+      <div className="mt-8 w-full space-y-3">
+        <label className="surface flex items-center gap-3 px-4 py-3">
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">Open the app on my QR code</span>
+            <span className="block text-xs text-muted-foreground">
+              Tapping the app icon on this device shows your code straight away.
+            </span>
+          </span>
+          <Switch
+            checked={openOnQr}
+            onCheckedChange={(on) => {
+              setOpenOnQr(on);
+              setOpenOnQrState(on);
+              toast.success(
+                on ? "The app will open on your QR code" : "The app will open on Cards",
+              );
+            }}
+          />
+        </label>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => void saveWallpaper()}
+          disabled={!svg || savingWallpaper}
+        >
+          <Smartphone className="h-4 w-4" />
+          Save as wallpaper
+        </Button>
+        <button
+          type="button"
+          onClick={() => openTip("qr")}
+          className="mx-auto flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground"
+        >
+          <Lightbulb className="h-3.5 w-3.5" />
+          How to get to your QR code in one tap
+        </button>
+        <p className="text-center text-xs text-muted-foreground">
+          This screen works even with no signal.
+        </p>
+      </div>
     </div>
   );
 }

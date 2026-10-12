@@ -56,6 +56,32 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     ],
   },
   {
+    id: "quick-qr",
+    title: "Quick access to your QR code",
+    items: [
+      [
+        "Can I add a QR widget to my phone?",
+        "Home-screen widgets need an app from the App Store or Play Store, so ContactKickstart can't add one. You can get just as close: one tap from your home screen, or your code right on your lock screen. The steps are below, and in the app under My QR → “How to get to your QR code in one tap”.",
+      ],
+      [
+        "iPhone: one tap from your home screen",
+        "Open contactkickstart.com in Safari, tap Share, then Add to Home Screen. Then open the app, go to My QR and turn on “Open the app on my QR code” — tapping the icon now shows your code straight away.",
+      ],
+      [
+        "Android: one tap from your home screen",
+        "In Chrome, tap ⋮ then Install app (or Add to Home screen). Touch and hold the ContactKickstart icon and drag “My QR code” onto your home screen for a one-tap QR icon — or turn on “Open the app on my QR code” in My QR.",
+      ],
+      [
+        "Put your QR code on your lock screen",
+        "In My QR, tap “Save as wallpaper” and save the image. iPhone: open it in Photos, tap Share → Use as Wallpaper. Android: open it in Photos or Gallery → Set as wallpaper → Lock screen. Your code shows as soon as you lift your phone.",
+      ],
+      [
+        "Works with no signal",
+        "The My QR screen is generated on your phone, so it still works at events with bad Wi-Fi or no reception.",
+      ],
+    ],
+  },
+  {
     id: "capturing",
     title: "Capturing contacts",
     items: [

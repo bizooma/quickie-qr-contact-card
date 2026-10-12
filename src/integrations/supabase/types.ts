@@ -513,6 +513,7 @@ export type Database = {
           created_at: string
           credit_follow_up: number
           credit_scan: number
+          dismissed_tips: string[]
           display_name: string | null
           id: string
           is_admin: boolean
@@ -534,6 +535,7 @@ export type Database = {
           created_at?: string
           credit_follow_up?: number
           credit_scan?: number
+          dismissed_tips?: string[]
           display_name?: string | null
           id: string
           is_admin?: boolean
@@ -555,6 +557,7 @@ export type Database = {
           created_at?: string
           credit_follow_up?: number
           credit_scan?: number
+          dismissed_tips?: string[]
           display_name?: string | null
           id?: string
           is_admin?: boolean
