@@ -869,6 +869,11 @@ function Landing() {
                   Terms of service
                 </Link>
               </li>
+              <li>
+                <Link to="/security" className="hover:text-foreground">
+                  Security
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

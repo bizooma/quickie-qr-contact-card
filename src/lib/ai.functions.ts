@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveAuth } from "@/lib/auth-guard";
 import {
   NoteSummarySchema,
   SummarizeNoteInputSchema,
@@ -27,7 +27,7 @@ async function getAnthropic() {
 
 /** Reads photos of paper business cards and returns one structured contact per card. */
 export const scanCards = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveAuth])
   .validator(ScanCardsInputSchema)
   .handler(async ({ data, context }) => {
     const { assertWithinLimit, recordUsage } = await import("./usage.server");
@@ -86,7 +86,7 @@ export const scanCards = createServerFn({ method: "POST" })
 
 /** Drafts a personalized follow-up email for one captured contact. */
 export const draftFollowUp = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveAuth])
   .validator(FollowUpInputSchema)
   .handler(async ({ data, context }) => {
     const { assertWithinLimit, recordUsage } = await import("./usage.server");
@@ -162,7 +162,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
 
 /** Researches a contact on the web and returns verified field SUGGESTIONS only; never writes. */
 export const enrichContact = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveAuth])
   .validator(EnrichInputSchema)
   .handler(async ({ data, context }) => {
     const { assertWithinLimit, recordUsage } = await import("./usage.server");
@@ -181,7 +181,8 @@ export const enrichContact = createServerFn({ method: "POST" })
 
     const known = [
       `Name: ${contact.full_name}`,
-      contact.email && `Email: ${contact.email} (domain: ${contact.email.split("@")[1] ?? "unknown"})`,
+      contact.email &&
+        `Email: ${contact.email} (domain: ${contact.email.split("@")[1] ?? "unknown"})`,
       contact.company && `Company: ${contact.company}`,
       contact.job_title && `Title: ${contact.job_title}`,
       contact.website && `Website: ${contact.website}`,
@@ -239,7 +240,7 @@ export const enrichContact = createServerFn({ method: "POST" })
 
 /** Summarizes one contact note into key points and next steps; does not write anything. */
 export const summarizeNote = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveAuth])
   .validator(SummarizeNoteInputSchema)
   .handler(async ({ data, context }) => {
     const { assertWithinLimit, recordUsage } = await import("./usage.server");

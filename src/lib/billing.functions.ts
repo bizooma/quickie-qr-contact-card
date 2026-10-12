@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveAuth } from "@/lib/auth-guard";
 import { effectivePlan, monthlyLimit, USAGE_KINDS, type PlanId, type UsageKind } from "./plans";
 
 // Billing server functions. SDK and admin imports stay inside handlers —
@@ -83,7 +84,7 @@ const CheckoutSchema = z.object({
 /** Starts a Stripe Checkout subscription — Pro or Premium (monthly/annual,
  *  one seat) or Teams (per-seat quantity, 3-seat minimum). Returns the URL. */
 export const createCheckout = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveAuth])
   .validator(CheckoutSchema)
   .handler(async ({ data, context }) => {
     const { getStripe, isStripeConfigured, stripeEnv } = await import("./stripe.server");

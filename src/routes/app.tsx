@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { trackActivity } from "@/lib/activity.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({
@@ -59,15 +60,26 @@ function AppLayout() {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
 
-  // People can share their details back at any time; surface the ones that
-  // arrived since the contacts page was last opened.
-  const { data: isAdmin = false } = useQuery({
+  const { data: access } = useQuery({
     queryKey: ["is-admin", user?.id],
     enabled: !!user,
     queryFn: async () =>
-      (await supabase.from("profiles").select("is_admin").eq("id", user!.id).maybeSingle()).data
-        ?.is_admin ?? false,
+      (
+        await supabase
+          .from("profiles")
+          .select("is_admin, suspended")
+          .eq("id", user!.id)
+          .maybeSingle()
+      ).data ?? null,
   });
+  const isAdmin = access?.is_admin ?? false;
+
+  // Presence breadcrumb for the admin dashboard (last seen + screens opened).
+  // Fire-and-forget; throttled to one ping per screen per visit.
+  useEffect(() => {
+    if (!user) return;
+    void trackActivity({ data: { path: pathname } }).catch(() => {});
+  }, [user, pathname]);
 
   const { data: newLeads = 0 } = useQuery({
     queryKey: ["new-leads"],
@@ -93,6 +105,33 @@ function AppLayout() {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
         Loading…
+      </div>
+    );
+
+  // Suspended accounts can sign in but nothing else: the server functions
+  // and database writes are blocked independently of this screen.
+  if (access?.suspended)
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="surface max-w-md space-y-4 p-8 text-center">
+          <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
+          <h1 className="text-xl font-bold">Account suspended</h1>
+          <p className="text-sm text-muted-foreground">
+            Your account has been suspended and app features are unavailable. If you believe this is
+            a mistake, email{" "}
+            <a href="mailto:support@contactkickstart.com" className="font-semibold underline">
+              support@contactkickstart.com
+            </a>{" "}
+            and we&apos;ll take a look.
+          </p>
+          <button
+            type="button"
+            onClick={() => void supabase.auth.signOut()}
+            className="text-sm font-medium text-muted-foreground underline hover:text-foreground"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     );
 
