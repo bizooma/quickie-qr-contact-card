@@ -8,12 +8,15 @@ import {
   CORNERS,
   coverFit,
   defaultDesign,
+  designMediaPaths,
   gradientLine,
   layerBox,
   moveLayer,
   newImageLayer,
   newTextLayer,
+  ownPaths,
   panelLayout,
+  parseDesign,
   pdfSafeText,
   QR_SIZES,
   resizeLayer,
@@ -93,16 +96,12 @@ describe("design layers", () => {
     expect(box.y).toBeGreaterThan(BG_HEIGHT / 2);
   });
 
-  it("places a logo top-left within 320x160 and a photo as a top-right circle", () => {
+  it("places a logo top-left within 320x160", () => {
     const logo = newImageLayer("logo", "Logo", 4);
     const lb = layerBox(logo);
     expect(lb.w).toBeLessThanOrEqual(320);
     expect(lb.h).toBeLessThanOrEqual(160);
     expect(lb.x).toBeLessThan(BG_WIDTH / 2);
-    const photo = newImageLayer("photo", "Photo", 0.75);
-    const pb = layerBox(photo);
-    expect(pb.w).toBe(pb.h);
-    expect(pb.x).toBeGreaterThan(BG_WIDTH / 2);
     expect(newImageLayer("upload", "Pic", Number.NaN).aspect).toBe(1);
   });
 
@@ -150,5 +149,54 @@ describe("captionColors", () => {
   it("uses dark text on light panels and light text on dark ones", () => {
     expect(captionColors("#FFFFFF").name).toBe("#111827");
     expect(captionColors("#111111").name).toBe("#ffffff");
+  });
+});
+
+describe("saved designs", () => {
+  const design = () => {
+    const d = defaultDesign("#E8553D");
+    return {
+      ...d,
+      photo: "u/backdrop.jpg",
+      fill: { type: "photo" as const, dim: 0.2, blur: 4 },
+      layers: [
+        ...d.layers,
+        newImageLayer("logo", "Company logo", 2),
+        newImageLayer("upload", "Pic", 1.5, "u/pic.png"),
+        newTextLayer("Hello", "#FFFFFF"),
+      ],
+    };
+  };
+
+  it("round-trips through JSON", () => {
+    const d = design();
+    expect(parseDesign(JSON.parse(JSON.stringify(d)))).toEqual(d);
+  });
+
+  it("lists only uploaded files, not the card's own logo or photo", () => {
+    expect(designMediaPaths(design()).sort()).toEqual(["u/backdrop.jpg", "u/pic.png"]);
+  });
+
+  it("rejects malformed or inconsistent designs", () => {
+    // Profile-photo layers were dropped: nothing identifying on backgrounds.
+    expect(
+      parseDesign({ ...design(), layers: [{ ...newImageLayer("logo", "x", 1), role: "photo" }] }),
+    ).toBeNull();
+    expect(parseDesign(null)).toBeNull();
+    expect(
+      parseDesign({ fill: { type: "solid", color: "red" }, layers: [], photo: null }),
+    ).toBeNull();
+    expect(parseDesign({ ...design(), photo: null })).toBeNull();
+    const d = design();
+    expect(parseDesign({ ...d, layers: [d.layers[0], d.layers[0]] })).toBeNull();
+    expect(parseDesign({ ...d, layers: Array.from({ length: 31 }, () => d.layers[3]) })).toBeNull();
+  });
+});
+
+describe("ownPaths", () => {
+  it("keeps only files in the user's own folder", () => {
+    expect(ownPaths("u1", ["u1/a.jpg", "u2/b.jpg", "u1/../u2/c.jpg", "x/u1/d.jpg"])).toEqual([
+      "u1/a.jpg",
+    ]);
   });
 });

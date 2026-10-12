@@ -9,6 +9,7 @@ import {
   coverFit,
   gradientLine,
   layerBox,
+  QR_CAPTION,
   QR_PAD,
   TEXT_LINE,
   type Box,
@@ -26,8 +27,6 @@ export type DesignAssets = {
   qr: HTMLImageElement | null;
   // Image layers' sources, keyed by layer id.
   images: Record<string, HTMLImageElement>;
-  // Name printed under the QR code.
-  name: string;
 };
 
 export const TEXT_FONT = "Helvetica, Arial, sans-serif";
@@ -223,18 +222,11 @@ export function drawQrPanel(
     ctx.drawImage(assets.qr, box.x + QR_PAD, box.y + QR_PAD, layer.size, layer.size);
   }
   if (layer.caption) {
-    const colors = captionColors(layer.panel);
-    const cx = box.x + box.w / 2;
-    const top = box.y + QR_PAD + layer.size + 14;
-    const maxW = box.w - QR_PAD;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = colors.name;
-    ctx.font = `700 26px ${TEXT_FONT}`;
-    ctx.fillText(assets.name, cx, top, maxW);
-    ctx.fillStyle = colors.sub;
-    ctx.font = `400 17px ${TEXT_FONT}`;
-    ctx.fillText("Scan to connect", cx, top + 32, maxW);
+    ctx.fillStyle = captionColors(layer.panel).name;
+    ctx.font = `600 22px ${TEXT_FONT}`;
+    ctx.fillText(QR_CAPTION, box.x + box.w / 2, box.y + QR_PAD + layer.size + 10, box.w - QR_PAD);
   }
 }
 
@@ -275,4 +267,21 @@ export function canvasBlob(
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Export failed"))), type, quality),
   );
+}
+
+/** Downscales an image for upload: JPEG for photos, PNG when it may have
+ *  transparency (logos, cut-outs). */
+export async function imageForUpload(
+  img: HTMLImageElement,
+  { max, keepAlpha }: { max: number; keepAlpha: boolean },
+): Promise<Blob> {
+  const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.naturalWidth * s));
+  c.height = Math.max(1, Math.round(img.naturalHeight * s));
+  const ctx = c.getContext("2d");
+  if (!ctx) throw new Error("Canvas unavailable");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  return keepAlpha ? canvasBlob(c, "image/png") : canvasBlob(c, "image/jpeg", 0.88);
 }

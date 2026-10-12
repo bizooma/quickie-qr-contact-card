@@ -65,6 +65,35 @@ export type Database = {
         }
         Relationships: []
       }
+      background_designs: {
+        Row: {
+          card_id: string
+          design: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          design: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          design?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "background_designs_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: true
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_links: {
         Row: {
           card_id: string
