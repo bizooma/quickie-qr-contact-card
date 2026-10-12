@@ -65,6 +65,22 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "ContactKickstart",
+          url: "https://contactkickstart.com",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          description:
+            "A digital business card that shares your details with one QR scan and captures theirs back automatically.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        }),
+      },
+    ],
   }),
   component: Landing,
 });
