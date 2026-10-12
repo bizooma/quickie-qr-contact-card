@@ -113,6 +113,8 @@ export function CardView({
     </div>
   );
 
+  const logoAlt = card.company ? `${card.company} logo` : "Company logo";
+
   return (
     <div
       className="min-h-full w-full"
@@ -122,7 +124,7 @@ export function CardView({
         <div className="relative h-36" style={{ background: accent }}>
           <img
             src={logo}
-            alt=""
+            alt={logoAlt}
             className="absolute right-4 top-4 h-9 max-w-[96px] rounded-md object-contain"
           />
         </div>
@@ -137,7 +139,7 @@ export function CardView({
           <div className="flex flex-col gap-5 pt-10">
             <div className="flex items-center justify-between">
               {avatar(72)}
-              <img src={logo} alt="" className="h-9 max-w-[110px] object-contain" />
+              <img src={logo} alt={logoAlt} className="h-9 max-w-[110px] object-contain" />
             </div>
             <div className="h-1 w-10 rounded-full" style={{ background: accent }} />
             {header}
@@ -146,7 +148,7 @@ export function CardView({
           <div className="flex flex-col items-center gap-4 pt-10">
             {avatar(112)}
             {header}
-            <img src={logo} alt="" className="h-8 max-w-[120px] object-contain" />
+            <img src={logo} alt={logoAlt} className="h-8 max-w-[120px] object-contain" />
           </div>
         )}
 
