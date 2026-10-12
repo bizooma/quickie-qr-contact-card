@@ -113,6 +113,8 @@ export function CardView({
     </div>
   );
 
+  const logoAlt = card.company ? `${card.company} logo` : "Company logo";
+
   return (
     <div
       className="min-h-full w-full"
