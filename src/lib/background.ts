@@ -1,6 +1,8 @@
 // Pure layout math and backdrop presets for the virtual-background generator.
 // Canvas rendering lives in the route; everything here is unit-testable.
 
+import { z } from "zod/v4";
+
 export const BG_WIDTH = 1920;
 export const BG_HEIGHT = 1080;
 
@@ -128,6 +130,9 @@ export type ImageLayer = LayerBase & {
   shape: ImageShape;
   // White rounded backing so dark logos read on dark backdrops.
   plate: boolean;
+  // Storage path of an uploaded picture; logo and photo layers use the
+  // card's current logo/headshot instead, so they follow card edits.
+  path: string | null;
 };
 export type TextLayer = LayerBase & {
   kind: "text";
@@ -138,11 +143,18 @@ export type TextLayer = LayerBase & {
   shadow: boolean;
 };
 export type Layer = QrLayer | ImageLayer | TextLayer;
-export type Design = { fill: Fill; layers: Layer[] };
+export type Design = {
+  fill: Fill;
+  layers: Layer[];
+  // Storage path of the uploaded backdrop photo. Kept while another fill is
+  // showing, so switching back to "Photo" still has it.
+  photo: string | null;
+};
 
 export type Box = { x: number; y: number; w: number; h: number };
 export type Placement = CornerId | "center";
 
+export const MAX_LAYERS = 30;
 export const QR_SIZE_RANGE = { min: 160, max: 520 } as const;
 export const IMAGE_W_RANGE = { min: 60, max: BG_WIDTH } as const;
 export const TEXT_SIZE_RANGE = { min: 20, max: 200 } as const;
@@ -260,10 +272,16 @@ export function defaultDesign(accent: string): Design {
   return {
     fill: fillFromBackdrop(backdropPresets(accent)[0]!),
     layers: [{ ...qr, ...snapPosition("br", box.w, box.h) }],
+    photo: null,
   };
 }
 
-export function newImageLayer(role: ImageLayer["role"], name: string, aspect: number): ImageLayer {
+export function newImageLayer(
+  role: ImageLayer["role"],
+  name: string,
+  aspect: number,
+  path: string | null = null,
+): ImageLayer {
   const safeAspect = aspect > 0 && Number.isFinite(aspect) ? aspect : 1;
   const base = {
     id: newId(role),
@@ -271,6 +289,7 @@ export function newImageLayer(role: ImageLayer["role"], name: string, aspect: nu
     role,
     name,
     aspect: safeAspect,
+    path,
     visible: true,
     opacity: 1,
   };
@@ -339,3 +358,89 @@ export function captionColors(panel: string): { name: string; sub: string } {
 
 export const QR_PAD = PAD;
 export const QR_LABEL_H = LABEL_H;
+
+// ---------- saving ----------
+
+/** Uploaded files a design references (backdrop photo and pictures). */
+export function designMediaPaths(design: Design): string[] {
+  const paths = new Set<string>();
+  if (design.photo) paths.add(design.photo);
+  for (const l of design.layers) if (l.kind === "image" && l.path) paths.add(l.path);
+  return [...paths];
+}
+
+const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const storagePath = z.string().min(1).max(300);
+const layerBase = {
+  id: z.string().min(1).max(80),
+  x: z
+    .number()
+    .min(-BG_WIDTH)
+    .max(BG_WIDTH * 2),
+  y: z
+    .number()
+    .min(-BG_HEIGHT)
+    .max(BG_HEIGHT * 2),
+  visible: z.boolean(),
+  opacity: z.number().min(0).max(1),
+};
+const LayerSchema = z.discriminatedUnion("kind", [
+  z.object({
+    ...layerBase,
+    kind: z.literal("qr"),
+    size: z.number().min(QR_SIZE_RANGE.min).max(QR_SIZE_RANGE.max),
+    panel: hex,
+    caption: z.boolean(),
+  }),
+  z.object({
+    ...layerBase,
+    kind: z.literal("image"),
+    role: z.enum(["logo", "photo", "upload"]),
+    name: z.string().max(80),
+    w: z.number().min(IMAGE_W_RANGE.min).max(IMAGE_W_RANGE.max),
+    aspect: z.number().positive().max(100),
+    shape: z.enum(["square", "rounded", "circle"]),
+    plate: z.boolean(),
+    path: storagePath.nullable(),
+  }),
+  z.object({
+    ...layerBase,
+    kind: z.literal("text"),
+    text: z.string().max(500),
+    size: z.number().min(TEXT_SIZE_RANGE.min).max(TEXT_SIZE_RANGE.max),
+    color: hex,
+    bold: z.boolean(),
+    shadow: z.boolean(),
+  }),
+]);
+const FillSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("solid"), color: hex }),
+  z.object({ type: z.literal("gradient"), from: hex, to: hex, angle: z.number().min(0).max(360) }),
+  z.object({
+    type: z.literal("photo"),
+    dim: z.number().min(0).max(1),
+    blur: z.number().min(0).max(40),
+  }),
+]);
+const DesignSchema = z.object({
+  fill: FillSchema,
+  layers: z.array(LayerSchema).max(MAX_LAYERS),
+  photo: storagePath.nullable(),
+});
+
+/** Validates a saved design; null if it's missing or malformed, so the
+ *  editor falls back to the default instead of breaking. */
+export function parseDesign(raw: unknown): Design | null {
+  const r = DesignSchema.safeParse(raw);
+  if (!r.success) return null;
+  const d = r.data as Design;
+  // A photo fill needs its photo; ids must be unique for selection/dragging.
+  if (d.fill.type === "photo" && !d.photo) return null;
+  if (new Set(d.layers.map((l) => l.id)).size !== d.layers.length) return null;
+  return d;
+}
+
+/** Paths safe for this user to delete: only files in their own folder. */
+export function ownPaths(userId: string, paths: string[]): string[] {
+  return paths.filter((p) => p.startsWith(`${userId}/`) && !p.includes(".."));
+}

@@ -18,9 +18,10 @@ import { ScanMyCard } from "@/components/card/ScanMyCard";
 import { mergeScannedIntoCard } from "@/lib/own-card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { designUploads } from "@/lib/background-store";
 import { getCard, rowToCard, saveLinks } from "@/lib/cards-api";
 import { ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, LINK_ICONS, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
-import { signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
+import { removeMedia, signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
 import { renderOgImage } from "@/lib/og-image";
 import { cn } from "@/lib/utils";
 
@@ -195,8 +196,10 @@ function Editor({
   }
 
   async function deleteCard() {
+    const bgFiles = user ? await designUploads(user.id, cardId) : [];
     const { error } = await supabase.from("cards").delete().eq("id", cardId);
     if (error) { toast.error(error.message); return; }
+    void removeMedia(bgFiles).catch(() => {});
     await qc.invalidateQueries({ queryKey: ["cards"] });
     navigate({ to: "/app" });
   }

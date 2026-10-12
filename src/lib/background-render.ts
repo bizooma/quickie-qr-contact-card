@@ -276,3 +276,20 @@ export function canvasBlob(
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Export failed"))), type, quality),
   );
 }
+
+/** Downscales an image for upload: JPEG for photos, PNG when it may have
+ *  transparency (logos, cut-outs). */
+export async function imageForUpload(
+  img: HTMLImageElement,
+  { max, keepAlpha }: { max: number; keepAlpha: boolean },
+): Promise<Blob> {
+  const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.naturalWidth * s));
+  c.height = Math.max(1, Math.round(img.naturalHeight * s));
+  const ctx = c.getContext("2d");
+  if (!ctx) throw new Error("Canvas unavailable");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  return keepAlpha ? canvasBlob(c, "image/png") : canvasBlob(c, "image/jpeg", 0.88);
+}

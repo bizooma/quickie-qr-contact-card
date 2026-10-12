@@ -10,6 +10,7 @@ import {
   ArrowUpLeft,
   ArrowUpRight,
   Building2,
+  Check,
   ChevronDown,
   ChevronUp,
   Crosshair,
@@ -33,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
 import { listCards, type CardRow } from "@/lib/cards-api";
 import { signedUrls } from "@/lib/media";
 import { publicCardUrl } from "@/components/card/QrPanel";
@@ -43,12 +45,14 @@ import {
   captionColors,
   clampPosition,
   defaultDesign,
+  designMediaPaths,
   fillFromBackdrop,
   layerBox,
   layerSize,
   moveLayer,
   newImageLayer,
   newTextLayer,
+  ownPaths,
   resizeLayer,
   shade,
   sizeRange,
@@ -60,7 +64,15 @@ import {
   type Layer,
   type Placement,
 } from "@/lib/background";
-import { canvasBlob, loadImage, renderDesign, type DesignAssets } from "@/lib/background-render";
+import {
+  canvasBlob,
+  imageForUpload,
+  loadImage,
+  renderDesign,
+  type DesignAssets,
+} from "@/lib/background-render";
+import { loadDesign, saveDesign, uploadBackgroundImage } from "@/lib/background-store";
+import { removeMedia } from "@/lib/media";
 
 export const Route = createFileRoute("/app/tools/background")({
   head: appHead("Meeting background", "Make a video-call background with your card's QR code."),
@@ -228,7 +240,8 @@ function BackgroundPage() {
       <h1 className="mb-1 text-2xl font-bold">Virtual background</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         A 1920×1080 backdrop for Zoom, Meet, or Teams with your card's QR code — meetings become
-        contact capture too. Drag anything on the preview to move it.
+        contact capture too. Drag anything on the preview to move it — your design saves
+        automatically.
       </p>
       {card ? (
         <Studio key={card.id} card={card} cards={cards ?? []} onCardChange={setCardId} />
@@ -248,15 +261,28 @@ function Studio({
   cards: CardRow[];
   onCardChange: (id: string) => void;
 }) {
+  const { user } = useAuth();
+  // Org admins can see teammates' cards; backgrounds save for your own only.
+  const canSave = !!user && card.user_id === user.id;
+  // Read through a ref so saves fired from unmount/pagehide see the owner.
+  const owner = useRef<string | null>(null);
+  owner.current = canSave && user ? user.id : null;
   const accent = card.accent_color || "#E8553D";
-  const presets = useMemo(() => backdropPresets(accent).map(fillFromBackdrop), [accent]);
+  const presets = useMemo(
+    () => backdropPresets(accent).map((b) => ({ name: b.name, fill: fillFromBackdrop(b) })),
+    [accent],
+  );
   const [design, setDesign] = useState<Design>(() => defaultDesign(accent));
+  const [hydrated, setHydrated] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved" | "error">(
+    "idle",
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [images, setImages] = useState<Record<string, HTMLImageElement>>({});
   const [qr, setQr] = useState<HTMLImageElement | null>(null);
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
-  const [adding, setAdding] = useState<"logo" | "photo" | null>(null);
+  const [adding, setAdding] = useState<"logo" | "photo" | "picture" | "backdrop" | null>(null);
   const [exporting, setExporting] = useState<"png" | "pdf" | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -277,6 +303,127 @@ function Studio({
     [photo, qr, images, card.full_name],
   );
   const selected = design.layers.find((l) => l.id === selectedId) ?? null;
+
+  // ---- saving ----
+  // Last design JSON written to the database, the latest in-memory design,
+  // uploaded files the design has referenced (candidates for cleanup), and
+  // a queue so saves land in order.
+  const savedJson = useRef<string | null>(null);
+  const latest = useRef(design);
+  latest.current = design;
+  const known = useRef(new Set<string>());
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const pending = useRef<Design | null>(null);
+
+  function persist(next: Design) {
+    const userId = owner.current;
+    if (!userId) return;
+    const json = JSON.stringify(next);
+    pending.current = null;
+    queue.current = queue.current.then(async () => {
+      if (json === savedJson.current) return;
+      setSaveState("saving");
+      try {
+        await saveDesign(userId, card.id, next);
+        savedJson.current = json;
+        // Drop uploads neither this save nor the newest edit still uses.
+        const keep = new Set([...designMediaPaths(next), ...designMediaPaths(latest.current)]);
+        const orphans = [...known.current].filter((p) => !keep.has(p));
+        known.current = keep;
+        if (orphans.length) void removeMedia(ownPaths(userId, orphans)).catch(() => {});
+        setSaveState(pending.current ? "pending" : "saved");
+      } catch {
+        setSaveState("error");
+      }
+    });
+  }
+
+  // Load the saved design once, with its pictures.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let saved: Design | null = null;
+      try {
+        saved = canSave ? await loadDesign(card.id) : null;
+      } catch {
+        // Fall back to the default design.
+      }
+      if (saved) {
+        // Logo/photo layers follow the card; drop them if the card lost it.
+        const source = (l: Layer) =>
+          l.kind !== "image"
+            ? null
+            : l.role === "logo"
+              ? card.logo_path
+              : l.role === "photo"
+                ? card.headshot_path
+                : l.path;
+        const layers = saved.layers.filter((l) => l.kind !== "image" || !!source(l));
+        const imgs: Record<string, HTMLImageElement> = {};
+        await Promise.all(
+          layers.map(async (l) => {
+            const p = source(l);
+            if (!p) return;
+            try {
+              imgs[l.id] = await loadStoredImage(p);
+            } catch {
+              // Leave it in the list; it just won't draw.
+            }
+          }),
+        );
+        let backdrop: HTMLImageElement | null = null;
+        if (saved.photo) {
+          try {
+            backdrop = await loadStoredImage(saved.photo);
+          } catch {
+            // Photo fill falls back to a plain backdrop until replaced.
+          }
+        }
+        if (cancelled) return;
+        const next = { ...saved, layers };
+        savedJson.current = JSON.stringify(saved);
+        known.current = new Set(designMediaPaths(saved));
+        setImages(imgs);
+        setPhoto(backdrop);
+        setDesign(next);
+        setSaveState("saved");
+      }
+      if (cancelled) return;
+      // Nothing saved yet: the default design only saves once it's edited.
+      if (!saved) savedJson.current = JSON.stringify(latest.current);
+      setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Runs once per card (the Studio is keyed by card id).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Autosave shortly after each change.
+  useEffect(() => {
+    if (!hydrated || !canSave) return;
+    if (JSON.stringify(design) === savedJson.current) return;
+    pending.current = design;
+    setSaveState("pending");
+    const t = setTimeout(() => persist(design), 800);
+    return () => clearTimeout(t);
+    // persist reads refs; design is the trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design, hydrated, canSave]);
+
+  // Don't lose the last edit when leaving the page or switching cards.
+  useEffect(() => {
+    const flush = () => {
+      if (pending.current) persist(pending.current);
+    };
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // QR code for this card, rendered once at the largest size the editor allows.
   useEffect(() => {
@@ -300,7 +447,7 @@ function Studio({
     if (!ctx) return;
     const frame = requestAnimationFrame(() => setBoxes(renderDesign(ctx, design, assets)));
     return () => cancelAnimationFrame(frame);
-  }, [design, assets]);
+  }, [design, assets, hydrated]);
 
   function updateLayer(id: string, patch: Partial<Layer>) {
     setDesign((d) => ({
@@ -351,17 +498,30 @@ function Studio({
       toast.error("Please choose an image file");
       return;
     }
+    setAdding(as === "backdrop" ? "backdrop" : "picture");
     try {
       const img = await loadImage(URL.createObjectURL(file));
+      // Store a right-sized copy so the design can be reopened later.
+      let path: string | null = null;
+      if (canSave && user) {
+        const blob = await imageForUpload(img, {
+          max: as === "backdrop" ? 2560 : 1600,
+          keepAlpha: as === "layer" && /png|webp|gif/.test(file.type),
+        });
+        path = await uploadBackgroundImage(user.id, blob);
+        known.current.add(path);
+      }
       if (as === "backdrop") {
         setPhoto(img);
-        setDesign((d) => ({ ...d, fill: { type: "photo", dim: 0.2, blur: 0 } }));
+        setDesign((d) => ({ ...d, photo: path, fill: { type: "photo", dim: 0.2, blur: 0 } }));
       } else {
         const name = file.name.replace(/\.[^.]+$/, "").slice(0, 40) || "Picture";
-        addLayer(newImageLayer("upload", name, img.naturalWidth / img.naturalHeight), img);
+        addLayer(newImageLayer("upload", name, img.naturalWidth / img.naturalHeight, path), img);
       }
     } catch {
-      toast.error("Could not read that image");
+      toast.error("Could not add that image");
+    } finally {
+      setAdding(null);
     }
   }
 
@@ -474,6 +634,10 @@ function Studio({
     }
   }
 
+  if (!hydrated) {
+    return <div className="aspect-video w-full animate-pulse rounded-xl bg-muted lg:max-w-3xl" />;
+  }
+
   const fill = design.fill;
   const hasLogo = !!card.logo_path;
   const hasPhoto = !!card.headshot_path;
@@ -537,7 +701,14 @@ function Studio({
 
       <div className="mt-4 space-y-6 lg:mt-0">
         <div className="space-y-1">
-          <Label htmlFor="bg-card">Card</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="bg-card">Card</Label>
+            <SaveStatus
+              state={canSave ? saveState : "idle"}
+              canSave={canSave}
+              onRetry={() => persist(latest.current)}
+            />
+          </div>
           <select
             id="bg-card"
             className="w-full rounded-xl border bg-background px-3 py-2 text-sm"
@@ -555,9 +726,9 @@ function Studio({
         <section className="space-y-3">
           <h2 className="font-semibold">Background</h2>
           <div className="flex flex-wrap gap-2">
-            {presets.map((p, i) => (
+            {presets.map(({ name, fill: p }) => (
               <button
-                key={i}
+                key={name}
                 type="button"
                 onClick={() => setFill(p)}
                 className={`h-10 w-14 rounded-lg border-2 ${sameFill(fill, p) ? "border-brand" : "border-transparent"}`}
@@ -569,7 +740,8 @@ function Studio({
                         ? `linear-gradient(${p.angle}deg, ${p.from}, ${p.to})`
                         : undefined,
                 }}
-                aria-label={`Preset ${i + 1}`}
+                aria-label={`${name} background`}
+                title={name}
               />
             ))}
           </div>
@@ -642,8 +814,17 @@ function Studio({
           )}
           {fill.type === "photo" && (
             <div className="space-y-3">
-              <Button variant="outline" size="sm" onClick={() => photoInput.current?.click()}>
-                <Upload className="h-4 w-4" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => photoInput.current?.click()}
+                disabled={adding === "backdrop"}
+              >
+                {adding === "backdrop" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
                 Change photo
               </Button>
               <SliderField
@@ -696,8 +877,16 @@ function Studio({
               <Type className="h-4 w-4" />
               Text
             </Button>
-            <Button variant="outline" onClick={() => imageInput.current?.click()}>
-              <ImagePlus className="h-4 w-4" />
+            <Button
+              variant="outline"
+              onClick={() => imageInput.current?.click()}
+              disabled={adding === "picture"}
+            >
+              {adding === "picture" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImagePlus className="h-4 w-4" />
+              )}
               Picture
             </Button>
           </div>
@@ -725,6 +914,7 @@ function Studio({
               size="sm"
               onClick={() => {
                 setDesign(defaultDesign(accent));
+                setPhoto(null);
                 setSelectedId(null);
               }}
             >
@@ -834,6 +1024,41 @@ function Studio({
         </section>
       </div>
     </div>
+  );
+}
+
+function SaveStatus({
+  state,
+  canSave,
+  onRetry,
+}: {
+  state: "idle" | "pending" | "saving" | "saved" | "error";
+  canSave: boolean;
+  onRetry: () => void;
+}) {
+  if (!canSave) {
+    return <span className="text-xs text-muted-foreground">Saving is for your own cards</span>;
+  }
+  if (state === "error") {
+    return (
+      <button type="button" onClick={onRetry} className="text-xs text-destructive underline">
+        Couldn't save — retry
+      </button>
+    );
+  }
+  if (state === "pending" || state === "saving") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Saving…
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+      <Check className="h-3 w-3" />
+      {state === "saved" ? "Saved — it'll be here next time" : "Changes save automatically"}
+    </span>
   );
 }
 
