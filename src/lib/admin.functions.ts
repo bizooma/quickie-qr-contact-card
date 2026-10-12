@@ -16,6 +16,12 @@ async function assertPlatformAdmin(userId: string) {
   return supabaseAdmin;
 }
 
+/** Logs the real error server-side; callers only ever see a generic message. */
+function adminFailure(action: string, error: { message?: string }): Error {
+  console.error(`[admin] ${action} failed:`, error.message);
+  return new Error(`Couldn't ${action}. Please try again.`);
+}
+
 // Comping plans is owner-only (not every admin): the JWT email must match.
 export const OWNER_EMAIL = "kale@myaisummit.dev";
 
@@ -85,7 +91,7 @@ export const setUserPlan = createServerFn({ method: "POST" })
       // Clear any old expiry, or a lapsed date would override the new plan.
       .update({ plan: data.plan, plan_expires_at: null })
       .eq("id", data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return { ok: true };
   });
 
@@ -124,7 +130,7 @@ export const compUser = createServerFn({ method: "POST" })
       .from("profiles")
       .update({ plan: data.plan, plan_expires_at: expiresAt(data.term) })
       .eq("id", data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return { ok: true };
   });
 
@@ -149,7 +155,7 @@ export const addSignupGrant = createServerFn({ method: "POST" })
       grant_months: termMonths(data.term),
       note: data.note ?? null,
     });
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return { ok: true };
   });
 
@@ -174,7 +180,7 @@ export const listSignupGrants = createServerFn({ method: "POST" })
       .select("id, match_email, match_name, plan, grant_months, note, created_at")
       .is("claimed_at", null)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return data ?? [];
   });
 
@@ -190,7 +196,7 @@ export const deleteSignupGrant = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .is("claimed_at", null);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return { ok: true };
   });
 
@@ -222,7 +228,7 @@ export const setUserSuspended = createServerFn({ method: "POST" })
         suspended_at: data.suspended ? new Date().toISOString() : null,
       })
       .eq("id", data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return { ok: true };
   });
 
@@ -243,7 +249,7 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
       if (paths.length) await admin.storage.from("card-media").remove(paths);
     }
     const { error } = await admin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     // Belt and braces for rows that might not cascade from auth.users.
     await admin.from("profiles").delete().eq("id", data.userId);
     return { ok: true };
@@ -284,7 +290,7 @@ export const getUserActivity = createServerFn({ method: "POST" })
       .eq("user_id", data.userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return rows ?? [];
   });
 
@@ -298,7 +304,7 @@ export const deleteOrgAdmin = createServerFn({ method: "POST" })
     await admin.from("org_invites").delete().eq("org_id", data.orgId);
     await admin.from("org_members").delete().eq("org_id", data.orgId);
     const { error } = await admin.from("orgs").delete().eq("id", data.orgId);
-    if (error) throw new Error(error.message);
+    if (error) throw adminFailure("complete that action", error);
     return { ok: true };
   });
 
