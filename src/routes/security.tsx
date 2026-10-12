@@ -54,8 +54,8 @@ function Security() {
         time (CSV or vCard from the app), and you can delete your account yourself from Settings —
         deletion removes your cards, contacts, photos and account data. For any other access,
         correction or erasure request, email{" "}
-        <a href="mailto:support@contactkickstart.com" className="underline">
-          support@contactkickstart.com
+        <a href="mailto:support@myaisummit.dev" className="underline">
+          support@myaisummit.dev
         </a>{" "}
         and we&apos;ll handle it promptly.
       </p>
@@ -72,16 +72,16 @@ function Security() {
         privilege throughout. ContactKickstart has not yet completed an independent SOC&nbsp;2
         Type&nbsp;II audit; formal certification is on our roadmap as the company grows. If your
         organization needs our current security documentation for a vendor review, email{" "}
-        <a href="mailto:support@contactkickstart.com" className="underline">
-          support@contactkickstart.com
+        <a href="mailto:support@myaisummit.dev" className="underline">
+          support@myaisummit.dev
         </a>
         .
       </p>
       <h2>Reporting a vulnerability</h2>
       <p>
         If you believe you&apos;ve found a security issue, email{" "}
-        <a href="mailto:support@contactkickstart.com" className="underline">
-          support@contactkickstart.com
+        <a href="mailto:support@myaisummit.dev" className="underline">
+          support@myaisummit.dev
         </a>{" "}
         with the details. We read every report and act on them quickly.
       </p>

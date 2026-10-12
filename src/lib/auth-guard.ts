@@ -15,7 +15,7 @@ export const requireActiveAuth = createMiddleware({ type: "function" })
       .eq("id", context.userId)
       .maybeSingle();
     if (data?.suspended) {
-      throw new Error("Account suspended — contact support@contactkickstart.com");
+      throw new Error("Account suspended — contact support@myaisummit.dev");
     }
     return next();
   });

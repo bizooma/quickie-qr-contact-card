@@ -119,8 +119,8 @@ function AppLayout() {
           <p className="text-sm text-muted-foreground">
             Your account has been suspended and app features are unavailable. If you believe this is
             a mistake, email{" "}
-            <a href="mailto:support@contactkickstart.com" className="font-semibold underline">
-              support@contactkickstart.com
+            <a href="mailto:support@myaisummit.dev" className="font-semibold underline">
+              support@myaisummit.dev
             </a>{" "}
             and we&apos;ll take a look.
           </p>
