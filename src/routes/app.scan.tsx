@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
@@ -32,7 +33,7 @@ import { decodeQrText, mergeScannedContacts } from "@/lib/scan-decode";
 import { contactsToVcf } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 
-export const Route = createFileRoute("/app/scan")({ component: ScanPage });
+export const Route = createFileRoute("/app/scan")({ head: appHead('Scan a card', 'Photograph a paper business card to save it as a contact.'), component: ScanPage });
 
 type EditableContact = ScannedContact & { include: boolean; headshot: CroppedHeadshot | null };
 

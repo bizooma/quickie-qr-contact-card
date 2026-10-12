@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -51,7 +52,7 @@ import {
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
 
-export const Route = createFileRoute("/app/settings")({ component: Settings });
+export const Route = createFileRoute("/app/settings")({ head: appHead('Settings', 'Manage your profile, cards and account.'), component: Settings });
 
 function Settings() {
   const { user } = useAuth();

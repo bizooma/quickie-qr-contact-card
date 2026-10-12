@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -10,7 +11,7 @@ import { buildSignatureHtml, SIGNATURE_STYLES, type SignatureStyle } from "@/lib
 import { publicCardUrl } from "@/components/card/QrPanel";
 import { PremiumGate } from "@/components/PremiumGate";
 
-export const Route = createFileRoute("/app/tools/signature")({ component: SignaturePage });
+export const Route = createFileRoute("/app/tools/signature")({ head: appHead('Email signature', 'Create an email signature from your card.'), component: SignaturePage });
 
 const SETUP = [
   {

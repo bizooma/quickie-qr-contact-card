@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Loader2, Users } from "lucide-react";
@@ -5,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { acceptInvite } from "@/lib/org.functions";
 
-export const Route = createFileRoute("/app/join/$token")({ component: JoinPage });
+export const Route = createFileRoute("/app/join/$token")({ head: appHead('Join team', 'Accept an invitation to join a team.'), component: JoinPage });
 
 function JoinPage() {
   const { token } = Route.useParams();

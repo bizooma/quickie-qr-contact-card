@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
@@ -93,7 +94,7 @@ function Spark({ points, label }: { points: DayPoint[]; label: string }) {
   );
 }
 
-export const Route = createFileRoute("/app/admin")({ component: AdminPage });
+export const Route = createFileRoute("/app/admin")({ head: appHead('Admin', 'Administration tools.'), component: AdminPage });
 
 // The page is gated twice: this client check hides it, and every server
 // function re-verifies profiles.is_admin with the service role (destructive

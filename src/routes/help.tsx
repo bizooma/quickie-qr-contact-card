@@ -9,6 +9,10 @@ export const Route = createFileRoute("/help")({
         content:
           "How to build and share your digital business card, capture contacts, scan paper cards, set up your team, and manage your plan.",
       },
+      { property: "og:title", content: "Help Center — ContactKickstart" },
+      { property: "og:description", content: "Guides for building, sharing and getting the most from your ContactKickstart card." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Help,

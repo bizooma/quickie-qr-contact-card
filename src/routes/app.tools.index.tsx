@@ -1,7 +1,8 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ImageIcon, PenLine } from "lucide-react";
 
-export const Route = createFileRoute("/app/tools/")({ component: ToolsIndex });
+export const Route = createFileRoute("/app/tools/")({ head: appHead('Tools', 'Tools to share your card further.'), component: ToolsIndex });
 
 const TOOLS = [
   {

@@ -5,6 +5,11 @@ export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
       { title: "Terms of Service — ContactKickstart" },
+      { name: "description", content: "The terms that apply when you use ContactKickstart digital business cards and contact tools." },
+      { property: "og:title", content: "Terms of Service — ContactKickstart" },
+      { property: "og:description", content: "The terms that apply when you use ContactKickstart." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

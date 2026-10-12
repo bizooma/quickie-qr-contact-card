@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -12,7 +13,7 @@ import { createCard, listCards, type CardRow } from "@/lib/cards-api";
 import { initials } from "@/lib/card-model";
 import { signedUrls } from "@/lib/media";
 
-export const Route = createFileRoute("/app/")({ component: CardsPage });
+export const Route = createFileRoute("/app/")({ head: appHead('My cards', 'All your digital business cards in one place.'), component: CardsPage });
 
 function CardsPage() {
   const { user } = useAuth();

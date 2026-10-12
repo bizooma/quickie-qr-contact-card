@@ -50,7 +50,22 @@ export const Route = createFileRoute("/c/$slug")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: image },
     ];
-    return { meta };
+    const scripts = c
+      ? [{
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            mainEntity: {
+              "@type": "Person",
+              name: c.full_name,
+              ...(c.job_title ? { jobTitle: c.job_title } : {}),
+              ...(c.company ? { worksFor: { "@type": "Organization", name: c.company } } : {}),
+            },
+          }).replace(/</g, "\\u003c"),
+        }]
+      : [];
+    return { meta, scripts };
   },
   notFoundComponent: () => (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">

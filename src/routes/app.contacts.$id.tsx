@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -51,7 +52,7 @@ import {
 import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
 
-export const Route = createFileRoute("/app/contacts/$id")({ component: ContactDetail });
+export const Route = createFileRoute("/app/contacts/$id")({ head: appHead('Contact', 'Contact details, notes and follow-ups.'), component: ContactDetail });
 
 const DETAIL_FIELDS = [
   "full_name",

@@ -1,3 +1,4 @@
+import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -22,7 +23,7 @@ type QrSnapshot = {
 
 const QR_CACHE_KEY = "ck-qr-card";
 
-export const Route = createFileRoute("/app/qr")({ component: QuickQr });
+export const Route = createFileRoute("/app/qr")({ head: appHead('QR code', "Show your card's QR code full screen."), component: QuickQr });
 
 function readSnapshot(): QrSnapshot | null {
   try {
