@@ -10,17 +10,26 @@ import { effectivePlan, monthlyLimit, USAGE_KINDS, type PlanId, type UsageKind }
 
 const FALLBACK_ORIGIN = "https://contactkickstart.com";
 
+// Stripe return URLs only ever point back at our own domains.
+const ALLOWED_ORIGINS = new Set([
+  "https://contactkickstart.com",
+  "https://www.contactkickstart.com",
+  "https://contactkickstart.lovable.app",
+  "https://id-preview--47eb069c-46a5-4b91-8359-3b044f3e0bde.lovable.app",
+]);
+
 function requestOrigin(): string {
   const req = getRequest();
-  const origin = req?.headers.get("origin");
-  if (origin && /^https:\/\//.test(origin)) return origin;
-  try {
-    const ref = req?.headers.get("referer");
-    if (ref) return new URL(ref).origin;
-  } catch {
-    // Fall through.
+  let origin = req?.headers.get("origin") ?? null;
+  if (!origin) {
+    try {
+      const ref = req?.headers.get("referer");
+      if (ref) origin = new URL(ref).origin;
+    } catch {
+      // Fall through.
+    }
   }
-  return FALLBACK_ORIGIN;
+  return origin && ALLOWED_ORIGINS.has(origin) ? origin : FALLBACK_ORIGIN;
 }
 
 export type BillingState = {
