@@ -484,11 +484,14 @@ export type Database = {
           display_name: string | null
           id: string
           is_admin: boolean
+          last_seen_at: string | null
           onboarded: boolean
           plan: string
           plan_expires_at: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          suspended: boolean
+          suspended_at: string | null
           team_seats: number
           updated_at: string
           webhook_url: string | null
@@ -502,11 +505,14 @@ export type Database = {
           display_name?: string | null
           id: string
           is_admin?: boolean
+          last_seen_at?: string | null
           onboarded?: boolean
           plan?: string
           plan_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          suspended?: boolean
+          suspended_at?: string | null
           team_seats?: number
           updated_at?: string
           webhook_url?: string | null
@@ -520,11 +526,14 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_admin?: boolean
+          last_seen_at?: string | null
           onboarded?: boolean
           plan?: string
           plan_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          suspended?: boolean
+          suspended_at?: string | null
           team_seats?: number
           updated_at?: string
           webhook_url?: string | null
@@ -657,11 +666,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_analytics: { Args: never; Returns: Json }
       admin_overview: { Args: never; Returns: Json }
       apply_purchase_entitlements: {
         Args: { _email: string; _user: string }

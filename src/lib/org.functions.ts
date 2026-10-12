@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveAuth } from "@/lib/auth-guard";
 
 // Team server functions. Only invite acceptance needs the service role (the
 // joiner isn't a member yet, so RLS can't let them write the membership);
@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const AcceptInviteSchema = z.object({ token: z.string().min(16).max(128) });
 
 export const acceptInvite = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveAuth])
   .validator(AcceptInviteSchema)
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

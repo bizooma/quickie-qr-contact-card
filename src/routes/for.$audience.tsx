@@ -126,6 +126,9 @@ function AudiencePage() {
           <Link to="/terms" className="hover:text-foreground">
             Terms
           </Link>
+          <Link to="/security" className="hover:text-foreground">
+            Security
+          </Link>
         </nav>
       </footer>
     </div>
