@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { buildVCard, contrastText, type CardData } from "@/lib/card-model";
-import { submitShareback } from "@/lib/capture.functions";
-import { signedUrls } from "@/lib/media";
+import { signPublicCardMedia, submitShareback } from "@/lib/capture.functions";
 
 // Absolute URL so crawlers accept it from any serving domain.
 const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
@@ -22,7 +21,7 @@ async function loadCard(slug: string) {
   if (error) throw error;
   if (!data) throw notFound();
   const card = data as unknown as PublicCardData;
-  const urls = await signedUrls([card.headshot_path, card.logo_path, card.og_path]);
+  const urls = await signPublicCardMedia({ data: { slug } });
   return {
     card,
     headshotUrl: card.headshot_path ? (urls[card.headshot_path] ?? null) : null,

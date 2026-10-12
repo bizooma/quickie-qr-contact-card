@@ -106,3 +106,27 @@ export const notifyNewContacts = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
+
+/** Public (unauthenticated): short-lived signed URLs for a published card's own
+ *  images only. The bucket has no public read policy, so anon can't sign. */
+export const signPublicCardMedia = createServerFn({ method: "POST" })
+  .validator(z.object({ slug: z.string().min(3).max(49) }))
+  .handler(async ({ data }): Promise<Record<string, string>> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: card } = await supabaseAdmin
+      .from("cards")
+      .select("headshot_path, logo_path, og_path")
+      .eq("slug", data.slug.toLowerCase())
+      .maybeSingle();
+    if (!card) return {};
+    const paths = [card.headshot_path, card.logo_path, card.og_path].filter(
+      (p): p is string => !!p && !p.split("/").includes("contact-photos"),
+    );
+    if (!paths.length) return {};
+    const { data: signed } = await supabaseAdmin.storage
+      .from("card-media")
+      .createSignedUrls(paths, 60 * 60 * 24 * 7);
+    const out: Record<string, string> = {};
+    for (const s of signed ?? []) if (s.signedUrl && s.path) out[s.path] = s.signedUrl;
+    return out;
+  });
