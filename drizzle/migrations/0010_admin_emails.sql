@@ -1,4 +1,5 @@
 -- Applied directly to the Lovable cloud database (this repo has no migration runner).
+-- SUPERSEDED: grant_admin_on_signup below is replaced by 0019 (confirmed email required).
 -- Platform-owner bootstrap: emails in admin_emails get is_admin + Premium
 -- automatically the moment their account is created (works for email or
 -- OAuth signups alike), and retroactively if the account already exists.
