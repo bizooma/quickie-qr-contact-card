@@ -25,7 +25,6 @@ import {
   Trash2,
   Type,
   Upload,
-  UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -282,7 +281,7 @@ function Studio({
   const [images, setImages] = useState<Record<string, HTMLImageElement>>({});
   const [qr, setQr] = useState<HTMLImageElement | null>(null);
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
-  const [adding, setAdding] = useState<"logo" | "photo" | "picture" | "backdrop" | null>(null);
+  const [adding, setAdding] = useState<"logo" | "picture" | "backdrop" | null>(null);
   const [exporting, setExporting] = useState<"png" | "pdf" | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -298,10 +297,7 @@ function Studio({
     scale: number;
   } | null>(null);
 
-  const assets: DesignAssets = useMemo(
-    () => ({ photo, qr, images, name: card.full_name }),
-    [photo, qr, images, card.full_name],
-  );
+  const assets: DesignAssets = useMemo(() => ({ photo, qr, images }), [photo, qr, images]);
   const selected = design.layers.find((l) => l.id === selectedId) ?? null;
 
   // ---- saving ----
@@ -349,15 +345,9 @@ function Studio({
         // Fall back to the default design.
       }
       if (saved) {
-        // Logo/photo layers follow the card; drop them if the card lost it.
+        // The logo layer follows the card; drop it if the card lost its logo.
         const source = (l: Layer) =>
-          l.kind !== "image"
-            ? null
-            : l.role === "logo"
-              ? card.logo_path
-              : l.role === "photo"
-                ? card.headshot_path
-                : l.path;
+          l.kind !== "image" ? null : l.role === "logo" ? card.logo_path : l.path;
         const layers = saved.layers.filter((l) => l.kind !== "image" || !!source(l));
         const imgs: Record<string, HTMLImageElement> = {};
         await Promise.all(
@@ -462,28 +452,20 @@ function Studio({
     setSelectedId(layer.id);
   }
 
-  async function addStored(role: "logo" | "photo") {
-    const existing = design.layers.find((l) => l.kind === "image" && l.role === role);
+  async function addLogo() {
+    const existing = design.layers.find((l) => l.kind === "image" && l.role === "logo");
     if (existing) {
       updateLayer(existing.id, { visible: true });
       setSelectedId(existing.id);
       return;
     }
-    const path = role === "logo" ? card.logo_path : card.headshot_path;
-    if (!path) return;
-    setAdding(role);
+    if (!card.logo_path) return;
+    setAdding("logo");
     try {
-      const img = await loadStoredImage(path);
-      addLayer(
-        newImageLayer(
-          role,
-          role === "logo" ? "Company logo" : "My photo",
-          img.naturalWidth / img.naturalHeight,
-        ),
-        img,
-      );
+      const img = await loadStoredImage(card.logo_path);
+      addLayer(newImageLayer("logo", "Company logo", img.naturalWidth / img.naturalHeight), img);
     } catch {
-      toast.error(`Could not load your ${role === "logo" ? "logo" : "photo"}`);
+      toast.error("Could not load your logo");
     } finally {
       setAdding(null);
     }
@@ -532,7 +514,7 @@ function Studio({
         : design.fill.type === "gradient"
           ? design.fill.from
           : "#000000";
-    addLayer(newTextLayer(card.job_title || card.company || "Your text", captionColors(base).name));
+    addLayer(newTextLayer("Your text", captionColors(base).name));
   }
 
   function setFillType(type: Fill["type"]) {
@@ -640,7 +622,6 @@ function Studio({
 
   const fill = design.fill;
   const hasLogo = !!card.logo_path;
-  const hasPhoto = !!card.headshot_path;
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
@@ -851,7 +832,8 @@ function Studio({
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
-              onClick={() => void addStored("logo")}
+              className="col-span-2"
+              onClick={() => void addLogo()}
               disabled={!hasLogo || adding === "logo"}
             >
               {adding === "logo" ? (
@@ -860,18 +842,6 @@ function Studio({
                 <Building2 className="h-4 w-4" />
               )}
               Company logo
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => void addStored("photo")}
-              disabled={!hasPhoto || adding === "photo"}
-            >
-              {adding === "photo" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <UserRound className="h-4 w-4" />
-              )}
-              My photo
             </Button>
             <Button variant="outline" onClick={addText}>
               <Type className="h-4 w-4" />
@@ -890,14 +860,9 @@ function Studio({
               Picture
             </Button>
           </div>
-          {(!hasLogo || !hasPhoto) && (
+          {!hasLogo && (
             <p className="text-xs text-muted-foreground">
-              {!hasLogo && !hasPhoto
-                ? "Add a logo and photo to this card"
-                : !hasLogo
-                  ? "Add a company logo to this card"
-                  : "Add a photo to this card"}{" "}
-              to place {!hasLogo && !hasPhoto ? "them" : "it"} with one tap —{" "}
+              Add a company logo to this card to place it with one tap —{" "}
               <Link to="/app/cards/$id" params={{ id: card.id }} className="underline">
                 edit card
               </Link>
@@ -939,8 +904,6 @@ function Studio({
                       <Type className="h-4 w-4 shrink-0" />
                     ) : l.role === "logo" ? (
                       <Building2 className="h-4 w-4 shrink-0" />
-                    ) : l.role === "photo" ? (
-                      <UserRound className="h-4 w-4 shrink-0" />
                     ) : (
                       <ImagePlus className="h-4 w-4 shrink-0" />
                     )}
@@ -1010,7 +973,7 @@ function Studio({
             Download for Canva, then in Canva choose <strong>
               Create a design → Import file
             </strong>{" "}
-            and pick the PDF. Your text stays editable, and the logo, photos, QR code and backdrop
+            and pick the PDF. Your text stays editable, and the logo, pictures, QR code and backdrop
             come in as separate pieces you can move, resize or swap.{" "}
             <a
               href="https://www.canva.com/"
@@ -1150,7 +1113,7 @@ function LayerEditor({
                 onReplace({ ...next, ...clampPosition(b) });
               }}
             />
-            Show my name under the code
+            Show “Scan to connect” under the code
           </label>
         </div>
       )}

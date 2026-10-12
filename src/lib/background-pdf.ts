@@ -10,6 +10,7 @@ import {
   captionColors,
   layerBox,
   pdfSafeText,
+  QR_CAPTION,
   QR_PAD,
   TEXT_LINE,
   type Design,
@@ -127,32 +128,25 @@ async function addLayer(
     });
   }
   if (layer.caption) {
-    const colors = captionColors(layer.panel);
-    const top = box.y + QR_PAD + layer.size + 14;
-    const lines: [string, number, PDFFont, string, number][] = [
-      [assets.name, 26, fonts.bold, colors.name, top],
-      ["Scan to connect", 17, fonts.regular, colors.sub, top + 32],
-    ];
-    for (const [text, size, font, hex, y] of lines) {
-      if (!text || !pdfSafeText(text)) continue;
-      let s = size;
-      while (s > 10 && font.widthOfTextAtSize(text, s) > box.w - QR_PAD) s -= 1;
-      page.drawText(text, {
-        x: box.x + (box.w - font.widthOfTextAtSize(text, s)) / 2,
-        y: BG_HEIGHT - y - s * 0.78,
-        size: s,
-        font,
-        color: color(hex),
-        opacity: layer.opacity,
-      });
-    }
+    const font = fonts.bold;
+    let size = 22;
+    while (size > 10 && font.widthOfTextAtSize(QR_CAPTION, size) > box.w - QR_PAD) size -= 1;
+    const top = box.y + QR_PAD + layer.size + 10;
+    page.drawText(QR_CAPTION, {
+      x: box.x + (box.w - font.widthOfTextAtSize(QR_CAPTION, size)) / 2,
+      y: BG_HEIGHT - top - size * 0.78,
+      size,
+      font,
+      color: color(captionColors(layer.panel).name),
+      opacity: layer.opacity,
+    });
   }
 }
 
 /** Builds a 1920×1080 PDF of the design with each layer as its own element. */
 export async function designToPdf(design: Design, assets: DesignAssets): Promise<Blob> {
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`${assets.name || "My"} virtual background`);
+  pdf.setTitle("Virtual background");
   pdf.setCreator("ContactKickstart");
   const page = pdf.addPage([BG_WIDTH, BG_HEIGHT]);
   const fonts = {

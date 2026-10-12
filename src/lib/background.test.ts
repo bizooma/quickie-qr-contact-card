@@ -96,16 +96,12 @@ describe("design layers", () => {
     expect(box.y).toBeGreaterThan(BG_HEIGHT / 2);
   });
 
-  it("places a logo top-left within 320x160 and a photo as a top-right circle", () => {
+  it("places a logo top-left within 320x160", () => {
     const logo = newImageLayer("logo", "Logo", 4);
     const lb = layerBox(logo);
     expect(lb.w).toBeLessThanOrEqual(320);
     expect(lb.h).toBeLessThanOrEqual(160);
     expect(lb.x).toBeLessThan(BG_WIDTH / 2);
-    const photo = newImageLayer("photo", "Photo", 0.75);
-    const pb = layerBox(photo);
-    expect(pb.w).toBe(pb.h);
-    expect(pb.x).toBeGreaterThan(BG_WIDTH / 2);
     expect(newImageLayer("upload", "Pic", Number.NaN).aspect).toBe(1);
   });
 
@@ -182,6 +178,10 @@ describe("saved designs", () => {
   });
 
   it("rejects malformed or inconsistent designs", () => {
+    // Profile-photo layers were dropped: nothing identifying on backgrounds.
+    expect(
+      parseDesign({ ...design(), layers: [{ ...newImageLayer("logo", "x", 1), role: "photo" }] }),
+    ).toBeNull();
     expect(parseDesign(null)).toBeNull();
     expect(
       parseDesign({ fill: { type: "solid", color: "red" }, layers: [], photo: null }),

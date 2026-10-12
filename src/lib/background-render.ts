@@ -9,6 +9,7 @@ import {
   coverFit,
   gradientLine,
   layerBox,
+  QR_CAPTION,
   QR_PAD,
   TEXT_LINE,
   type Box,
@@ -26,8 +27,6 @@ export type DesignAssets = {
   qr: HTMLImageElement | null;
   // Image layers' sources, keyed by layer id.
   images: Record<string, HTMLImageElement>;
-  // Name printed under the QR code.
-  name: string;
 };
 
 export const TEXT_FONT = "Helvetica, Arial, sans-serif";
@@ -223,18 +222,11 @@ export function drawQrPanel(
     ctx.drawImage(assets.qr, box.x + QR_PAD, box.y + QR_PAD, layer.size, layer.size);
   }
   if (layer.caption) {
-    const colors = captionColors(layer.panel);
-    const cx = box.x + box.w / 2;
-    const top = box.y + QR_PAD + layer.size + 14;
-    const maxW = box.w - QR_PAD;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = colors.name;
-    ctx.font = `700 26px ${TEXT_FONT}`;
-    ctx.fillText(assets.name, cx, top, maxW);
-    ctx.fillStyle = colors.sub;
-    ctx.font = `400 17px ${TEXT_FONT}`;
-    ctx.fillText("Scan to connect", cx, top + 32, maxW);
+    ctx.fillStyle = captionColors(layer.panel).name;
+    ctx.font = `600 22px ${TEXT_FONT}`;
+    ctx.fillText(QR_CAPTION, box.x + box.w / 2, box.y + QR_PAD + layer.size + 10, box.w - QR_PAD);
   }
 }
 

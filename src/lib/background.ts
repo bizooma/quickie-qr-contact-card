@@ -24,6 +24,8 @@ export type CornerId = (typeof CORNERS)[number]["id"];
 const MARGIN = 48;
 const PAD = 24;
 const LABEL_H = 64;
+// Height of the optional "Scan to connect" line under a QR layer.
+const CAPTION_H = 44;
 
 export type PanelLayout = {
   panel: { x: number; y: number; w: number; h: number; radius: number };
@@ -118,11 +120,14 @@ export type Fill =
 
 type LayerBase = { id: string; x: number; y: number; visible: boolean; opacity: number };
 
+// `caption` shows "Scan to connect" under the code. Nothing identifying (name,
+// photo) goes on the background: the people on the call already know who
+// they're talking to.
 export type QrLayer = LayerBase & { kind: "qr"; size: number; panel: string; caption: boolean };
 export type ImageShape = "square" | "rounded" | "circle";
 export type ImageLayer = LayerBase & {
   kind: "image";
-  role: "logo" | "photo" | "upload";
+  role: "logo" | "upload";
   name: string;
   w: number;
   // Source width / height; a circle is always drawn square.
@@ -130,8 +135,8 @@ export type ImageLayer = LayerBase & {
   shape: ImageShape;
   // White rounded backing so dark logos read on dark backdrops.
   plate: boolean;
-  // Storage path of an uploaded picture; logo and photo layers use the
-  // card's current logo/headshot instead, so they follow card edits.
+  // Storage path of an uploaded picture; the logo layer uses the card's
+  // current logo instead, so it follows card edits.
   path: string | null;
 };
 export type TextLayer = LayerBase & {
@@ -192,7 +197,7 @@ export function layerBox(layer: Layer, textWidth = 0): Box {
         x: layer.x,
         y: layer.y,
         w: layer.size + PAD * 2,
-        h: layer.size + PAD * 2 + (layer.caption ? LABEL_H : 0),
+        h: layer.size + PAD * 2 + (layer.caption ? CAPTION_H : 0),
       };
     case "image": {
       const h = layer.shape === "circle" ? layer.w : layer.w / layer.aspect;
@@ -293,10 +298,6 @@ export function newImageLayer(
     visible: true,
     opacity: 1,
   };
-  if (role === "photo") {
-    const w = 240;
-    return { ...base, w, shape: "circle", plate: false, ...snapPosition("tr", w, w) };
-  }
   if (role === "logo") {
     // Fit within 320×160.
     const w = Math.round(Math.min(320, 160 * safeAspect));
@@ -357,7 +358,8 @@ export function captionColors(panel: string): { name: string; sub: string } {
 }
 
 export const QR_PAD = PAD;
-export const QR_LABEL_H = LABEL_H;
+export const QR_CAPTION_H = CAPTION_H;
+export const QR_CAPTION = "Scan to connect";
 
 // ---------- saving ----------
 
@@ -395,7 +397,7 @@ const LayerSchema = z.discriminatedUnion("kind", [
   z.object({
     ...layerBase,
     kind: z.literal("image"),
-    role: z.enum(["logo", "photo", "upload"]),
+    role: z.enum(["logo", "upload"]),
     name: z.string().max(80),
     w: z.number().min(IMAGE_W_RANGE.min).max(IMAGE_W_RANGE.max),
     aspect: z.number().positive().max(100),
