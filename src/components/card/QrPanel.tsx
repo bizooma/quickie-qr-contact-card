@@ -10,12 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { contrastText } from "@/lib/card-model";
 import { signedUrls } from "@/lib/media";
 import {
+  BRAND_QR_CENTER,
   parseQrCenter,
   qrCenterAllowed,
   qrCenterSource,
   svgWithLogo,
   type CenterShape,
   type QrCenterChoice,
+  type QrCenterSource,
 } from "@/lib/qr-logo";
 
 export function publicCardUrl(slug: string) {
@@ -97,30 +99,75 @@ async function toCenterDataUrl(signedUrl: string, photo: boolean): Promise<strin
   }
 }
 
-/** Loads a stored card image as a small inline data URL for the QR center.
- *  `ready` turns true once the current path has resolved (to an image or to
- *  null on failure), so callers can tell "still loading" from "no image". */
-export function useCenterImage(path: string | null | undefined, shape: CenterShape | undefined) {
-  const [loaded, setLoaded] = useState<{ path: string; href: string | null } | null>(null);
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("Could not read the image"));
+    r.readAsDataURL(blob);
+  });
+}
+
+// The badge is a static, already-optimized asset: fetch it once per page.
+let brandCenter: Promise<string> | null = null;
+function loadBrandCenter(url: string): Promise<string> {
+  brandCenter ??= fetch(url)
+    .then((r) => r.blob())
+    .then(blobToDataUrl)
+    .catch((e: unknown) => {
+      brandCenter = null;
+      throw e;
+    });
+  return brandCenter;
+}
+
+/** Loads the QR center image as a small inline data URL. A stored photo or
+ *  logo that fails to load falls back to the ContactKickstart badge. `ready`
+ *  turns true once the current source has resolved, so callers can tell
+ *  "still loading" from "no image". */
+export function useCenterImage(source: QrCenterSource | null | undefined) {
+  const kind = source?.kind;
+  const ref = source ? (source.kind === "stored" ? source.path : source.url) : "";
+  const wantShape = source?.shape ?? "rounded";
+  const key = kind ? `${kind}:${ref}:${wantShape}` : "";
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    href: string | null;
+    shape: CenterShape;
+  } | null>(null);
   useEffect(() => {
-    if (!path) return;
+    if (!kind) return;
     let cancelled = false;
     (async () => {
       let href: string | null = null;
-      try {
-        const signed = (await signedUrls([path]))[path];
-        if (signed) href = await toCenterDataUrl(signed, shape === "circle");
-      } catch {
-        href = null;
+      let shape = wantShape;
+      if (kind === "stored") {
+        try {
+          const signed = (await signedUrls([ref]))[ref];
+          if (signed) href = await toCenterDataUrl(signed, wantShape === "circle");
+        } catch {
+          href = null;
+        }
       }
-      if (!cancelled) setLoaded({ path, href });
+      if (!href) {
+        shape = "rounded";
+        try {
+          href = await loadBrandCenter(BRAND_QR_CENTER);
+        } catch {
+          href = null;
+        }
+      }
+      if (!cancelled) setLoaded({ key: `${kind}:${ref}:${wantShape}`, href, shape });
     })();
     return () => {
       cancelled = true;
     };
-  }, [path, shape]);
-  const current = !!path && loaded?.path === path;
-  return { href: current ? loaded.href : null, ready: !path || current };
+  }, [kind, ref, wantShape]);
+  const current = !!key && loaded?.key === key;
+  return {
+    image: current && loaded.href ? { href: loaded.href, shape: loaded.shape } : null,
+    ready: !key || current,
+  };
 }
 
 function download(href: string, name: string) {
@@ -155,7 +202,7 @@ async function svgToPng(svg: string, size: number): Promise<string> {
 }
 
 const CENTER_OPTIONS: { value: QrCenterChoice | null; label: string }[] = [
-  { value: null, label: "None" },
+  { value: null, label: "ContactKickstart" },
   { value: "photo", label: "My photo" },
   { value: "logo", label: "Logo" },
 ];
@@ -186,9 +233,8 @@ export function QrPanel({
   const [full, setFull] = useState(false);
   const url = publicCardUrl(slug);
 
-  const source = qrCenterSource(choice, { headshotPath, logoPath }, plan);
-  const { href } = useCenterImage(source?.path, source?.shape);
-  const { svg } = useQr(slug, accent, bg, source && href ? { href, shape: source.shape } : null);
+  const { image } = useCenterImage(qrCenterSource(choice, { headshotPath, logoPath }, plan));
+  const { svg } = useQr(slug, accent, bg, image);
 
   async function pickCenter(next: QrCenterChoice | null) {
     if (!allowed || next === choice) return;
@@ -317,7 +363,7 @@ export function QrPanel({
         </div>
         {plan && !allowed && (
           <p className="text-xs text-muted-foreground">
-            Put your face or company logo in the middle of your QR with{" "}
+            Swap the ContactKickstart logo for your face or company logo with{" "}
             <Link to="/app/settings" className="font-semibold text-foreground underline">
               Pro or Premium
             </Link>

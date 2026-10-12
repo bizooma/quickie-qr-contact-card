@@ -60,17 +60,27 @@ export function parseQrCenter(value: string | null | undefined): QrCenterChoice 
   return value === "photo" || value === "logo" ? value : null;
 }
 
-/** Which stored image (if any) goes in the middle of the QR. Returns null when
- *  the plan doesn't include it, nothing was chosen, or the chosen image is
- *  missing — the plain QR is always the safe fallback. */
+/** Small, palette-optimized ContactKickstart badge (~10 KB) used as the
+ *  default QR center. */
+export const BRAND_QR_CENTER = "/brand/qr-center.png";
+
+export type QrCenterSource =
+  | { kind: "stored"; path: string; shape: CenterShape }
+  | { kind: "brand"; url: string; shape: CenterShape };
+
+/** What goes in the middle of the QR. The owner's photo or logo when the plan
+ *  includes it and that image exists; otherwise the ContactKickstart badge —
+ *  so every QR carries an image and a downgrade never leaves a broken one. */
 export function qrCenterSource(
   choice: QrCenterChoice | null,
   paths: { headshotPath: string | null | undefined; logoPath: string | null | undefined },
   plan: PlanId | undefined,
-): { path: string; shape: CenterShape } | null {
-  if (!choice || !qrCenterAllowed(plan)) return null;
-  if (choice === "photo" && paths.headshotPath)
-    return { path: paths.headshotPath, shape: "circle" };
-  if (choice === "logo" && paths.logoPath) return { path: paths.logoPath, shape: "rounded" };
-  return null;
+): QrCenterSource {
+  if (choice && qrCenterAllowed(plan)) {
+    if (choice === "photo" && paths.headshotPath)
+      return { kind: "stored", path: paths.headshotPath, shape: "circle" };
+    if (choice === "logo" && paths.logoPath)
+      return { kind: "stored", path: paths.logoPath, shape: "rounded" };
+  }
+  return { kind: "brand", url: BRAND_QR_CENTER, shape: "rounded" };
 }

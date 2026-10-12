@@ -57,12 +57,11 @@ function QuickQr() {
         plan,
       )
     : null;
-  const centerImg = useCenterImage(source?.path, source?.shape);
-  // Settled once the plan is known and any center image has loaded; until
+  const centerImg = useCenterImage(source);
+  // Settled once the plan is known and the center image has loaded; until
   // then (or offline) keep showing the snapshot's center for the same card.
   const centerSettled = !!fresh && plan !== undefined && centerImg.ready;
-  const freshCenter: QrCenterImage | null =
-    source && centerImg.href ? { href: centerImg.href, shape: source.shape } : null;
+  const freshCenter: QrCenterImage | null = centerImg.image;
   const snapCenter = snap && fresh && snap.slug === fresh.slug ? (snap.center ?? null) : null;
 
   const view: QrSnapshot | null = fresh
