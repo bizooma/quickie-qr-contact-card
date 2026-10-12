@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
-import { Copy, Download, Maximize2, Share2, X } from "lucide-react";
+import { Copy, Download, Lock, Maximize2, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { usePlan } from "@/components/PremiumGate";
+import { supabase } from "@/integrations/supabase/client";
 import { contrastText } from "@/lib/card-model";
 import { signedUrls } from "@/lib/media";
-import { svgWithLogo } from "@/lib/qr-logo";
+import {
+  parseQrCenter,
+  qrCenterAllowed,
+  qrCenterSource,
+  svgWithLogo,
+  type CenterShape,
+  type QrCenterChoice,
+} from "@/lib/qr-logo";
 
 export function publicCardUrl(slug: string) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -21,20 +30,97 @@ function qrColors(accent: string, bg: string) {
   return { dark: contrastText(accent) === "#FFFFFF" ? accent : "#111111", light: "#FFFFFF" };
 }
 
-export function useQr(slug: string, accent: string, bg: string, logoDataUrl?: string | null) {
+export type QrCenterImage = { href: string; shape: CenterShape };
+
+export function useQr(slug: string, accent: string, bg: string, center?: QrCenterImage | null) {
   const [svg, setSvg] = useState("");
+  const href = center?.href ?? null;
+  const shape = center?.shape ?? "rounded";
   useEffect(() => {
     const url = publicCardUrl(slug);
     const color = qrColors(accent, bg);
-    // A center logo hides some modules, so step error correction up to H.
+    // A center image hides some modules, so step error correction up to H.
     QRCode.toString(url, {
       type: "svg",
       margin: 1,
       color,
-      errorCorrectionLevel: logoDataUrl ? "H" : "M",
-    }).then((s) => setSvg(logoDataUrl ? svgWithLogo(s, logoDataUrl) : s));
-  }, [slug, accent, bg, logoDataUrl]);
+      errorCorrectionLevel: href ? "H" : "M",
+    }).then((s) => setSvg(href ? svgWithLogo(s, href, shape) : s));
+  }, [slug, accent, bg, href, shape]);
   return { svg };
+}
+
+const CENTER_PX = 256;
+
+/** Downscales a stored image to a small data URL. Inlining (rather than a
+ *  signed URL) keeps it inside downloaded SVG/PNG files and the offline QR
+ *  snapshot; photos are center-cropped square since the QR clips them to a
+ *  circle anyway. */
+async function toCenterDataUrl(signedUrl: string, photo: boolean): Promise<string> {
+  const blob = await (await fetch(signedUrl)).blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Could not load the image"));
+      img.src = objectUrl;
+    });
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx || !w || !h) throw new Error("Canvas unavailable");
+    if (photo) {
+      const side = Math.min(w, h);
+      canvas.width = canvas.height = Math.min(CENTER_PX, side);
+      ctx.drawImage(
+        img,
+        (w - side) / 2,
+        (h - side) / 2,
+        side,
+        side,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      return canvas.toDataURL("image/jpeg", 0.85);
+    }
+    const scale = Math.min(1, CENTER_PX / Math.max(w, h));
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/png");
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+/** Loads a stored card image as a small inline data URL for the QR center.
+ *  `ready` turns true once the current path has resolved (to an image or to
+ *  null on failure), so callers can tell "still loading" from "no image". */
+export function useCenterImage(path: string | null | undefined, shape: CenterShape | undefined) {
+  const [loaded, setLoaded] = useState<{ path: string; href: string | null } | null>(null);
+  useEffect(() => {
+    if (!path) return;
+    let cancelled = false;
+    (async () => {
+      let href: string | null = null;
+      try {
+        const signed = (await signedUrls([path]))[path];
+        if (signed) href = await toCenterDataUrl(signed, shape === "circle");
+      } catch {
+        href = null;
+      }
+      if (!cancelled) setLoaded({ path, href });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [path, shape]);
+  const current = !!path && loaded?.path === path;
+  return { href: current ? loaded.href : null, ready: !path || current };
 }
 
 function download(href: string, name: string) {
@@ -68,44 +154,55 @@ async function svgToPng(svg: string, size: number): Promise<string> {
   }
 }
 
-export function QrPanel({ slug, accent, bg, name, logoPath }: { slug: string; accent: string; bg: string; name: string; logoPath?: string | null | undefined }) {
-  const [withLogo, setWithLogo] = useState(false);
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+const CENTER_OPTIONS: { value: QrCenterChoice | null; label: string }[] = [
+  { value: null, label: "None" },
+  { value: "photo", label: "My photo" },
+  { value: "logo", label: "Logo" },
+];
+
+export function QrPanel({
+  cardId,
+  slug,
+  accent,
+  bg,
+  name,
+  headshotPath,
+  logoPath,
+  qrCenter,
+}: {
+  cardId: string;
+  slug: string;
+  accent: string;
+  bg: string;
+  name: string;
+  headshotPath?: string | null | undefined;
+  logoPath?: string | null | undefined;
+  qrCenter?: string | null | undefined;
+}) {
+  const qc = useQueryClient();
+  const { plan } = usePlan();
+  const allowed = qrCenterAllowed(plan);
+  const [choice, setChoice] = useState<QrCenterChoice | null>(() => parseQrCenter(qrCenter));
   const [full, setFull] = useState(false);
   const url = publicCardUrl(slug);
 
-  // Inline the logo as a data URL so it survives inside downloaded SVG/PNG files.
-  useEffect(() => {
-    if (!withLogo || !logoPath) {
-      setLogoDataUrl(null);
+  const source = qrCenterSource(choice, { headshotPath, logoPath }, plan);
+  const { href } = useCenterImage(source?.path, source?.shape);
+  const { svg } = useQr(slug, accent, bg, source && href ? { href, shape: source.shape } : null);
+
+  async function pickCenter(next: QrCenterChoice | null) {
+    if (!allowed || next === choice) return;
+    const prev = choice;
+    setChoice(next);
+    const { error } = await supabase.from("cards").update({ qr_center: next }).eq("id", cardId);
+    if (error) {
+      setChoice(prev);
+      toast.error(error.message);
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const signed = (await signedUrls([logoPath]))[logoPath];
-        if (!signed) return;
-        const blob = await (await fetch(signed)).blob();
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(blob);
-        });
-        if (!cancelled) setLogoDataUrl(dataUrl);
-      } catch {
-        if (!cancelled) {
-          setWithLogo(false);
-          toast.error("Couldn't load your logo for the QR code");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [withLogo, logoPath]);
-
-  const { svg } = useQr(slug, accent, bg, withLogo ? logoDataUrl : null);
+    qc.invalidateQueries({ queryKey: ["cards"] });
+    qc.invalidateQueries({ queryKey: ["card", cardId] });
+  }
 
   async function copyLink() {
     try {
@@ -177,14 +274,57 @@ export function QrPanel({ slug, accent, bg, name, logoPath }: { slug: string; ac
           Full screen
         </Button>
       </div>
-      {logoPath && (
-        <div className="flex items-center justify-center gap-2">
-          <Switch id="qr-logo" checked={withLogo} onCheckedChange={setWithLogo} />
-          <Label htmlFor="qr-logo" className="text-sm text-muted-foreground">
-            Logo in the middle
-          </Label>
+      <div className="space-y-2 text-center">
+        <p className="text-xs font-semibold text-muted-foreground">
+          Center of your QR code
+          {plan && !allowed && (
+            <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-bold text-foreground">
+              <Lock className="h-3 w-3" />
+              Pro
+            </span>
+          )}
+        </p>
+        <div
+          className="inline-flex rounded-xl border p-1"
+          role="radiogroup"
+          aria-label="Center of your QR code"
+        >
+          {CENTER_OPTIONS.map((o) => {
+            const missing =
+              (o.value === "photo" && !headshotPath) || (o.value === "logo" && !logoPath);
+            const active = allowed ? choice === o.value : o.value === null;
+            return (
+              <button
+                key={o.label}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                disabled={!allowed || missing}
+                title={
+                  missing
+                    ? `Add ${o.value === "photo" ? "a photo" : "a logo"} to this card first`
+                    : undefined
+                }
+                onClick={() => pickCenter(o.value)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  active ? "bg-brand text-white" : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {o.label}
+              </button>
+            );
+          })}
         </div>
-      )}
+        {plan && !allowed && (
+          <p className="text-xs text-muted-foreground">
+            Put your face or company logo in the middle of your QR with{" "}
+            <Link to="/app/settings" className="font-semibold text-foreground underline">
+              Pro or Premium
+            </Link>
+            .
+          </p>
+        )}
+      </div>
       {full && (
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-background p-6"

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { logoBox, qrViewBoxSize, svgWithLogo } from "./qr-logo";
+import {
+  logoBox,
+  parseQrCenter,
+  qrCenterAllowed,
+  qrCenterSource,
+  qrViewBoxSize,
+  svgWithLogo,
+} from "./qr-logo";
 
 const SAMPLE =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37"><path d="M0 0h37v37H0z" fill="#FFFFFF"/></svg>';
@@ -35,5 +42,52 @@ describe("svgWithLogo", () => {
   });
   it("returns the svg unchanged when the viewBox is unreadable", () => {
     expect(svgWithLogo("<svg></svg>", "x")).toBe("<svg></svg>");
+  });
+});
+
+describe("svgWithLogo circle", () => {
+  it("clips a photo to a circle on a white ring", () => {
+    const out = svgWithLogo(SAMPLE, "data:image/jpeg;base64,BBBB", "circle");
+    expect(out).toContain('<clipPath id="ck-qr-center"><circle');
+    expect(out).toContain('clip-path="url(#ck-qr-center)"');
+    expect(out).toContain('preserveAspectRatio="xMidYMid slice"');
+    expect(out).toContain('href="data:image/jpeg;base64,BBBB"');
+    expect(out.endsWith("</svg>")).toBe(true);
+  });
+});
+
+describe("qrCenterAllowed", () => {
+  it("is a Pro and Premium perk", () => {
+    expect(qrCenterAllowed("pro")).toBe(true);
+    expect(qrCenterAllowed("premium")).toBe(true);
+    expect(qrCenterAllowed("free")).toBe(false);
+    expect(qrCenterAllowed(undefined)).toBe(false);
+  });
+});
+
+describe("parseQrCenter", () => {
+  it("accepts photo/logo and treats anything else as none", () => {
+    expect(parseQrCenter("photo")).toBe("photo");
+    expect(parseQrCenter("logo")).toBe("logo");
+    expect(parseQrCenter(null)).toBeNull();
+    expect(parseQrCenter("banana")).toBeNull();
+  });
+});
+
+describe("qrCenterSource", () => {
+  const paths = { headshotPath: "u/face.webp", logoPath: "u/logo.png" };
+  it("returns the photo as a circle and the logo as a rounded square", () => {
+    expect(qrCenterSource("photo", paths, "pro")).toEqual({ path: "u/face.webp", shape: "circle" });
+    expect(qrCenterSource("logo", paths, "premium")).toEqual({
+      path: "u/logo.png",
+      shape: "rounded",
+    });
+  });
+  it("falls back to a plain QR for free plans, no choice, or a missing image", () => {
+    expect(qrCenterSource("photo", paths, "free")).toBeNull();
+    expect(qrCenterSource(null, paths, "pro")).toBeNull();
+    expect(
+      qrCenterSource("logo", { headshotPath: "u/face.webp", logoPath: null }, "pro"),
+    ).toBeNull();
   });
 });

@@ -6,7 +6,14 @@ import { ArrowLeft, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { listCards } from "@/lib/cards-api";
-import { publicCardUrl, useQr } from "@/components/card/QrPanel";
+import {
+  publicCardUrl,
+  useCenterImage,
+  useQr,
+  type QrCenterImage,
+} from "@/components/card/QrPanel";
+import { usePlan } from "@/components/PremiumGate";
+import { parseQrCenter, qrCenterSource } from "@/lib/qr-logo";
 
 // The fastest path to "scan me": launches straight from the app-icon
 // shortcut, renders from a localStorage snapshot before any network round
@@ -19,6 +26,8 @@ type QrSnapshot = {
   full_name: string;
   accent: string;
   bg: string;
+  // Inline (data URL) so the photo/logo center still shows with no signal.
+  center?: QrCenterImage | null;
 };
 
 const QR_CACHE_KEY = "ck-qr-card";
@@ -39,7 +48,23 @@ function QuickQr() {
   const [chosen, setChosen] = useState<string | null>(null);
   const { data: cards } = useQuery({ queryKey: ["cards"], queryFn: listCards });
 
+  const { plan } = usePlan();
   const fresh = cards?.find((c) => c.slug === (chosen ?? snap?.slug)) ?? cards?.[0];
+  const source = fresh
+    ? qrCenterSource(
+        parseQrCenter(fresh.qr_center),
+        { headshotPath: fresh.headshot_path, logoPath: fresh.logo_path },
+        plan,
+      )
+    : null;
+  const centerImg = useCenterImage(source?.path, source?.shape);
+  // Settled once the plan is known and any center image has loaded; until
+  // then (or offline) keep showing the snapshot's center for the same card.
+  const centerSettled = !!fresh && plan !== undefined && centerImg.ready;
+  const freshCenter: QrCenterImage | null =
+    source && centerImg.href ? { href: centerImg.href, shape: source.shape } : null;
+  const snapCenter = snap && fresh && snap.slug === fresh.slug ? (snap.center ?? null) : null;
+
   const view: QrSnapshot | null = fresh
     ? {
         slug: fresh.slug,
@@ -47,28 +72,29 @@ function QuickQr() {
         full_name: fresh.full_name,
         accent: fresh.accent_color,
         bg: fresh.background_color,
+        center: centerSettled ? freshCenter : snapCenter,
       }
     : snap;
 
   // Whatever we last showed becomes the instant snapshot for next launch.
+  const snapshotKey = view ? JSON.stringify(view) : "";
   useEffect(() => {
-    if (!fresh) return;
-    const next: QrSnapshot = {
-      slug: fresh.slug,
-      label: fresh.label,
-      full_name: fresh.full_name,
-      accent: fresh.accent_color,
-      bg: fresh.background_color,
-    };
+    if (!fresh || !centerSettled || !snapshotKey) return;
+    const next = JSON.parse(snapshotKey) as QrSnapshot;
     setSnap(next);
     try {
       localStorage.setItem(QR_CACHE_KEY, JSON.stringify(next));
     } catch {
       // Snapshot is a convenience only.
     }
-  }, [fresh]);
+  }, [fresh, centerSettled, snapshotKey]);
 
-  const { svg } = useQr(view?.slug ?? "", view?.accent ?? "#111111", view?.bg ?? "#FFFFFF");
+  const { svg } = useQr(
+    view?.slug ?? "",
+    view?.accent ?? "#111111",
+    view?.bg ?? "#FFFFFF",
+    view?.center ?? null,
+  );
   const url = view ? publicCardUrl(view.slug) : "";
 
   async function share() {

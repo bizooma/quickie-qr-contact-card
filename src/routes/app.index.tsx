@@ -141,11 +141,14 @@ function CardsPage() {
           </DialogHeader>
           {qrCard && (
             <QrPanel
+              cardId={qrCard.id}
               slug={qrCard.slug}
               accent={qrCard.accent_color}
               bg={qrCard.background_color}
               name={qrCard.full_name}
+              headshotPath={qrCard.headshot_path}
               logoPath={qrCard.logo_path}
+              qrCenter={qrCard.qr_center}
             />
           )}
         </DialogContent>
