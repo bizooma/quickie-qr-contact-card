@@ -169,6 +169,7 @@ export type Database = {
           og_path: string | null
           org_id: string | null
           phones: Json
+          qr_center: string | null
           slug: string
           template: string
           updated_at: string
@@ -193,6 +194,7 @@ export type Database = {
           og_path?: string | null
           org_id?: string | null
           phones?: Json
+          qr_center?: string | null
           slug: string
           template?: string
           updated_at?: string
@@ -217,6 +219,7 @@ export type Database = {
           og_path?: string | null
           org_id?: string | null
           phones?: Json
+          qr_center?: string | null
           slug?: string
           template?: string
           updated_at?: string
