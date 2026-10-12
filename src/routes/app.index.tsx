@@ -105,7 +105,7 @@ function CardsPage() {
                     />
                   )}
                 </div>
-                <div className="-mt-8 px-5 pb-4">
+                <div className="relative z-10 -mt-8 px-5 pb-4">
                   {c.headshot_path && mediaUrls[c.headshot_path] ? (
                     <img
                       src={mediaUrls[c.headshot_path]}

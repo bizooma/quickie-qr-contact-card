@@ -381,7 +381,7 @@ function ContactDetail() {
             />
           </span>
         </div>
-        <div className="-mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
+        <div className="relative z-10 -mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
           {photoUrl ? (
             <img
               src={photoUrl}
@@ -389,7 +389,7 @@ function ContactDetail() {
               className="h-24 w-24 rounded-full border-4 border-card object-cover shadow md:h-28 md:w-28"
             />
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-brand-soft text-2xl font-semibold text-accent-foreground shadow md:h-28 md:w-28">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-card bg-[image:linear-gradient(var(--brand-soft),var(--brand-soft))] text-2xl font-semibold text-accent-foreground shadow md:h-28 md:w-28">
               {initials(c.full_name)}
             </div>
           )}
