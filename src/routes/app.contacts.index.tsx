@@ -116,7 +116,7 @@ function ContactsPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Contacts</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{contacts.length} people you've met</p>
+          <p className="mt-1 text-sm text-muted-foreground">{contacts.length} {contacts.length === 1 ? "person" : "people"} you've met</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}>

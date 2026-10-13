@@ -5,6 +5,7 @@ import { format, formatDistanceToNowStrict } from "date-fns";
 import { Bell, BellRing, Check, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -47,15 +48,16 @@ function RemindPicker({
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {QUICK_PICKS.map((p) => (
-          <Button
-            key={p.id}
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            onClick={() => onPick(quickPickDate(p.id), note)}
-          >
-            {p.label}
-          </Button>
+          <Hint key={p.id} label={format(quickPickDate(p.id), "EEEE, MMM d 'at' h:mm a")}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => onPick(quickPickDate(p.id), note)}
+            >
+              {p.label}
+            </Button>
+          </Hint>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -132,25 +134,29 @@ function ReminderItem({ r, showName }: { r: ReminderRow; showName: boolean }) {
           {r.note ? ` — ${r.note}` : ""}
         </p>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={busy}
-        onClick={() => void act(() => completeReminder(r.id), "Marked done")}
-      >
-        <Check className="h-4 w-4" />
-        Done
-      </Button>
-      {!showName && (
+      <Hint label="You followed up — clear this reminder">
         <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Delete reminder"
+          variant="outline"
+          size="sm"
           disabled={busy}
-          onClick={() => void act(() => deleteReminder(r.id), "Reminder deleted")}
+          onClick={() => void act(() => completeReminder(r.id), "Marked done")}
         >
-          <Trash2 className="h-4 w-4" />
+          <Check className="h-4 w-4" />
+          Done
         </Button>
+      </Hint>
+      {!showName && (
+        <Hint label="Delete this reminder">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Delete reminder"
+            disabled={busy}
+            onClick={() => void act(() => deleteReminder(r.id), "Reminder deleted")}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </Hint>
       )}
     </li>
   );
@@ -273,10 +279,12 @@ export function BulkRemindButton({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <Bell className="h-4 w-4" />
-        Remind me to follow up with all {contactIds.length}
-      </Button>
+      <Hint label="Set one follow-up reminder for each person you met at this event">
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <Bell className="h-4 w-4" />
+          Remind me to follow up with all {contactIds.length}
+        </Button>
+      </Hint>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -15,12 +15,14 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
+  autoTipFor,
   boldParts,
   detectPlatform,
   mergeDismissed,
   stepsFor,
   TIPS,
   tipIdForPath,
+  withAnnouncements,
   type Platform,
   type TipId,
 } from "@/lib/feature-tips";
@@ -106,7 +108,9 @@ export function useDismissedTips() {
     // Only auto-open once we know the real answer (or the fetch failed).
     ready: query.isSuccess || query.isError,
     setDismissed: (id: TipId, on: boolean) =>
-      save(on ? mergeDismissed(dismissed, [id]) : dismissed.filter((d) => d !== id)),
+      save(
+        on ? withAnnouncements(mergeDismissed(dismissed, [id])) : dismissed.filter((d) => d !== id),
+      ),
     resetAll: async () => {
       try {
         for (const id of Object.keys(TIPS)) sessionStorage.removeItem(SEEN_PREFIX + id);
@@ -125,18 +129,20 @@ export function FeatureTips() {
   const { dismissed, ready, setDismissed } = useDismissedTips();
   const [open, setOpen] = useState<TipId | null>(null);
 
-  // First visit this session → open by itself, unless turned off.
+  // First visit this session → open by itself, unless turned off. Someone
+  // who turned the screen tip off may still get its one-time "what's new".
   useEffect(() => {
     setOpen(null);
-    if (!pageTip || !ready || dismissed.includes(pageTip) || seenThisSession(pageTip)) return;
+    const auto = ready ? autoTipFor(pathname, dismissed) : null;
+    if (!auto || seenThisSession(auto)) return;
     const t = setTimeout(() => {
-      markSeen(pageTip);
-      setOpen(pageTip);
+      markSeen(auto);
+      setOpen(auto);
     }, 600);
     return () => clearTimeout(t);
     // Re-run on navigation and once loaded, not when the list changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageTip, ready]);
+  }, [pathname, ready]);
 
   useEffect(() => {
     const onOpen = (e: Event) => setOpen((e as CustomEvent<TipId>).detail);
@@ -205,10 +211,12 @@ function TipDialog({
   onClose: (neverAgain: boolean) => void;
 }) {
   const tip = TIPS[id];
+  const announcement = "announcement" in tip && tip.announcement === true;
   const [platform, setPlatform] = useState<Platform>(() =>
     detectPlatform(navigator.userAgent, navigator.maxTouchPoints),
   );
-  const [neverAgain, setNeverAgain] = useState(dismissed);
+  // Announcements are one-time: closing one always turns it off.
+  const [neverAgain, setNeverAgain] = useState(dismissed || announcement);
   const steps = stepsFor(tip, platform);
 
   return (
@@ -260,10 +268,14 @@ function TipDialog({
           </a>
         )}
         <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Checkbox checked={neverAgain} onCheckedChange={(v) => setNeverAgain(v === true)} />
-            Don&apos;t show this again
-          </label>
+          {announcement ? (
+            <span />
+          ) : (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox checked={neverAgain} onCheckedChange={(v) => setNeverAgain(v === true)} />
+              Don&apos;t show this again
+            </label>
+          )}
           <Button onClick={() => onClose(neverAgain)}>Got it</Button>
         </DialogFooter>
       </DialogContent>

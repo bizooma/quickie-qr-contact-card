@@ -19,6 +19,8 @@ export type Tip = {
   platformTabs?: boolean;
   // Help Center section with more detail.
   help?: string;
+  // One-time "what's new" note: no checkbox, closing it dismisses it for good.
+  announcement?: boolean;
 };
 
 export const TIPS = {
@@ -207,6 +209,43 @@ export const TIPS = {
     ],
     help: "notifications",
   },
+  contact: {
+    title: "A contact",
+    intro: "Everything about one person, and the tools to follow up.",
+    steps: [
+      {
+        text: "**Email**, call or **Save to phone** puts them straight into your phone's contacts.",
+      },
+      {
+        text: "**Remind me to follow up** pings your phone when it's time — Tomorrow, In 3 days, Next week, or any date (Premium).",
+      },
+      {
+        text: "**Draft follow-up email with AI** writes the email for you; open it in your mail app or copy it.",
+      },
+      { text: "**Enrich with AI** fills in a title, company or LinkedIn from public info." },
+      {
+        text: "Add **tags** and **notes** (typed or by voice). “Met at” shows the event you met them at.",
+      },
+    ],
+    help: "capturing",
+  },
+  "new-events-reminders": {
+    title: "New: event mode & follow-up reminders",
+    intro: "Two new ways to turn the people you meet into follow-ups.",
+    announcement: true,
+    steps: [
+      {
+        text: "**Event mode** (Pro and Premium): tap **Start event mode** before a conference or expo. Everyone you meet there is tagged with the event, so afterwards you have one list.",
+      },
+      {
+        text: "**Follow-up reminders** (Premium): on any contact, tap **Remind me to follow up** and pick a day. Your phone gets a notification when it's time.",
+      },
+      {
+        text: "From an event's list, **Remind me to follow up with all** sets a reminder for everyone you met there.",
+      },
+    ],
+    help: "capturing",
+  },
 } satisfies Record<string, Tip>;
 
 export type TipId = keyof typeof TIPS;
@@ -217,6 +256,7 @@ export function tipIdForPath(pathname: string): TipId | null {
   const p = pathname.replace(/\/+$/, "") || "/";
   if (p === "/app") return "cards";
   if (/^\/app\/cards\/[^/]+$/.test(p)) return "editor";
+  if (/^\/app\/contacts\/[^/]+$/.test(p)) return "contact";
   const exact: Record<string, TipId> = {
     "/app/qr": "qr",
     "/app/scan": "scan",
@@ -229,6 +269,32 @@ export function tipIdForPath(pathname: string): TipId | null {
     "/app/settings": "settings",
   };
   return exact[p] ?? null;
+}
+
+// "What's new" notes, keyed to the screen tip they extend. They only show to
+// people who had already turned that tip off (everyone else gets the updated
+// tip itself), and turning the tip off now also covers them.
+export const ANNOUNCEMENTS: Partial<Record<TipId, TipId>> = {
+  contacts: "new-events-reminders",
+};
+
+/** The tip a screen should open by itself, given what's been turned off. */
+export function autoTipFor(pathname: string, dismissed: readonly string[]): TipId | null {
+  const tip = tipIdForPath(pathname);
+  if (!tip) return null;
+  if (!dismissed.includes(tip)) return tip;
+  const news = ANNOUNCEMENTS[tip];
+  return news && !dismissed.includes(news) ? news : null;
+}
+
+/** Dismissing a screen tip also dismisses its announcement (same content). */
+export function withAnnouncements(ids: readonly TipId[]): TipId[] {
+  const out = new Set(ids);
+  for (const id of ids) {
+    const news = ANNOUNCEMENTS[id];
+    if (news) out.add(news);
+  }
+  return [...out];
 }
 
 export function detectPlatform(userAgent: string, maxTouchPoints = 0): Platform {
