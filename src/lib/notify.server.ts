@@ -106,12 +106,23 @@ async function vapidAuthHeader(endpoint: string): Promise<string> {
 }
 
 /** Sends a payload-less push to every subscription the user has; prunes dead ones. */
-export async function sendPushToUser(userId: string): Promise<void> {
+export type PushMessage = { title: string; body: string; url: string };
+
+/** Pushes to every device the user subscribed. Without a message the
+ *  service worker shows its generic "new contact" notification; with one,
+ *  the text is queued per device and the service worker fetches it from
+ *  /api/push/next when the (payload-less) push arrives. */
+export async function sendPushToUser(userId: string, message?: PushMessage): Promise<void> {
   const { data: subs } = await supabaseAdmin
     .from("push_subscriptions")
     .select("id, endpoint")
     .eq("user_id", userId);
   if (!subs?.length) return;
+  if (message) {
+    await supabaseAdmin
+      .from("push_messages")
+      .insert(subs.map((sub) => ({ subscription_id: sub.id, ...message })));
+  }
   await Promise.all(
     subs.map(async (sub) => {
       try {

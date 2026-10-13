@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, ChevronRight, Lightbulb, LogOut, Sparkles } from "lucide-react";
+import { Building2, ChevronRight, Lightbulb, LogOut, Rocket, Sparkles } from "lucide-react";
 import { useDismissedTips } from "@/components/FeatureTip";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -143,6 +143,7 @@ function Settings() {
         </ul>
       </section>
       <TipsSection />
+      <RoadmapSection />
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Install the app</h2>
         <InstallInstructions />
@@ -175,6 +176,68 @@ function Settings() {
         deleteAccount={deleteAccount}
       />
     </div>
+  );
+}
+
+const ROADMAP: { title: string; desc: string; plans?: string }[] = [
+  {
+    title: "Apple Wallet & Google Wallet card",
+    desc: "Your QR code in your phone's Wallet, a double-press away from the lock screen.",
+    plans: "Pro & Premium",
+  },
+  {
+    title: "NFC tap cards & stickers",
+    desc: "Tap a phone to share your card. Branded cards and stickers you can order, plus “write my card to a tag” on Android.",
+  },
+  {
+    title: "CRM sync",
+    desc: "New contacts flow straight into HubSpot, Salesforce, or your Google or Outlook contacts. (Webhooks to Make and Zapier already work today.)",
+  },
+  {
+    title: "Custom questions on your “Share yours” form",
+    desc: "Ask people what they're looking for, their budget, or anything else when they share their details.",
+  },
+  {
+    title: "Weekly summary email",
+    desc: "Every Monday: views, saves, new leads, and who's due a follow-up.",
+  },
+  {
+    title: "Referral program",
+    desc: "Give a friend a free month of Pro and get one yourself.",
+  },
+];
+
+/** What's being built next, so people know it's coming. */
+function RoadmapSection() {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-bold">Coming soon</h2>
+      <p className="text-sm text-muted-foreground">
+        What we're building next. Want something sooner? Email{" "}
+        <a href="mailto:support@myaisummit.dev" className="underline">
+          support@myaisummit.dev
+        </a>
+        .
+      </p>
+      <ul className="surface divide-y">
+        {ROADMAP.map((r) => (
+          <li key={r.title} className="flex items-start gap-3 px-4 py-3">
+            <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">
+                {r.title}
+                {r.plans && (
+                  <span className="ml-2 inline-block whitespace-nowrap rounded-full bg-brand-soft px-2 py-0.5 align-middle text-[10px] font-bold text-foreground">
+                    {r.plans}
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-muted-foreground">{r.desc}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -439,10 +502,12 @@ function PlanSection() {
           )}
           <p className="text-xs text-muted-foreground">
             Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
-            free): unlimited AI scans, enrichment, follow-ups and summaries, plus up to 3 cards.
+            free): unlimited AI scans, enrichment, follow-ups and summaries, event mode, plus up to 3
+            cards.
             Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
             {premiumAnnualFreeMonths()} months free): everything in Pro, plus unlimited personal
-            cards, email signatures, and advanced analytics with CSV export. Teams (
+            cards, email signatures, follow-up reminders, and advanced analytics with CSV export.
+            Teams (
             {TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with
             everything in Premium for every member. Plans auto-renew; cancelling stops the renewal
             and your plan runs to the end of the period you've paid for.

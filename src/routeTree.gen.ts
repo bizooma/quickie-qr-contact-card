@@ -29,6 +29,8 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AuthResetRouteImport } from './routes/auth_.reset'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as ForAudienceRouteImport } from './routes/for.$audience'
+import { Route as ApiCronRemindersRouteImport } from './routes/api.cron.reminders'
+import { Route as ApiPushNextRouteImport } from './routes/api.push.next'
 import { Route as AppCardsIdRouteImport } from './routes/app.cards.$id'
 import { Route as AppContactsIndexRouteImport } from './routes/app.contacts.index'
 import { Route as AppContactsIdRouteImport } from './routes/app.contacts.$id'
@@ -137,6 +139,16 @@ const ForAudienceRoute = ForAudienceRouteImport.update({
   path: '/for/$audience',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
+  id: '/api/cron/reminders',
+  path: '/api/cron/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPushNextRoute = ApiPushNextRouteImport.update({
+  id: '/api/push/next',
+  path: '/api/push/next',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppCardsIdRoute = AppCardsIdRouteImport.update({
   id: '/cards/$id',
   path: '/cards/$id',
@@ -194,6 +206,8 @@ export interface FileRoutesByFullPath {
   '/c/$slug': typeof CSlugRoute
   '/for/$audience': typeof ForAudienceRoute
   '/app/': typeof AppIndexRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
+  '/api/push/next': typeof ApiPushNextRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
   '/app/join/$token': typeof AppJoinTokenRoute
@@ -222,6 +236,8 @@ export interface FileRoutesByTo {
   '/c/$slug': typeof CSlugRoute
   '/for/$audience': typeof ForAudienceRoute
   '/app': typeof AppIndexRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
+  '/api/push/next': typeof ApiPushNextRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
   '/app/join/$token': typeof AppJoinTokenRoute
@@ -252,6 +268,8 @@ export interface FileRoutesById {
   '/c/$slug': typeof CSlugRoute
   '/for/$audience': typeof ForAudienceRoute
   '/app/': typeof AppIndexRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
+  '/api/push/next': typeof ApiPushNextRoute
   '/app/cards/$id': typeof AppCardsIdRoute
   '/app/contacts/$id': typeof AppContactsIdRoute
   '/app/join/$token': typeof AppJoinTokenRoute
@@ -283,6 +301,8 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/for/$audience'
     | '/app/'
+    | '/api/cron/reminders'
+    | '/api/push/next'
     | '/app/cards/$id'
     | '/app/contacts/$id'
     | '/app/join/$token'
@@ -311,6 +331,8 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/for/$audience'
     | '/app'
+    | '/api/cron/reminders'
+    | '/api/push/next'
     | '/app/cards/$id'
     | '/app/contacts/$id'
     | '/app/join/$token'
@@ -340,6 +362,8 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/for/$audience'
     | '/app/'
+    | '/api/cron/reminders'
+    | '/api/push/next'
     | '/app/cards/$id'
     | '/app/contacts/$id'
     | '/app/join/$token'
@@ -362,6 +386,8 @@ export interface RootRouteChildren {
   AuthResetRoute: typeof AuthResetRoute
   CSlugRoute: typeof CSlugRoute
   ForAudienceRoute: typeof ForAudienceRoute
+  ApiCronRemindersRoute: typeof ApiCronRemindersRoute
+  ApiPushNextRoute: typeof ApiPushNextRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -506,6 +532,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForAudienceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/reminders': {
+      id: '/api/cron/reminders'
+      path: '/api/cron/reminders'
+      fullPath: '/api/cron/reminders'
+      preLoaderRoute: typeof ApiCronRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/push/next': {
+      id: '/api/push/next'
+      path: '/api/push/next'
+      fullPath: '/api/push/next'
+      preLoaderRoute: typeof ApiPushNextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/cards/$id': {
       id: '/app/cards/$id'
       path: '/cards/$id'
@@ -609,6 +649,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthResetRoute: AuthResetRoute,
   CSlugRoute: CSlugRoute,
   ForAudienceRoute: ForAudienceRoute,
+  ApiCronRemindersRoute: ApiCronRemindersRoute,
+  ApiPushNextRoute: ApiPushNextRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

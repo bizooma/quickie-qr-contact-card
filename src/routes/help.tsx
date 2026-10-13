@@ -98,6 +98,14 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         "On any contact: add notes (typed or voice), tag them, draft an AI follow-up email, or enrich thin contacts from their company's public info.",
       ],
       [
+        "Event mode (Pro and Premium)",
+        "Going to a conference, expo or open house? On Contacts, tap “Start event mode” and name the event. Everyone who scans your card, shares their details or gets scanned by you is tagged with it until you end the event (or its last day passes). Afterwards, filter Contacts by the event to see everyone you met there.",
+      ],
+      [
+        "Follow-up reminders (Premium)",
+        "On any contact, tap Tomorrow, In 3 days, Next week or pick a time, and we'll send a notification to your phone when it's time to reach out (turn on notifications in Settings). Due follow-ups also show at the top of Contacts. From an event's list, one tap sets a reminder for everyone you met there.",
+      ],
+      [
         "Export everything",
         "Contacts export as CSV or vCard from the Contacts page. Your data is yours.",
       ],
