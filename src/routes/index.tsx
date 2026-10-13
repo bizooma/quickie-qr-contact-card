@@ -654,6 +654,7 @@ function Landing() {
                   "Up to 3 digital cards ",
                   "Unlimited  card scanning",
                   "Unlimited AI enrichment, follow-ups & summaries",
+                  "Event mode: tag everyone you meet at an event",
                   "Everything in Free",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
@@ -695,6 +696,7 @@ function Landing() {
                   "Unlimited personal cards",
                   "Advanced analytics + CSV export",
                   "Email signature builder",
+                  "Follow-up reminders on your phone",
                   "Everything in Pro",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">

@@ -2,7 +2,7 @@ import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Plus, Search } from "lucide-react";
+import { Download, MapPin, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,9 @@ import { listCards } from "@/lib/cards-api";
 import { signedUrls } from "@/lib/media";
 import { contactsToCsv, initials } from "@/lib/card-model";
 import { usePlan } from "@/components/PremiumGate";
+import { EventModeBar } from "@/components/contacts/EventMode";
+import { BulkRemindButton, FollowUpsPanel } from "@/components/contacts/Reminders";
+import { listEvents } from "@/lib/events-api";
 import { PREMIUM_PRICE_LABEL } from "@/lib/plans";
 
 export const Route = createFileRoute("/app/contacts/")({ head: appHead('Contacts', "Search, tag and export the contacts you've captured."), component: ContactsPage });
@@ -32,6 +35,7 @@ function ContactsPage() {
     queryFn: listContacts,
   });
   const { data: cards = [] } = useQuery({ queryKey: ["cards"], queryFn: listCards });
+  const { data: events = [] } = useQuery({ queryKey: ["events"], queryFn: listEvents });
 
   // Opening this page clears the "new leads" badge in the nav.
   useEffect(() => {
@@ -46,6 +50,7 @@ function ContactsPage() {
   const [tag, setTag] = useState("all");
   const [cardId, setCardId] = useState("all");
   const [range, setRange] = useState<keyof typeof RANGES>("all");
+  const [eventId, setEventId] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
 
   const photoPaths = useMemo(
@@ -59,6 +64,10 @@ function ContactsPage() {
   });
 
   const cardLabel = useMemo(() => Object.fromEntries(cards.map((c) => [c.id, c.label])), [cards]);
+  const eventName = useMemo(
+    () => Object.fromEntries(events.map((e) => [e.id, e.name])) as Record<string, string>,
+    [events],
+  );
   const allTags = useMemo(
     () => Array.from(new Set(contacts.flatMap((c) => c.tags))).sort(),
     [contacts],
@@ -75,12 +84,13 @@ function ContactsPage() {
       return false;
     if (tag !== "all" && !c.tags.includes(tag)) return false;
     if (cardId !== "all" && c.card_id !== cardId) return false;
+    if (eventId !== "all" && c.event_id !== eventId) return false;
     if (range !== "all" && Date.now() - new Date(c.created_at).getTime() > Number(range) * 864e5)
       return false;
     return true;
   });
 
-  const { isPremium } = usePlan();
+  const { isPremium, isPro } = usePlan();
 
   function exportCsv() {
     if (!isPremium) {
@@ -119,7 +129,16 @@ function ContactsPage() {
           </Button>
         </div>
       </div>
-      <div className="mb-5 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
+      <EventModeBar
+        events={events}
+        isPro={isPro}
+        countFor={(id) => contacts.filter((c) => c.event_id === id).length}
+        onShowEvent={setEventId}
+      />
+      <FollowUpsPanel />
+      <div
+        className={`mb-5 grid gap-2 ${events.length ? "sm:grid-cols-[1fr_auto_auto_auto_auto]" : "sm:grid-cols-[1fr_auto_auto_auto]"}`}
+      >
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -155,6 +174,21 @@ function ContactsPage() {
             ))}
           </SelectContent>
         </Select>
+        {events.length > 0 && (
+          <Select value={eventId} onValueChange={setEventId}>
+            <SelectTrigger className="sm:w-40" aria-label="Event">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All events</SelectItem>
+              {events.map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={range} onValueChange={(v) => setRange(v as keyof typeof RANGES)}>
           <SelectTrigger className="sm:w-36">
             <SelectValue />
@@ -168,6 +202,15 @@ function ContactsPage() {
           </SelectContent>
         </Select>
       </div>
+      {eventId !== "all" && eventName[eventId] && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <MapPin className="h-4 w-4 text-brand" />
+            {eventName[eventId]} · {filtered.length} contact{filtered.length === 1 ? "" : "s"}
+          </p>
+          <BulkRemindButton contactIds={filtered.map((c) => c.id)} eventName={eventName[eventId]} />
+        </div>
+      )}
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : filtered.length === 0 ? (
@@ -202,8 +245,14 @@ function ContactsPage() {
                   <p className="truncate text-sm text-muted-foreground">
                     {[c.job_title, c.company].filter(Boolean).join(" · ") || c.email || c.phone}
                   </p>
-                  {c.tags.length > 0 && (
+                  {(c.tags.length > 0 || (c.event_id && eventName[c.event_id])) && (
                     <div className="mt-1 flex flex-wrap gap-1">
+                      {c.event_id && eventName[c.event_id] && (
+                        <Badge variant="outline" className="gap-1 text-[10px]">
+                          <MapPin className="h-3 w-3" />
+                          {eventName[c.event_id]}
+                        </Badge>
+                      )}
                       {c.tags.map((t) => (
                         <Badge key={t} variant="secondary" className="text-[10px]">
                           {t}

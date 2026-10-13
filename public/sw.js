@@ -3,7 +3,7 @@
 // files → stale-while-revalidate; page navigations → network-first with the
 // cached /app shell as the offline fallback. Data (Supabase) is cross-origin
 // and never intercepted, so nothing stale is ever shown as live data.
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL = `ck-shell-${VERSION}`;
 const ASSETS = `ck-assets-${VERSION}`;
 const STATIC = `ck-static-${VERSION}`;
@@ -85,14 +85,43 @@ async function navigation(request) {
 
 // Pushes arrive without a payload (no encryption needed server-side), so the
 // notification text is generic; tapping it opens the contacts list.
+// Pushes carry no payload. Reminders queue their text on the server, so
+// ask for it with this device's subscription endpoint; nothing queued means
+// it's a share-back and gets the default text.
+async function nextMessage() {
+  try {
+    const sub = await self.registration.pushManager.getSubscription();
+    if (!sub) return null;
+    const res = await fetch("/api/push/next", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint }),
+    });
+    return res.status === 200 ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
+
 self.addEventListener("push", (event) => {
   event.waitUntil(
-    self.registration.showNotification("New contact captured 🎉", {
-      body: "Someone just shared their details with you. Tap to see who.",
-      icon: "/brand/icon-192.png",
-      badge: "/brand/icon-192.png",
-      tag: "ck-shareback",
-    }),
+    nextMessage().then((msg) =>
+      msg
+        ? self.registration.showNotification(msg.title, {
+            body: msg.body,
+            icon: "/brand/icon-192.png",
+            badge: "/brand/icon-192.png",
+            tag: "ck-reminder",
+            data: { url: msg.url },
+          })
+        : self.registration.showNotification("New contact captured 🎉", {
+            body: "Someone just shared their details with you. Tap to see who.",
+            icon: "/brand/icon-192.png",
+            badge: "/brand/icon-192.png",
+            tag: "ck-shareback",
+            data: { url: "/app/contacts" },
+          }),
+    ),
   );
 });
 
@@ -100,7 +129,9 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
-      const target = "/app/contacts";
+      const url = event.notification.data && event.notification.data.url;
+      // Only ever open our own app pages.
+      const target = typeof url === "string" && url.startsWith("/app") ? url : "/app/contacts";
       for (const w of wins) {
         if (new URL(w.url).pathname.startsWith("/app")) {
           w.navigate(target);

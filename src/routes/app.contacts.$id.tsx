@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Copy,
   Loader2,
+  MapPin,
   Mic,
   Square,
   Mail,
@@ -51,6 +52,8 @@ import {
 } from "@/lib/voice-notes";
 import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
+import { ContactReminders } from "@/components/contacts/Reminders";
+import { listEvents } from "@/lib/events-api";
 
 export const Route = createFileRoute("/app/contacts/$id")({ head: appHead('Contact', 'Contact details, notes and follow-ups.'), component: ContactDetail });
 
@@ -107,6 +110,7 @@ function ContactDetail() {
   );
   const [tag, setTag] = useState("");
   const [followUp, setFollowUp] = useState<FollowUpDraft | null>(null);
+  const { data: events = [] } = useQuery({ queryKey: ["events"], queryFn: listEvents });
   const [drafting, setDrafting] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
@@ -343,6 +347,7 @@ function ContactDetail() {
   }
 
   const cardLabel = (c as { cards?: { label: string } | null }).cards?.label;
+  const eventLabel = c.event_id ? events.find((e) => e.id === c.event_id)?.name : undefined;
   // Their company's logo, derived from the scanned card's website or work
   // email — no upload needed, it becomes the banner. Contacts without a
   // company domain (manual entries, share-backs from personal emails) get
@@ -403,6 +408,12 @@ function ContactDetail() {
               </p>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
+              {eventLabel && (
+                <span className="mb-1 flex items-center justify-center gap-1 font-semibold text-foreground">
+                  <MapPin className="h-3 w-3 text-brand" />
+                  Met at {eventLabel}
+                </span>
+              )}
               Captured {format(new Date(c.created_at), "MMM d, yyyy 'at' h:mm a")}
               {cardLabel
                 ? ` via ${cardLabel} card`
@@ -520,6 +531,12 @@ function ContactDetail() {
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-bold">Follow up</h2>
+        <div className="mb-3">
+          <ContactReminders
+            contactId={c.id}
+            firstName={c.full_name.trim().split(/\s+/)[0] || c.full_name}
+          />
+        </div>
         {!followUp && (
           <Button variant="outline" size="sm" onClick={generateFollowUp} disabled={drafting}>
             {drafting ? (

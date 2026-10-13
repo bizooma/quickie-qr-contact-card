@@ -3,12 +3,40 @@ import { Link } from "@tanstack/react-router";
 import { Lock, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { getBillingState } from "@/lib/billing.functions";
-import { PREMIUM_PRICE_LABEL, type PlanId } from "@/lib/plans";
+import { PREMIUM_PRICE_LABEL, PRO_PRICE_LABEL, type PlanId } from "@/lib/plans";
 
 /** The caller's effective plan (shared react-query cache with Settings). */
-export function usePlan(): { plan: PlanId | undefined; isPremium: boolean } {
+export function usePlan(): { plan: PlanId | undefined; isPremium: boolean; isPro: boolean } {
   const { data } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
-  return { plan: data?.plan, isPremium: data?.plan === "premium" };
+  return {
+    plan: data?.plan,
+    isPremium: data?.plan === "premium",
+    // Pro features are included in Premium.
+    isPro: data?.plan === "pro" || data?.plan === "premium",
+  };
+}
+
+/** Upsell card for a Pro feature (also included in Premium). */
+export function ProUpsell({ feature, children }: { feature: string; children?: ReactNode }) {
+  return (
+    <div className="surface flex flex-col items-start gap-3 border-dashed p-5">
+      <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-foreground">
+        <Lock className="h-3.5 w-3.5" />
+        Pro feature
+      </span>
+      <p className="text-sm text-muted-foreground">
+        {feature} comes with Pro ({PRO_PRICE_LABEL}) and Premium ({PREMIUM_PRICE_LABEL}).
+      </p>
+      {children}
+      <Link
+        to="/app/settings"
+        className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
+      >
+        <Sparkles className="h-4 w-4" />
+        Upgrade
+      </Link>
+    </div>
+  );
 }
 
 /** Upsell card shown in place of a Premium-only feature. */

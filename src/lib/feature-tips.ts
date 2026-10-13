@@ -124,7 +124,13 @@ export const TIPS = {
       {
         text: "Tap a contact for notes (typed or voice), tags, an AI follow-up email draft, and **Enrich with AI**.",
       },
-      { text: "Filter by card or tag. Premium can export everything as CSV." },
+      {
+        text: "**Start event mode** before a conference or expo: everyone you meet is tagged with the event (Pro and Premium).",
+      },
+      {
+        text: "On a contact, **Remind me to follow up** sends a phone notification when it's time (Premium). Due follow-ups show at the top here.",
+      },
+      { text: "Filter by card, tag or event. Premium can export everything as CSV." },
     ],
     help: "capturing",
   },

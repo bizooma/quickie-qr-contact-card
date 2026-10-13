@@ -297,6 +297,47 @@ export type Database = {
           },
         ]
       }
+      contact_reminders: {
+        Row: {
+          contact_id: string
+          created_at: string
+          done_at: string | null
+          id: string
+          note: string | null
+          notified_at: string | null
+          remind_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          notified_at?: string | null
+          remind_at: string
+          user_id?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          notified_at?: string | null
+          remind_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_reminders_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_tags: {
         Row: {
           contact_id: string
@@ -336,6 +377,7 @@ export type Database = {
           company: string | null
           created_at: string
           email: string | null
+          event_id: string | null
           full_name: string
           id: string
           job_title: string | null
@@ -355,6 +397,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           email?: string | null
+          event_id?: string | null
           full_name: string
           id?: string
           job_title?: string | null
@@ -374,6 +417,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           email?: string | null
+          event_id?: string | null
           full_name?: string
           id?: string
           job_title?: string | null
@@ -396,6 +440,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          ends_on: string | null
+          id: string
+          is_active: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       org_invites: {
         Row: {
@@ -617,6 +688,41 @@ export type Database = {
         }
         Relationships: []
       }
+      push_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          subscription_id: string
+          title: string
+          url: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          subscription_id: string
+          title: string
+          url?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          subscription_id?: string
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_messages_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "push_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -738,6 +844,7 @@ export type Database = {
         Returns: undefined
       }
       get_public_card: { Args: { _slug: string }; Returns: Json }
+      effective_plan: { Args: { _user: string }; Returns: string }
       has_team_seat: { Args: { _user: string }; Returns: boolean }
       in_same_org_as: { Args: { _user: string }; Returns: boolean }
       log_card_event: {
