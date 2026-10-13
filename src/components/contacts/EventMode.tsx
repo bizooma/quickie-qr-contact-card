@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarCheck, Loader2, MapPin, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -66,24 +67,30 @@ export function EventModeBar({
           </div>
           {/* Own row on phones so the event name isn't cut off. */}
           <div className="flex w-full gap-2 sm:w-auto">
-            <Button variant="outline" size="sm" onClick={() => onShowEvent(running.id)}>
-              View contacts
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void end()} disabled={ending}>
-              {ending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Square className="h-4 w-4" />
-              )}
-              End event
-            </Button>
+            <Hint label="Show only the people you've met at this event">
+              <Button variant="outline" size="sm" onClick={() => onShowEvent(running.id)}>
+                View contacts
+              </Button>
+            </Hint>
+            <Hint label="Stop tagging new contacts. Everyone already tagged stays tagged.">
+              <Button variant="outline" size="sm" onClick={() => void end()} disabled={ending}>
+                {ending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                End event
+              </Button>
+            </Hint>
           </div>
         </div>
       ) : (
-        <Button variant="outline" size="sm" className="mb-5" onClick={() => setOpen(true)}>
-          <MapPin className="h-4 w-4" />
-          Start event mode
-        </Button>
+        <Hint label="Going to a conference or expo? Everyone you meet there gets tagged with the event (Pro).">
+          <Button variant="outline" size="sm" className="mb-5" onClick={() => setOpen(true)}>
+            <MapPin className="h-4 w-4" />
+            Start event mode
+          </Button>
+        </Hint>
       )}
       <StartEventDialog open={open} onOpenChange={setOpen} isPro={isPro} />
     </>

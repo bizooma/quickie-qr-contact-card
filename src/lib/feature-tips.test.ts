@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  autoTipFor,
   boldParts,
   detectPlatform,
   mergeDismissed,
@@ -7,6 +8,7 @@ import {
   TIP_IDS,
   TIPS,
   tipIdForPath,
+  withAnnouncements,
 } from "./feature-tips";
 
 describe("tipIdForPath", () => {
@@ -17,10 +19,10 @@ describe("tipIdForPath", () => {
     expect(tipIdForPath("/app/qr")).toBe("qr");
     expect(tipIdForPath("/app/tools/background")).toBe("background");
     expect(tipIdForPath("/app/org")).toBe("team");
+    expect(tipIdForPath("/app/contacts/9a2ba320-72bb-4252-bbbf-6527199ca09f")).toBe("contact");
   });
 
   it("has no tip for screens without one", () => {
-    expect(tipIdForPath("/app/contacts/abc")).toBeNull();
     expect(tipIdForPath("/app/onboarding")).toBeNull();
     expect(tipIdForPath("/app/admin")).toBeNull();
     expect(tipIdForPath("/")).toBeNull();
@@ -76,5 +78,24 @@ describe("boldParts", () => {
 describe("mergeDismissed", () => {
   it("unions lists, drops unknown ids and duplicates", () => {
     expect(mergeDismissed(["qr", "nope"], ["qr", "scan"], null).sort()).toEqual(["qr", "scan"]);
+  });
+});
+
+describe("autoTipFor", () => {
+  it("opens the screen tip first", () => {
+    expect(autoTipFor("/app/contacts", [])).toBe("contacts");
+  });
+  it("shows the what's-new note only to people who turned the screen tip off", () => {
+    expect(autoTipFor("/app/contacts", ["contacts"])).toBe("new-events-reminders");
+    expect(autoTipFor("/app/contacts", ["contacts", "new-events-reminders"])).toBeNull();
+    expect(autoTipFor("/app/qr", ["qr"])).toBeNull();
+    expect(autoTipFor("/app/admin", [])).toBeNull();
+  });
+  it("covers the note when the screen tip is turned off", () => {
+    expect(withAnnouncements(["contacts"]).sort()).toEqual(["contacts", "new-events-reminders"]);
+    expect(withAnnouncements(["qr"])).toEqual(["qr"]);
+  });
+  it("marks the note as an announcement", () => {
+    expect(TIPS["new-events-reminders"].announcement).toBe(true);
   });
 });
