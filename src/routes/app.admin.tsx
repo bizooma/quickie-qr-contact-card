@@ -578,7 +578,10 @@ function AdminPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {series.map((s) => {
                 const pts: DayPoint[] = analytics[s.key];
-                const total = pts.reduce((a, p) => a + p.n, 0);
+                const total =
+                  s.key === "active_users" && analytics.active_users_total !== undefined
+                    ? analytics.active_users_total
+                    : pts.reduce((a, p) => a + p.n, 0);
                 return (
                   <div key={s.key} className="surface p-4">
                     <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
@@ -675,6 +678,12 @@ function AdminPage() {
                         {compLabel(g.plan, g.grant_months)}
                         {g.note ? ` — ${g.note}` : ""}
                       </p>
+                      {!g.match_email && (
+                        <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+                          Matches by name, so it only applies if they sign up with Google under
+                          exactly this name. Queue their email above to be sure.
+                        </p>
+                      )}
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => revokeGrant(g.id)}>
                       Revoke

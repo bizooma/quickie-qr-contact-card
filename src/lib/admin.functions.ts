@@ -312,6 +312,9 @@ export type DayPoint = { d: string; n: number };
 export type AdminAnalytics = {
   signups: DayPoint[];
   active_users: DayPoint[];
+  // Distinct people active in the window (summing the daily series would
+  // count someone once per day they were active).
+  active_users_total?: number;
   card_views: DayPoint[];
   sharebacks: DayPoint[];
   ai_calls: DayPoint[];
