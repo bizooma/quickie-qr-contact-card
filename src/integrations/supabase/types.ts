@@ -439,6 +439,13 @@ export type Database = {
             referencedRelation: "cards"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contacts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
         ]
       }
       events: {
@@ -843,8 +850,8 @@ export type Database = {
         Args: { _kind: string; _user: string }
         Returns: undefined
       }
-      get_public_card: { Args: { _slug: string }; Returns: Json }
       effective_plan: { Args: { _user: string }; Returns: string }
+      get_public_card: { Args: { _slug: string }; Returns: Json }
       has_team_seat: { Args: { _user: string }; Returns: boolean }
       in_same_org_as: { Args: { _user: string }; Returns: boolean }
       log_card_event: {
