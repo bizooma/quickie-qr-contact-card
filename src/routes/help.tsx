@@ -173,6 +173,10 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically, with its monthly AI allowance. Lifetime deals never expire. Year passes run 12 months from purchase, then the account moves to the free plan by itself — no charge, and nothing in it is lost.",
       ],
       [
+        "What counts as a scan",
+        "1 card = 1 scan. Each business card the AI reads uses one scan, so a photo with three cards on it uses three. Scanning your own card to build your digital card never counts.",
+      ],
+      [
         "Starter pack credits",
         "The starter pack adds 25 AI card scans and 25 follow-up drafts that never expire. They're used only after your plan's monthly allowance runs out, so on Pro they're a backup that waits until you need it.",
       ],

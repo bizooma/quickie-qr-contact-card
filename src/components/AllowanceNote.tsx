@@ -6,6 +6,7 @@ import {
   creditEligible,
   formatResetDate,
   limitReachedMessage,
+  SCAN_UNIT_NOTE,
   type UsageKind,
 } from "@/lib/plans";
 
@@ -37,6 +38,7 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
         ? `This month's allowance is used up — using your starter credits (${credits} left) · resets ${formatResetDate()}`
         : allowanceLine(kind, u.used, u.limit)}
       {left > 0 && credits > 0 && ` · +${credits} starter credits`}
+      {kind === "scan" && ` · ${SCAN_UNIT_NOTE}`}
     </p>
   );
 }

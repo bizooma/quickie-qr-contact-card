@@ -117,6 +117,21 @@ export function formatResetDate(now = new Date()): string {
 /** The exact Pro AI benefit line used everywhere Pro is described. */
 export const PRO_AI_BENEFIT = `${PLAN_LIMITS.pro.scan} AI card scans + ${PLAN_LIMITS.pro.follow_up} follow-up drafts every month — resets monthly.`;
 
+/** How scans are counted: per business card read, not per photo or batch. */
+export const SCAN_UNIT_NOTE = "1 card = 1 scan";
+
+/** How many units an AI action uses. Scans count each card read (a photo
+ *  of three cards is three scans), and a scan that reads nothing still
+ *  counts as one, since the AI did the work. Other kinds are one per action. */
+export function usageUnits(kind: UsageKind, cardsRead = 1): number {
+  return kind === "scan" ? Math.max(1, cardsRead) : 1;
+}
+
+/** A batch needs more scans than are left (but some are). */
+export function scansLeftMessage(available: number, now = new Date()): string {
+  return `You have ${available} scan${available === 1 ? "" : "s"} left this month (${SCAN_UNIT_NOTE}) — remove some photos and try again. Your allowance resets on ${formatResetDate(now)}.`;
+}
+
 /** Short plural noun for allowance lines: "37 of 100 scans left". */
 export const KIND_NOUNS: Record<UsageKind, string> = {
   scan: "scans",
