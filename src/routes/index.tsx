@@ -609,7 +609,7 @@ function Landing() {
                 {[
                   "1 digital card with QR code & your own link",
                   "Share-back contact capture, unlimited",
-                  `${free.scan} Card scans / month`,
+                  `${free.scan} AI card scans / month (1 card = 1 scan)`,
                   "Views, saves & click analytics",
                   "Push & webhook notifications",
                 ].map((t) => (
@@ -654,6 +654,7 @@ function Landing() {
                 {[
                   "Up to 3 digital cards",
                   PRO_AI_BENEFIT,
+                  "1 card = 1 scan, so 100 scans reads 100 cards",
                   "AI contact enrichment & note summaries",
                   "Event mode: tag everyone you meet at an event",
                   "Everything in Free",

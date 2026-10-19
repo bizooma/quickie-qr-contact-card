@@ -114,7 +114,7 @@ export const TIPS = {
       },
       { text: "Check what was read, untick anything you don't want, then tap **Save**." },
       {
-        text: "Free plan: 5 AI scans a month. Pro: 100 a month, resetting on the 1st. Starter-pack credits kick in once a month's scans are used. What's left shows under the button.",
+        text: "**1 card = 1 scan** — a photo with three cards uses three. Free plan: 5 scans a month. Pro: 100 a month, resetting on the 1st. Starter-pack credits kick in once a month's scans are used. What's left shows under the button.",
       },
     ],
     help: "capturing",

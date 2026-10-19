@@ -6,6 +6,8 @@ import {
   formatResetDate,
   nextResetDate,
   PRO_AI_BENEFIT,
+  scansLeftMessage,
+  usageUnits,
   effectivePlan,
   isWithinLimit,
   limitReachedMessage,
@@ -123,6 +125,23 @@ describe("limitReachedMessage", () => {
     expect(msg).toContain("You've used your 5 free scans for this month");
     expect(msg).toContain("resets on Nov 1");
     expect(msg).toContain("Pro includes 100 a month");
+  });
+});
+
+describe("1 card = 1 scan", () => {
+  it("counts scans per card read, at least one per scan", () => {
+    expect(usageUnits("scan", 3)).toBe(3);
+    expect(usageUnits("scan", 1)).toBe(1);
+    expect(usageUnits("scan", 0)).toBe(1);
+    expect(usageUnits("follow_up")).toBe(1);
+    expect(usageUnits("enrich", 5)).toBe(1);
+  });
+  it("explains a batch that needs more scans than are left", () => {
+    const oct = new Date("2026-10-19T12:00:00Z");
+    expect(scansLeftMessage(3, oct)).toBe(
+      "You have 3 scans left this month (1 card = 1 scan) — remove some photos and try again. Your allowance resets on Nov 1.",
+    );
+    expect(scansLeftMessage(1, oct)).toContain("You have 1 scan left");
   });
 });
 

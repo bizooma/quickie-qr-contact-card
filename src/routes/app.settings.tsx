@@ -47,6 +47,7 @@ import {
   PRO_AI_BENEFIT,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
+  SCAN_UNIT_NOTE,
   TEAM_MIN_SEATS,
   TEAM_SEAT_ANNUAL_PRICE_LABEL,
   TEAM_SEAT_PRICE_LABEL,
@@ -378,7 +379,12 @@ function PlanSection() {
           return (
             <div key={k}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
-                <span className="font-medium">{KIND_LABELS[k]}</span>
+                <span className="font-medium">
+                  {KIND_LABELS[k]}
+                  {k === "scan" && (
+                    <span className="font-normal text-muted-foreground"> ({SCAN_UNIT_NOTE})</span>
+                  )}
+                </span>
                 <span className="text-xs tabular-nums text-muted-foreground">
                   {u.limit === null ? `${u.used} this month` : allowanceLine(k, u.used, u.limit)}
                 </span>
@@ -508,14 +514,14 @@ function PlanSection() {
           )}
           <p className="text-xs text-muted-foreground">
             Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
-            free): {PRO_AI_BENEFIT} Plus AI enrichment and note summaries, event mode, and up to 3
-            cards. Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
-            {premiumAnnualFreeMonths()} months free): everything in Pro with higher AI limits, plus
-            unlimited personal cards, email signatures, follow-up reminders, and advanced analytics
-            with CSV export. Teams ({TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat minimum): a
-            team workspace with everything in Premium for every member. Plans auto-renew; cancelling
-            stops the renewal and your plan runs to the end of the period you've paid for. Every
-            account keeps one live digital card (link + QR) free for life.
+            free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus AI enrichment and note summaries, event
+            mode, and up to 3 cards. Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL}{" "}
+            with {premiumAnnualFreeMonths()} months free): everything in Pro with higher AI limits,
+            plus unlimited personal cards, email signatures, follow-up reminders, and advanced
+            analytics with CSV export. Teams ({TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat
+            minimum): a team workspace with everything in Premium for every member. Plans
+            auto-renew; cancelling stops the renewal and your plan runs to the end of the period
+            you've paid for. Every account keeps one live digital card (link + QR) free for life.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

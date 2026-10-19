@@ -13,6 +13,7 @@ import {
   ScanResultSchema,
   SELF_SCANS_PER_DAY,
 } from "./ai-model";
+import { usageUnits } from "./plans";
 
 const MODEL = "claude-opus-5-5";
 
@@ -34,7 +35,8 @@ export const scanCards = createServerFn({ method: "POST" })
   .validator(ScanCardsInputSchema)
   .handler(async ({ data, context }) => {
     const { assertWithinLimit, recordUsage } = await import("./usage.server");
-    await assertWithinLimit(context.userId, "scan");
+    // 1 card = 1 scan: every photo holds at least one card.
+    await assertWithinLimit(context.userId, "scan", data.images.length);
     const client = await getAnthropic();
     const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
@@ -83,7 +85,11 @@ export const scanCards = createServerFn({ method: "POST" })
     if (!response.parsed_output) {
       throw new Error("Could not read the cards from these photos. Try clearer, closer shots.");
     }
-    await recordUsage(context.userId, "scan");
+    await recordUsage(
+      context.userId,
+      "scan",
+      usageUnits("scan", response.parsed_output.contacts.length),
+    );
     return response.parsed_output;
   });
 

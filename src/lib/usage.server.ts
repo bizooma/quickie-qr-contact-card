@@ -12,6 +12,7 @@ import {
   limitReachedMessage,
   monthlyLimit,
   monthStartIso,
+  scansLeftMessage,
   type PlanId,
   type UsageKind,
 } from "./plans";
@@ -52,33 +53,44 @@ export async function getStarterCredits(
 }
 
 /** Throws a user-facing error when the caller is out of allowance. Order:
- *  the plan's monthly allowance first, then never-expiring starter credits. */
-export async function assertWithinLimit(userId: string, kind: UsageKind): Promise<void> {
+ *  the plan's monthly allowance first, then never-expiring starter credits.
+ *  `needed` is the least this action will use (for scans, one per photo). */
+export async function assertWithinLimit(
+  userId: string,
+  kind: UsageKind,
+  needed = 1,
+): Promise<void> {
   const plan = await getPlan(userId);
-  if (monthlyLimit(plan, kind) === Infinity) return; // No cap — skip the count query.
+  const limit = monthlyLimit(plan, kind);
+  if (limit === Infinity) return; // No cap — skip the count query.
   const used = await countUsageThisMonth(userId, kind);
-  if (isWithinLimit(plan, kind, used)) return;
-  // Past the monthly allowance: a starter-pack credit still covers it.
-  if (creditEligible(kind)) {
-    const credits = await getStarterCredits(userId);
-    if (credits[kind] > 0) return;
-  }
-  throw new Error(limitReachedMessage(plan, kind));
+  let available = Math.max(0, limit - used);
+  if (available >= needed) return;
+  // Past the monthly allowance: starter-pack credits still cover it.
+  if (creditEligible(kind)) available += (await getStarterCredits(userId))[kind];
+  if (available >= needed) return;
+  if (available === 0) throw new Error(limitReachedMessage(plan, kind));
+  throw new Error(scansLeftMessage(available));
 }
 
-/** Best-effort: a metering hiccup must never fail a successful AI action. */
-export async function recordUsage(userId: string, kind: UsageKind): Promise<void> {
+/** Records `units` of usage (scans: one per card read). Best-effort: a
+ *  metering hiccup must never fail a successful AI action. */
+export async function recordUsage(userId: string, kind: UsageKind, units = 1): Promise<void> {
   try {
-    await supabaseAdmin.from("ai_usage").insert({ user_id: userId, kind });
-    // If this action ran past the plan's monthly allowance, it was covered by
-    // a one-time starter credit — consume one (atomically, in SQL).
+    await supabaseAdmin
+      .from("ai_usage")
+      .insert(Array.from({ length: units }, () => ({ user_id: userId, kind })));
+    // Whatever ran past the plan's monthly allowance was covered by one-time
+    // starter credits — consume one per unit (atomically, in SQL).
     if (!creditEligible(kind)) return;
     const plan = await getPlan(userId);
     const limit = monthlyLimit(plan, kind);
     if (limit === Infinity) return;
-    const used = await countUsageThisMonth(userId, kind); // includes the row just inserted
-    if (used <= limit) return;
-    await supabaseAdmin.rpc("consume_starter_credit", { _user: userId, _kind: kind });
+    const used = await countUsageThisMonth(userId, kind); // includes the rows just inserted
+    const over = Math.min(units, used - limit);
+    for (let i = 0; i < over; i++) {
+      await supabaseAdmin.rpc("consume_starter_credit", { _user: userId, _kind: kind });
+    }
   } catch {
     // Swallowed on purpose.
   }
