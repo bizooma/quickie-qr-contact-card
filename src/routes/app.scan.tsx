@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AllowanceNote } from "@/components/AllowanceNote";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -86,7 +87,10 @@ function ScanPage() {
       const contacts = mergeScannedContacts(ai.contacts, qrContacts);
       if (aiError && !contacts.length) throw aiError;
       if (aiError) {
-        toast.warning("AI reading failed — showing only what the QR codes contained");
+        // Say why (e.g. the monthly allowance is used up), never fail silently.
+        toast.warning("AI reading failed — showing only what the QR codes contained", {
+          description: aiError instanceof Error ? aiError.message : undefined,
+        });
       }
       if (!contacts.length) {
         toast.error("No business cards found in these photos");
@@ -108,6 +112,7 @@ function ScanPage() {
       toast.error(e instanceof Error ? e.message : "Scan failed");
     } finally {
       setScanning(false);
+      qc.invalidateQueries({ queryKey: ["billing"] }); // refresh "N of 100 left"
     }
   }
 
@@ -270,6 +275,7 @@ function ScanPage() {
             )}
             {scanning ? "Reading cards…" : "Upload Contact"}
           </Button>
+          <AllowanceNote kind="scan" className="mt-3" />
         </>
       )}
 

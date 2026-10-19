@@ -51,10 +51,11 @@ export async function getStarterCredits(
   return { scan: data?.credit_scan ?? 0, follow_up: data?.credit_follow_up ?? 0 };
 }
 
-/** Throws a user-facing error when the caller's plan is out of allowance. */
+/** Throws a user-facing error when the caller is out of allowance. Order:
+ *  the plan's monthly allowance first, then never-expiring starter credits. */
 export async function assertWithinLimit(userId: string, kind: UsageKind): Promise<void> {
   const plan = await getPlan(userId);
-  if (plan !== "free") return; // Pro and Premium are unlimited — skip the count query.
+  if (monthlyLimit(plan, kind) === Infinity) return; // No cap — skip the count query.
   const used = await countUsageThisMonth(userId, kind);
   if (isWithinLimit(plan, kind, used)) return;
   // Past the monthly allowance: a starter-pack credit still covers it.
@@ -62,20 +63,21 @@ export async function assertWithinLimit(userId: string, kind: UsageKind): Promis
     const credits = await getStarterCredits(userId);
     if (credits[kind] > 0) return;
   }
-  throw new Error(limitReachedMessage(kind));
+  throw new Error(limitReachedMessage(plan, kind));
 }
 
 /** Best-effort: a metering hiccup must never fail a successful AI action. */
 export async function recordUsage(userId: string, kind: UsageKind): Promise<void> {
   try {
     await supabaseAdmin.from("ai_usage").insert({ user_id: userId, kind });
-    // If this action ran past the free monthly allowance, it was covered by a
-    // one-time starter credit — consume one (atomically, in SQL).
+    // If this action ran past the plan's monthly allowance, it was covered by
+    // a one-time starter credit — consume one (atomically, in SQL).
     if (!creditEligible(kind)) return;
     const plan = await getPlan(userId);
-    if (plan !== "free") return;
+    const limit = monthlyLimit(plan, kind);
+    if (limit === Infinity) return;
     const used = await countUsageThisMonth(userId, kind); // includes the row just inserted
-    if (used <= monthlyLimit("free", kind)) return;
+    if (used <= limit) return;
     await supabaseAdmin.rpc("consume_starter_credit", { _user: userId, _kind: kind });
   } catch {
     // Swallowed on purpose.

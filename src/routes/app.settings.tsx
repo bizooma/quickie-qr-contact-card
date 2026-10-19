@@ -36,6 +36,7 @@ import {
 import { useTheme, type ThemePref } from "@/hooks/use-theme";
 import { createBillingPortal, createCheckout, getBillingState } from "@/lib/billing.functions";
 import {
+  allowanceLine,
   annualFreeMonths,
   creditEligible,
   KIND_LABELS,
@@ -43,6 +44,7 @@ import {
   PREMIUM_ANNUAL_PRICE_LABEL,
   PREMIUM_PRICE_LABEL,
   premiumAnnualFreeMonths,
+  PRO_AI_BENEFIT,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   TEAM_MIN_SEATS,
@@ -375,11 +377,10 @@ function PlanSection() {
           const bonus = creditEligible(k) ? billing.credits[k] : 0;
           return (
             <div key={k}>
-              <div className="flex items-baseline justify-between text-sm">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
                 <span className="font-medium">{KIND_LABELS[k]}</span>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {u.limit === null ? `${u.used} · unlimited` : `${u.used} / ${u.limit} this month`}
-                  {u.limit !== null && bonus > 0 && ` · +${bonus} bonus credits`}
+                  {u.limit === null ? `${u.used} this month` : allowanceLine(k, u.used, u.limit)}
                 </span>
               </div>
               {u.limit !== null && (
@@ -389,6 +390,11 @@ function PlanSection() {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
+              )}
+              {u.limit !== null && bonus > 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  +{bonus} starter credits — used after your monthly allowance, never expire
+                </p>
               )}
             </div>
           );
@@ -502,15 +508,14 @@ function PlanSection() {
           )}
           <p className="text-xs text-muted-foreground">
             Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
-            free): unlimited AI scans, enrichment, follow-ups and summaries, event mode, plus up to 3
-            cards.
-            Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
-            {premiumAnnualFreeMonths()} months free): everything in Pro, plus unlimited personal
-            cards, email signatures, follow-up reminders, and advanced analytics with CSV export.
-            Teams (
-            {TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with
-            everything in Premium for every member. Plans auto-renew; cancelling stops the renewal
-            and your plan runs to the end of the period you've paid for.
+            free): {PRO_AI_BENEFIT} Plus AI enrichment and note summaries, event mode, and up to 3
+            cards. Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
+            {premiumAnnualFreeMonths()} months free): everything in Pro with higher AI limits, plus
+            unlimited personal cards, email signatures, follow-up reminders, and advanced analytics
+            with CSV export. Teams ({TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat minimum): a
+            team workspace with everything in Premium for every member. Plans auto-renew; cancelling
+            stops the renewal and your plan runs to the end of the period you've paid for. Every
+            account keeps one live digital card (link + QR) free for life.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

@@ -14,10 +14,11 @@ export const KIND_LABELS: Record<UsageKind, string> = {
   summarize: "Note summaries",
 };
 
-/** Monthly allowances; Infinity = unlimited. Cards is a total, not monthly. */
+/** Monthly allowances (reset on the 1st, UTC; no rollover); Infinity = no
+ *  cap. Cards is a total, not monthly. */
 export const PLAN_LIMITS: Record<PlanId, { cards: number } & Record<UsageKind, number>> = {
   free: { cards: 1, scan: 5, enrich: 5, follow_up: 15, summarize: 15 },
-  pro: { cards: 3, scan: Infinity, enrich: Infinity, follow_up: Infinity, summarize: Infinity },
+  pro: { cards: 3, scan: 100, enrich: Infinity, follow_up: 100, summarize: Infinity },
   premium: {
     cards: Infinity,
     scan: Infinity,
@@ -99,6 +100,51 @@ export function monthStartIso(now = new Date()): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
 }
 
-export function limitReachedMessage(kind: UsageKind): string {
-  return `You've used this month's free ${KIND_LABELS[kind].toLowerCase()} — upgrade to Pro (${PRO_PRICE_LABEL}) for unlimited AI.`;
+/** First instant of next calendar month, UTC — when the allowance resets. */
+export function nextResetDate(now = new Date()): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+}
+
+/** "Nov 1" — the reset day, in UTC so it never shows as Oct 31 in the US. */
+export function formatResetDate(now = new Date()): string {
+  return nextResetDate(now).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** The exact Pro AI benefit line used everywhere Pro is described. */
+export const PRO_AI_BENEFIT = `${PLAN_LIMITS.pro.scan} AI card scans + ${PLAN_LIMITS.pro.follow_up} follow-up drafts every month — resets monthly.`;
+
+/** Short plural noun for allowance lines: "37 of 100 scans left". */
+export const KIND_NOUNS: Record<UsageKind, string> = {
+  scan: "scans",
+  enrich: "enrichments",
+  follow_up: "follow-up drafts",
+  summarize: "summaries",
+};
+
+/** "37 of 100 scans left this month · resets Nov 1" (capped kinds only). */
+export function allowanceLine(
+  kind: UsageKind,
+  used: number,
+  limit: number,
+  now = new Date(),
+): string {
+  const left = Math.max(0, limit - used);
+  return `${left} of ${limit} ${KIND_NOUNS[kind]} left this month · resets ${formatResetDate(now)}`;
+}
+
+/** Shown (server-side, never silently) when a capped kind runs out. */
+export function limitReachedMessage(plan: PlanId, kind: UsageKind, now = new Date()): string {
+  const limit = monthlyLimit(plan, kind);
+  const used = `You've used your ${plan === "free" ? `${limit} free` : limit} ${KIND_NOUNS[kind]} for this month — your allowance resets on ${formatResetDate(now)}.`;
+  if (plan === "free") {
+    const pro = monthlyLimit("pro", kind);
+    return pro === Infinity
+      ? `${used} Need more right now? Upgrade to Pro (${PRO_PRICE_LABEL}).`
+      : `${used} Need more right now? Pro includes ${pro} a month (${PRO_PRICE_LABEL}).`;
+  }
+  return `${used} Need more right now? Premium has higher limits.`;
 }

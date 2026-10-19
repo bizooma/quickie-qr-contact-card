@@ -43,6 +43,7 @@ import { SUGGESTED_TAGS } from "@/lib/contacts-api";
 import { buildContactVCard, companyDomain, companyLogoUrl, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 import { draftFollowUp, enrichContact, summarizeNote } from "@/lib/ai.functions";
+import { AllowanceNote } from "@/components/AllowanceNote";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import {
   canSummarize,
@@ -255,6 +256,7 @@ function ContactDetail() {
       toast.error(e instanceof Error ? e.message : "Could not draft a follow-up");
     } finally {
       setDrafting(false);
+      qc.invalidateQueries({ queryKey: ["billing"] }); // refresh "N of 100 left"
     }
   }
   async function copyFollowUp() {
@@ -538,14 +540,17 @@ function ContactDetail() {
           />
         </div>
         {!followUp && (
-          <Button variant="outline" size="sm" onClick={generateFollowUp} disabled={drafting}>
-            {drafting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {drafting ? "Drafting…" : "Draft follow-up email with AI"}
-          </Button>
+          <>
+            <Button variant="outline" size="sm" onClick={generateFollowUp} disabled={drafting}>
+              {drafting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {drafting ? "Drafting…" : "Draft follow-up email with AI"}
+            </Button>
+            <AllowanceNote kind="follow_up" className="mt-2" />
+          </>
         )}
         {followUp && (
           <div className="surface space-y-3 p-4">

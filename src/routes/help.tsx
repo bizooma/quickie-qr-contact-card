@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PRO_AI_BENEFIT } from "@/lib/plans";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
@@ -149,15 +150,15 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "What's free, forever",
-        "One card with QR and link, unlimited share-back capture, analytics, notifications, and 5 AI card scans a month. No credit card to start.",
+        "One card with QR and link, unlimited share-back capture, analytics, notifications, and 5 AI card scans a month. No credit card to start. Every account keeps one live digital card (link + QR) free for life — including after a paid plan ends.",
       ],
       [
         "What Pro adds ($8/mo, or $80/yr)",
-        "Up to 3 cards and unlimited AI scanning, enrichment, follow-ups and summaries. Upgrade from Settings; cancel anytime and it runs to the end of the period.",
+        `Up to 3 cards, event mode, AI contact enrichment and note summaries, and ${PRO_AI_BENEFIT.replace(/\.$/, "")} (on the 1st, UTC; unused scans and drafts don't roll over). Settings shows what's left. Upgrade from Settings; cancel anytime and it runs to the end of the period.`,
       ],
       [
         "What Premium adds ($12/mo, or $120/yr)",
-        "Everything in Pro, plus unlimited personal cards, the email signature builder, and advanced analytics with contact CSV export.",
+        "Everything in Pro with higher AI limits, plus unlimited personal cards, the email signature builder, and advanced analytics with contact CSV export.",
       ],
       [
         "What Teams adds ($10/user/mo, or $100/user/yr)",
@@ -169,7 +170,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Founding offers (lifetime & year)",
-        "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically — lifetime deals never expire, year passes run 12 months from purchase.",
+        "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically, with its monthly AI allowance. Lifetime deals never expire. Year passes run 12 months from purchase, then the account moves to the free plan by itself — no charge, and nothing in it is lost.",
+      ],
+      [
+        "Starter pack credits",
+        "The starter pack adds 25 AI card scans and 25 follow-up drafts that never expire. They're used only after your plan's monthly allowance runs out, so on Pro they're a backup that waits until you need it.",
       ],
     ],
   },
