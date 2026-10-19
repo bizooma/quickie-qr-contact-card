@@ -134,7 +134,9 @@ export const TIPS = {
       {
         text: "On a contact, **Remind me to follow up** sends a phone notification when it's time (Premium). Due follow-ups show at the top here.",
       },
-      { text: "Filter by card, tag or event. Premium can export everything as CSV." },
+      {
+        text: "Filter by card, tag or event. **CSV** downloads the list as a spreadsheet for any CRM, on every plan.",
+      },
     ],
     help: "capturing",
   },
