@@ -113,7 +113,9 @@ export const TIPS = {
         text: "Tap **Upload Contact**. AI reads names, titles, phones, emails, addresses and photos; QR codes on cards (vCard, LinkedIn) are read too.",
       },
       { text: "Check what was read, untick anything you don't want, then tap **Save**." },
-      { text: "Free plan: 5 AI scans a month. Pro and Premium: unlimited." },
+      {
+        text: "Free plan: 5 AI scans a month. Pro: 100 a month, resetting on the 1st. Starter-pack credits kick in once a month's scans are used. What's left shows under the button.",
+      },
     ],
     help: "capturing",
   },

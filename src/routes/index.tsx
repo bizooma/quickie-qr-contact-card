@@ -27,6 +27,7 @@ import {
   PREMIUM_ANNUAL_USD,
   PREMIUM_PRICE_LABEL,
   premiumAnnualFreeMonths,
+  PRO_AI_BENEFIT,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_ANNUAL_USD,
   PRO_PRICE_LABEL,
@@ -651,9 +652,9 @@ function Landing() {
               </p>
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
-                  "Up to 3 digital cards ",
-                  "Unlimited  card scanning",
-                  "Unlimited AI enrichment, follow-ups & summaries",
+                  "Up to 3 digital cards",
+                  PRO_AI_BENEFIT,
+                  "AI contact enrichment & note summaries",
                   "Event mode: tag everyone you meet at an event",
                   "Everything in Free",
                 ].map((t) => (
@@ -697,7 +698,7 @@ function Landing() {
                   "Advanced analytics + CSV export",
                   "Email signature builder",
                   "Follow-up reminders on your phone",
-                  "Everything in Pro",
+                  "Everything in Pro, with higher AI limits",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
@@ -797,7 +798,7 @@ function Landing() {
             ],
             [
               "What happens if I cancel a paid plan?",
-              "Your plan runs to the end of the month or year you've already paid for — you lose nothing you paid for — and it simply doesn't renew after that. Annual plans aren't refunded mid-term; cancelling just turns off the renewal.",
+              "Your plan runs to the end of the month or year you've already paid for — you lose nothing you paid for — and it simply doesn't renew after that. Annual plans aren't refunded mid-term; cancelling just turns off the renewal. Either way your digital card (link + QR) stays live on the free plan — free for life.",
             ],
             [
               "Can my whole team use it?",

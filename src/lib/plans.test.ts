@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  allowanceLine,
   annualFreeMonths,
   creditEligible,
+  formatResetDate,
+  nextResetDate,
+  PRO_AI_BENEFIT,
   effectivePlan,
   isWithinLimit,
   limitReachedMessage,
@@ -44,13 +48,18 @@ describe("effectivePlan", () => {
 });
 
 describe("limits", () => {
-  it("free is capped, paid tiers are unlimited on AI", () => {
+  it("free is capped, Pro gets 100 scans + 100 drafts a month, Premium has no cap", () => {
     expect(monthlyLimit("free", "scan")).toBe(5);
-    expect(monthlyLimit("pro", "scan")).toBe(Infinity);
+    expect(monthlyLimit("pro", "scan")).toBe(100);
+    expect(monthlyLimit("pro", "follow_up")).toBe(100);
     expect(monthlyLimit("premium", "scan")).toBe(Infinity);
+    expect(monthlyLimit("premium", "follow_up")).toBe(Infinity);
     expect(isWithinLimit("free", "scan", 4)).toBe(true);
     expect(isWithinLimit("free", "scan", 5)).toBe(false);
-    expect(isWithinLimit("pro", "scan", 1_000_000)).toBe(true);
+    expect(isWithinLimit("pro", "scan", 99)).toBe(true);
+    expect(isWithinLimit("pro", "scan", 100)).toBe(false);
+    expect(isWithinLimit("pro", "follow_up", 100)).toBe(false);
+    expect(isWithinLimit("premium", "scan", 1_000_000)).toBe(true);
   });
   it("cards: 1 free, 3 pro, unlimited premium", () => {
     expect(PLAN_LIMITS.free.cards).toBe(1);
@@ -77,11 +86,52 @@ describe("monthStartIso", () => {
   });
 });
 
+describe("monthly reset", () => {
+  it("resets on the 1st of next month, UTC", () => {
+    expect(nextResetDate(new Date("2026-10-19T12:00:00Z")).toISOString()).toBe(
+      "2026-11-01T00:00:00.000Z",
+    );
+    expect(nextResetDate(new Date("2026-12-31T23:59:59Z")).toISOString()).toBe(
+      "2027-01-01T00:00:00.000Z",
+    );
+    expect(formatResetDate(new Date("2026-10-19T12:00:00Z"))).toBe("Nov 1");
+    expect(formatResetDate(new Date("2026-12-31T23:59:59Z"))).toBe("Jan 1");
+  });
+  it("shows what's left this month", () => {
+    const oct = new Date("2026-10-19T12:00:00Z");
+    expect(allowanceLine("scan", 63, 100, oct)).toBe(
+      "37 of 100 scans left this month · resets Nov 1",
+    );
+    expect(allowanceLine("follow_up", 120, 100, oct)).toBe(
+      "0 of 100 follow-up drafts left this month · resets Nov 1",
+    );
+  });
+});
+
 describe("limitReachedMessage", () => {
-  it("names the exhausted feature and the upgrade", () => {
-    const msg = limitReachedMessage("scan");
-    expect(msg).toContain("ai card scans");
-    expect(msg).toContain("Pro");
+  const oct = new Date("2026-10-19T12:00:00Z");
+  it("tells Pro when the allowance resets and points at Premium", () => {
+    expect(limitReachedMessage("pro", "scan", oct)).toBe(
+      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium has higher limits.",
+    );
+    expect(limitReachedMessage("pro", "follow_up", oct)).toContain(
+      "You've used your 100 follow-up drafts for this month",
+    );
+  });
+  it("points free accounts at Pro", () => {
+    const msg = limitReachedMessage("free", "scan", oct);
+    expect(msg).toContain("You've used your 5 free scans for this month");
+    expect(msg).toContain("resets on Nov 1");
+    expect(msg).toContain("Pro includes 100 a month");
+  });
+});
+
+describe("Pro copy", () => {
+  it("states the monthly allowance, never 'unlimited'", () => {
+    expect(PRO_AI_BENEFIT).toBe(
+      "100 AI card scans + 100 follow-up drafts every month — resets monthly.",
+    );
+    expect(PRO_AI_BENEFIT.toLowerCase()).not.toContain("unlimited");
   });
 });
 
