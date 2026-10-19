@@ -108,7 +108,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Export everything",
-        "Contacts export as CSV or vCard from the Contacts page. Your data is yours.",
+        "Contacts export as CSV (for spreadsheets and any CRM) or vCard (for your phone) from the Contacts page, on every plan. Your data is yours.",
       ],
     ],
   },
@@ -158,7 +158,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "What Premium adds ($12/mo, or $120/yr)",
-        "Everything in Pro with higher AI limits, plus unlimited personal cards, the email signature builder, and advanced analytics with contact CSV export.",
+        "Everything in Pro with higher AI limits, plus unlimited personal cards, the email signature builder, and advanced analytics.",
       ],
       [
         "What Teams adds ($10/user/mo, or $100/user/yr)",

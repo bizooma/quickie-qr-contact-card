@@ -21,7 +21,6 @@ import { usePlan } from "@/components/PremiumGate";
 import { EventModeBar } from "@/components/contacts/EventMode";
 import { BulkRemindButton, FollowUpsPanel } from "@/components/contacts/Reminders";
 import { listEvents } from "@/lib/events-api";
-import { PREMIUM_PRICE_LABEL } from "@/lib/plans";
 
 export const Route = createFileRoute("/app/contacts/")({ head: appHead('Contacts', "Search, tag and export the contacts you've captured."), component: ContactsPage });
 
@@ -90,15 +89,10 @@ function ContactsPage() {
     return true;
   });
 
-  const { isPremium, isPro } = usePlan();
+  const { isPro } = usePlan();
 
+  // CSV export is on every plan: a customer's contacts are theirs to take anywhere.
   function exportCsv() {
-    if (!isPremium) {
-      toast("CSV export is a Premium feature", {
-        description: `Upgrade in Settings (${PREMIUM_PRICE_LABEL}) to export your contacts as a spreadsheet.`,
-      });
-      return;
-    }
     const csv = contactsToCsv(
       filtered.map((c) => ({
         ...c,

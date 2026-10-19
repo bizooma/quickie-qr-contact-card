@@ -611,6 +611,7 @@ function Landing() {
                   "Share-back contact capture, unlimited",
                   `${free.scan} AI card scans / month (1 card = 1 scan)`,
                   "Views, saves & click analytics",
+                  "Export contacts to your phone or any CRM (CSV)",
                   "Push & webhook notifications",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
@@ -696,7 +697,7 @@ function Landing() {
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
                   "Unlimited personal cards",
-                  "Advanced analytics + CSV export",
+                  "Advanced analytics",
                   "Email signature builder",
                   "Follow-up reminders on your phone",
                   "Everything in Pro, with higher AI limits",
@@ -791,7 +792,7 @@ function Landing() {
             ],
             [
               "What happens to my data and my contacts?",
-              "They're yours. Every contact can be saved to your phone as a vCard, Premium adds one-click CSV export of everything, and you can delete your account — and everything in it — from Settings with one button.",
+              "They're yours. Every contact can be saved to your phone as a vCard or exported as a CSV for any spreadsheet or CRM — on every plan, free included — and you can delete your account — and everything in it — from Settings with one button.",
             ],
             [
               "What does the free plan include, forever?",
