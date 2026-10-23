@@ -757,6 +757,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rpc_rate_limits: {
+        Row: {
+          card_id: string | null
+          created_at: string
+          id: number
+          ip_hash: string
+          kind: string
+        }
+        Insert: {
+          card_id?: string | null
+          created_at?: string
+          id?: never
+          ip_hash: string
+          kind: string
+        }
+        Update: {
+          card_id?: string | null
+          created_at?: string
+          id?: never
+          ip_hash?: string
+          kind?: string
+        }
+        Relationships: []
+      }
       signup_grants: {
         Row: {
           claimed_at: string | null
@@ -846,6 +870,11 @@ export type Database = {
         Args: { _email: string; _user: string }
         Returns: undefined
       }
+      claim_verified_signup_grant: {
+        Args: { p_user: string }
+        Returns: undefined
+      }
+      cleanup_rpc_rate_limits: { Args: never; Returns: number }
       consume_starter_credit: {
         Args: { _kind: string; _user: string }
         Returns: undefined
@@ -885,6 +914,7 @@ export type Database = {
         Returns: Json
       }
       restore_entitlement_plan: { Args: { _user: string }; Returns: undefined }
+      rpc_client_ip_hash: { Args: never; Returns: string }
       submit_shareback: {
         Args: {
           _company: string
@@ -895,6 +925,13 @@ export type Database = {
           _slug: string
         }
         Returns: undefined
+      }
+      team_member_names: {
+        Args: { p_org: string }
+        Returns: {
+          display_name: string
+          id: string
+        }[]
       }
     }
     Enums: {
