@@ -2,7 +2,7 @@ import { appHead } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Copy, Link2, Loader2, Plus, Trash2, Users } from "lucide-react";
+import { AlertCircle, Copy, Link2, Loader2, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import {
   newInviteToken,
   ROLE_LABELS,
   teamNames,
+  uncoveredMembers,
   type OrgRole,
 } from "@/lib/org-model";
 import { createCard } from "@/lib/cards-api";
@@ -56,7 +57,10 @@ async function loadTeam(userId: string) {
     p_org: membership.org_id,
   });
   if (namesError) throw namesError;
+  // Seats are on the owner's profile, which other members can't read.
+  const { data: seats } = await supabase.rpc("team_seat_count", { p_org: membership.org_id });
   return {
+    seats: seats ?? 0,
     org,
     role: membership.role as OrgRole,
     members: members ?? [],
@@ -79,28 +83,54 @@ function OrgPage() {
   if (!user || isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!team) return <CreateTeam onCreated={refresh} />;
 
-  const { org, role, members, invites, teamCards, names } = team;
+  const { org, role, members, invites, teamCards, names, seats } = team;
   const admin = isOrgAdmin(role);
+  const noSeat = new Set(uncoveredMembers(members, seats).map((m) => m.user_id));
+  const overLimit = members.length > seats ? members.length - seats : 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-10 pb-10">
       <div>
         <h1 className="text-3xl font-bold">{org.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {members.length} member{members.length === 1 ? "" : "s"} · you're{" "}
+          {members.length} of {seats} seat{seats === 1 ? "" : "s"} used · you're{" "}
           {ROLE_LABELS[role].toLowerCase()}
         </p>
       </div>
+
+      {admin && overLimit > 0 && (
+        <p
+          role="status"
+          className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <span>
+            You have {members.length} members but {seats} seats, so{" "}
+            {overLimit === 1
+              ? "the newest member doesn't"
+              : `the ${overLimit} newest members don't`}{" "}
+            get Premium. Add seats in Settings → Manage billing, or remove someone.
+          </span>
+        </p>
+      )}
 
       <MembersSection
         myId={user.id}
         myRole={role}
         members={members}
         names={names}
+        noSeat={noSeat}
         onChanged={refresh}
       />
 
-      {admin && <InvitesSection orgId={org.id} invites={invites} onChanged={refresh} />}
+      {admin && (
+        <InvitesSection
+          orgId={org.id}
+          invites={invites}
+          seatsFull={members.length >= seats}
+          onChanged={refresh}
+        />
+      )}
 
       {admin && (
         <TeamCardsSection
@@ -184,12 +214,14 @@ function MembersSection({
   myRole,
   members,
   names,
+  noSeat,
   onChanged,
 }: {
   myId: string;
   myRole: OrgRole;
   members: MemberRow[];
   names: Record<string, string>;
+  noSeat: Set<string>;
   onChanged: () => void;
 }) {
   async function remove(m: MemberRow) {
@@ -231,6 +263,11 @@ function MembersSection({
                 {name}
                 {self && <span className="text-muted-foreground"> (you)</span>}
               </span>
+              {noSeat.has(m.user_id) && (
+                <span className="whitespace-nowrap rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                  No seat
+                </span>
+              )}
               {canChangeRole(myRole, targetRole) && !self ? (
                 <Select value={m.role} onValueChange={(v) => setRole(m, v)}>
                   <SelectTrigger className="h-8 w-28 text-xs">
@@ -267,10 +304,12 @@ type InviteRow = { id: string; token: string; role: string; expires_at: string }
 function InvitesSection({
   orgId,
   invites,
+  seatsFull,
   onChanged,
 }: {
   orgId: string;
   invites: InviteRow[];
+  seatsFull: boolean;
   onChanged: () => void;
 }) {
   const { user } = useAuth();
@@ -337,6 +376,12 @@ function InvitesSection({
       <p className="text-xs text-muted-foreground">
         Each link works once and expires after 14 days. The teammate opens it while signed in.
       </p>
+      {seatsFull && (
+        <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+          All seats are in use, so nobody can join with a link until you add a seat in Settings →
+          Manage billing.
+        </p>
+      )}
     </section>
   );
 }

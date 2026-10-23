@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
 import { requireActiveAuth } from "@/lib/auth-guard";
+import { inviteProblemMessage } from "@/lib/org-model";
 
 // Team server functions. Only invite acceptance needs the service role (the
 // joiner isn't a member yet, so RLS can't let them write the membership);
 // everything else on the org page talks to Postgres directly under RLS.
+// The seat and invite checks live in the accept_team_invite SQL function.
 
 const AcceptInviteSchema = z.object({ token: z.string().min(16).max(128) });
 
@@ -13,31 +15,18 @@ export const acceptInvite = createServerFn({ method: "POST" })
   .validator(AcceptInviteSchema)
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: invite } = await supabaseAdmin
-      .from("org_invites")
-      .select("id, org_id, role, expires_at, accepted_at, orgs(name)")
-      .eq("token", data.token)
-      .maybeSingle();
-    if (!invite) throw new Error("This invite link is not valid.");
-    if (invite.accepted_at) throw new Error("This invite link was already used.");
-    if (new Date(invite.expires_at).getTime() < Date.now()) {
-      throw new Error("This invite link has expired — ask for a new one.");
-    }
-    const { error } = await supabaseAdmin.from("org_members").insert({
-      org_id: invite.org_id,
-      user_id: context.userId,
-      role: invite.role,
+    // One transaction checks the invite, takes a seat and marks it used.
+    const { data: result, error } = await supabaseAdmin.rpc("accept_team_invite", {
+      _token: data.token,
+      _user: context.userId,
     });
-    if (error) {
-      if (error.code === "23505") {
-        throw new Error("You're already on a team — leave it before joining another.");
-      }
-      throw new Error("Could not join this team. Try again.");
-    }
-    await supabaseAdmin
-      .from("org_invites")
-      .update({ accepted_by: context.userId, accepted_at: new Date().toISOString() })
-      .eq("id", invite.id);
-    const orgName = (invite as { orgs?: { name?: string } | null }).orgs?.name ?? "your team";
-    return { orgName };
+    if (error) throw new Error("Could not join this team. Try again.");
+    const r = (result ?? {}) as { ok?: boolean; code?: string; org_name?: string | null };
+    if (r.ok) return { ok: true as const, orgName: r.org_name ?? "your team" };
+    // Expected refusals come back as data so the join page can explain them.
+    return {
+      ok: false as const,
+      code: r.code ?? "invalid",
+      message: inviteProblemMessage(r.code ?? "invalid", r.org_name),
+    };
   });

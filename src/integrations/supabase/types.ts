@@ -875,6 +875,10 @@ export type Database = {
         Returns: undefined
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
+      accept_team_invite: {
+        Args: { _token: string; _user: string }
+        Returns: Json
+      }
       consume_starter_credit: {
         Args: { _kind: string; _user: string }
         Returns: undefined
@@ -926,6 +930,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      team_seat_count: { Args: { p_org: string }; Returns: number }
       team_member_names: {
         Args: { p_org: string }
         Returns: {

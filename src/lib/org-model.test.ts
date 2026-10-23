@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { canChangeRole, canRemoveMember, inviteUrl, isOrgAdmin, newInviteToken, teamNames } from "./org-model";
+import {
+  canChangeRole,
+  canRemoveMember,
+  inviteProblemMessage,
+  inviteUrl,
+  isOrgAdmin,
+  newInviteToken,
+  seatOrder,
+  teamNames,
+  uncoveredMembers,
+} from "./org-model";
 
 describe("isOrgAdmin", () => {
   it("treats owner and admin as managers", () => {
@@ -53,5 +63,39 @@ describe("team member names", () => {
   });
   it("handles a team with no name rows", () => {
     expect(teamNames([])).toEqual({});
+  });
+});
+
+describe("seats", () => {
+  const members = [
+    { user_id: "c", role: "member", created_at: "2026-10-03T00:00:00Z" },
+    { user_id: "o", role: "owner", created_at: "2026-10-05T00:00:00Z" },
+    { user_id: "a", role: "admin", created_at: "2026-10-01T00:00:00Z" },
+    { user_id: "b", role: "member", created_at: "2026-10-02T00:00:00Z" },
+  ];
+  it("orders the owner first, then by join date", () => {
+    expect(seatOrder(members).map((m) => m.user_id)).toEqual(["o", "a", "b", "c"]);
+  });
+  it("drops the newest members first when seats are reduced", () => {
+    expect(uncoveredMembers(members, 4)).toEqual([]);
+    expect(uncoveredMembers(members, 3).map((m) => m.user_id)).toEqual(["c"]);
+  });
+  it("leaves everyone uncovered under the 3-seat minimum", () => {
+    expect(uncoveredMembers(members, 0)).toHaveLength(4);
+  });
+});
+
+describe("inviteProblemMessage", () => {
+  it("says clearly when the team is full", () => {
+    expect(inviteProblemMessage("seats_full", "Acme Realty")).toBe(
+      "Acme Realty has no free seats right now. Ask the team owner to add a seat (Settings → Manage billing), then open this link again.",
+    );
+  });
+  it("covers every refusal reason", () => {
+    expect(inviteProblemMessage("used")).toContain("already used");
+    expect(inviteProblemMessage("expired")).toContain("expired");
+    expect(inviteProblemMessage("other_team")).toContain("already on another team");
+    expect(inviteProblemMessage("invalid")).toContain("not valid");
+    expect(inviteProblemMessage("seats_full", null)).toMatch(/^This team has no free seats/);
   });
 });
