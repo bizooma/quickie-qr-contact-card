@@ -1,4 +1,8 @@
 # Roadmap
+## Security audit — database (part 1)
+- [ ] Apply the nine approved database fixes in one generated migration without changing history.
+- [ ] Replace teammate profile reads and extend existing reminder cleanup.
+- [ ] Verify live policies, grants, functions, and focused/full tests; show applied SQL.
 ## Phase 1 (built)
 - [x] Auth (email + Google), onboarding
 - [x] Card builder, live preview, autosave
