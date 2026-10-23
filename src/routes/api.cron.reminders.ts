@@ -35,6 +35,10 @@ export const Route = createFileRoute("/api/cron/reminders")({
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
 
+        // Keep private abuse records for one day, even when no reminders are due.
+        const { error: cleanupError } = await supabaseAdmin.rpc("cleanup_rpc_rate_limits");
+        if (cleanupError) return Response.json({ error: "cleanup failed" }, { status: 500 });
+
         const { data: due, error } = await supabaseAdmin
           .from("contact_reminders")
           .select("id, user_id, contact_id, note, contacts(full_name)")

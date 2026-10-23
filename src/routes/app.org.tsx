@@ -24,6 +24,7 @@ import {
   isOrgAdmin,
   newInviteToken,
   ROLE_LABELS,
+  teamNames,
   type OrgRole,
 } from "@/lib/org-model";
 import { createCard } from "@/lib/cards-api";
@@ -51,17 +52,17 @@ async function loadTeam(userId: string) {
       supabase.from("cards").select("*").eq("org_id", membership.org_id).order("created_at"),
     ]);
   if (!org) return null;
-  const ids = (members ?? []).map((m) => m.user_id);
-  const { data: profiles } = ids.length
-    ? await supabase.from("profiles").select("id, display_name").in("id", ids)
-    : { data: [] };
+  const { data: names, error: namesError } = await supabase.rpc("team_member_names", {
+    p_org: membership.org_id,
+  });
+  if (namesError) throw namesError;
   return {
     org,
     role: membership.role as OrgRole,
     members: members ?? [],
     invites: invites ?? [],
     teamCards: teamCards ?? [],
-    names: Object.fromEntries((profiles ?? []).map((p) => [p.id, p.display_name ?? ""])),
+    names: teamNames(names ?? []),
   };
 }
 
