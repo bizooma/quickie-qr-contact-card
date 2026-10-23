@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  bearerMatches,
   entitlementsForItems,
   isTestOrder,
   normalizeEmail,
   parsePinballOrder,
+  parsePinballRefund,
   signPinballBody,
   verifyPinballSignature,
   type PinballPayload,
@@ -94,5 +96,54 @@ describe("normalizeEmail", () => {
   it("trims and lowercases", () => {
     expect(normalizeEmail("  A@B.Co ")).toBe("a@b.co");
     expect(normalizeEmail(null)).toBe("");
+  });
+});
+
+describe("parsePinballRefund", () => {
+  it("maps a refunded app product to its entitlement", () => {
+    expect(
+      parsePinballRefund({
+        event: "refund_issued",
+        order_id: "ord_9",
+        product_id: LIFETIME_ID,
+        refunded_amount: 7500,
+        email: " Buyer@Example.com",
+      }),
+    ).toEqual({
+      ok: true,
+      refund: { orderId: "ord_9", kind: "lifetime", email: "buyer@example.com" },
+    });
+  });
+  it("falls back to the email when Pinball has no order id", () => {
+    const r = parsePinballRefund({
+      event: "refund_issued",
+      order_id: null,
+      product_id: YEAR_ID,
+      email: "a@b.co",
+    });
+    expect(r).toEqual({ ok: true, refund: { orderId: null, kind: "year", email: "a@b.co" } });
+  });
+  it("ignores other products, other events and unusable payloads", () => {
+    expect(
+      parsePinballRefund({
+        event: "refund_issued",
+        product_id: "01m4hts98nyxs8k0cmw7gt10f5",
+        email: "a@b.co",
+      }).ok,
+    ).toBe(false);
+    expect(parsePinballRefund({ event: "purchase", product_id: YEAR_ID, email: "a@b.co" }).ok).toBe(
+      false,
+    );
+    expect(parsePinballRefund({ event: "refund_issued", product_id: YEAR_ID }).ok).toBe(false);
+  });
+});
+
+describe("bearerMatches", () => {
+  it("accepts only the exact secret", () => {
+    expect(bearerMatches("Bearer s3cret", "s3cret")).toBe(true);
+    expect(bearerMatches("bearer  s3cret ", "s3cret")).toBe(true);
+    expect(bearerMatches("Bearer s3cre", "s3cret")).toBe(false);
+    expect(bearerMatches(null, "s3cret")).toBe(false);
+    expect(bearerMatches("Bearer ", "")).toBe(false);
   });
 });

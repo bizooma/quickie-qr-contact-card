@@ -16,6 +16,7 @@ import { Route as HelpRouteImport } from './routes/help'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ApiPinballRefundRouteImport } from './routes/api.pinball-refund'
 import { Route as ApiPinballWebhookRouteImport } from './routes/api.pinball-webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe-webhook'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -72,6 +73,11 @@ const SecurityRoute = SecurityRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPinballRefundRoute = ApiPinballRefundRouteImport.update({
+  id: '/api/pinball-refund',
+  path: '/api/pinball-refund',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPinballWebhookRoute = ApiPinballWebhookRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
+  '/api/pinball-refund': typeof ApiPinballRefundRoute
   '/api/pinball-webhook': typeof ApiPinballWebhookRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
+  '/api/pinball-refund': typeof ApiPinballRefundRoute
   '/api/pinball-webhook': typeof ApiPinballWebhookRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
+  '/api/pinball-refund': typeof ApiPinballRefundRoute
   '/api/pinball-webhook': typeof ApiPinballWebhookRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/security'
     | '/terms'
+    | '/api/pinball-refund'
     | '/api/pinball-webhook'
     | '/api/stripe-webhook'
     | '/app/admin'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/security'
     | '/terms'
+    | '/api/pinball-refund'
     | '/api/pinball-webhook'
     | '/api/stripe-webhook'
     | '/app/admin'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/security'
     | '/terms'
+    | '/api/pinball-refund'
     | '/api/pinball-webhook'
     | '/api/stripe-webhook'
     | '/app/admin'
@@ -381,6 +393,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
+  ApiPinballRefundRoute: typeof ApiPinballRefundRoute
   ApiPinballWebhookRoute: typeof ApiPinballWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   AuthResetRoute: typeof AuthResetRoute
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pinball-refund': {
+      id: '/api/pinball-refund'
+      path: '/api/pinball-refund'
+      fullPath: '/api/pinball-refund'
+      preLoaderRoute: typeof ApiPinballRefundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/pinball-webhook': {
@@ -644,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,
+  ApiPinballRefundRoute: ApiPinballRefundRoute,
   ApiPinballWebhookRoute: ApiPinballWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   AuthResetRoute: AuthResetRoute,

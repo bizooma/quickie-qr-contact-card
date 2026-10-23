@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Download, Send, Share2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,7 +19,14 @@ type PublicCardData = CardData & { og_path?: string | null };
 async function loadCard(slug: string) {
   const { data, error } = await supabase.rpc("get_public_card", { _slug: slug });
   if (error) throw error;
-  if (!data) throw notFound();
+  if (!data) {
+    // A renamed card's old address (e.g. on a printed QR code) forwards to its new one.
+    const { data: current } = await supabase.rpc("resolve_card_slug", { _slug: slug });
+    if (current && current !== slug) {
+      throw redirect({ to: "/c/$slug", params: { slug: current }, statusCode: 301 });
+    }
+    throw notFound();
+  }
   const card = data as unknown as PublicCardData;
   const urls = await signPublicCardMedia({ data: { slug } });
   return {

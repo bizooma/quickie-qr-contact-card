@@ -666,6 +666,7 @@ export type Database = {
           order_number: number | null
           payload: Json | null
           pinball_order_id: string
+          refunded_at: string | null
         }
         Insert: {
           amount_cents?: number | null
@@ -679,6 +680,7 @@ export type Database = {
           order_number?: number | null
           payload?: Json | null
           pinball_order_id: string
+          refunded_at?: string | null
         }
         Update: {
           amount_cents?: number | null
@@ -692,6 +694,7 @@ export type Database = {
           order_number?: number | null
           payload?: Json | null
           pinball_order_id?: string
+          refunded_at?: string | null
         }
         Relationships: []
       }
@@ -885,6 +888,15 @@ export type Database = {
       }
       effective_plan: { Args: { _user: string }; Returns: string }
       get_public_card: { Args: { _slug: string }; Returns: Json }
+      premium_card_insights: {
+        Args: { p_card?: string; p_since: string }
+        Returns: Json
+      }
+      refund_app_purchase: {
+        Args: { _kind: string; _order_id: string }
+        Returns: Json
+      }
+      resolve_card_slug: { Args: { _slug: string }; Returns: string }
       has_team_seat: { Args: { _user: string }; Returns: boolean }
       in_same_org_as: { Args: { _user: string }; Returns: boolean }
       log_card_event: {

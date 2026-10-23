@@ -11,15 +11,34 @@ import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
 
 export const Route = createFileRoute("/app/analytics")({ head: appHead('Analytics', 'Views, saves and share-backs for each of your cards.'), component: Analytics });
 
+const sinceIso = (days: number) => startOfDay(subDays(new Date(), days - 1)).toISOString();
+
 async function loadEvents(days: number) {
-  const since = startOfDay(subDays(new Date(), days - 1)).toISOString();
   const { data, error } = await supabase
     .from("card_views")
-    .select("card_id, event_type, created_at, meta, referrer, device, visitor")
-    .gte("created_at", since)
+    .select("card_id, event_type, created_at")
+    .gte("created_at", sinceIso(days))
     .limit(10000);
   if (error) throw error;
   return data;
+}
+
+type Insights = {
+  unique: number;
+  devices: [string, number][];
+  referrers: [string, number][];
+  clicks: [string, number][];
+};
+
+/** Premium breakdowns. The database checks the plan; visitor, device,
+ *  referrer and link columns aren't readable any other way. */
+async function loadInsights(days: number, cardId: string): Promise<Insights> {
+  const { data, error } = await supabase.rpc("premium_card_insights", {
+    p_since: sinceIso(days),
+    ...(cardId === "all" ? {} : { p_card: cardId }),
+  });
+  if (error) throw error;
+  return data as unknown as Insights;
 }
 
 function Analytics() {
@@ -31,48 +50,27 @@ function Analytics() {
     queryKey: ["events", days],
     queryFn: () => loadEvents(days),
   });
+  const { data: insights } = useQuery({
+    queryKey: ["insights", days, cardId],
+    enabled: isPremium,
+    queryFn: () => loadInsights(days, cardId),
+  });
 
   const filtered = cardId === "all" ? events : events.filter((e) => e.card_id === cardId);
   const totals = { view: 0, save: 0, shareback: 0, click: 0 } as Record<string, number>;
   for (const e of filtered) totals[e.event_type] = (totals[e.event_type] ?? 0) + 1;
 
-  // Unique visitors (views carrying a visitor id), conversion, devices, referrers.
-  const depth = useMemo(() => {
-    const visitors = new Set<string>();
-    const devices = new Map<string, number>();
-    const referrers = new Map<string, number>();
-    for (const e of filtered) {
-      if (e.event_type !== "view") continue;
-      if (e.visitor) visitors.add(e.visitor);
-      if (e.device) devices.set(e.device, (devices.get(e.device) ?? 0) + 1);
-      if (e.referrer) referrers.set(e.referrer, (referrers.get(e.referrer) ?? 0) + 1);
-    }
-    const views = filtered.filter((e) => e.event_type === "view").length;
-    const captures = filtered.filter(
-      (e) => e.event_type === "save" || e.event_type === "shareback",
-    ).length;
-    return {
-      unique: visitors.size,
-      conversion: views ? Math.round((captures / views) * 100) : 0,
-      devices: Array.from(devices.entries()).sort((a, b) => b[1] - a[1]),
-      referrers: Array.from(referrers.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6),
-    };
-  }, [filtered]);
-
-  // Which links people actually tap, most-tapped first.
-  const topClicks = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const e of filtered) {
-      if (e.event_type !== "click") continue;
-      const label = e.meta || "link";
-      counts.set(label, (counts.get(label) ?? 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-  }, [filtered]);
+  // Premium: unique visitors, devices, referrers and most-tapped links come
+  // from the server; conversion only needs the counts everyone can read.
+  const views = totals["view"] ?? 0;
+  const captures = (totals["save"] ?? 0) + (totals["shareback"] ?? 0);
+  const depth = {
+    unique: insights?.unique ?? 0,
+    conversion: views ? Math.round((captures / views) * 100) : 0,
+    devices: insights?.devices ?? [],
+    referrers: insights?.referrers ?? [],
+  };
+  const topClicks = insights?.clicks ?? [];
 
   const series = useMemo(() => {
     const map = new Map<string, { day: string; view: number; save: number; shareback: number }>();

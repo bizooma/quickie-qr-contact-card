@@ -142,3 +142,46 @@ export async function verifyPinballSignature(
   const expected = await signPinballBody(rawBody, secret);
   return timingSafeEqual(expected, signature.trim().toLowerCase());
 }
+
+// ---- Refunds ------------------------------------------------------------------
+// Pinball's "refund issued" automation POSTs a webhook step's JSON payload.
+// Automation webhooks can't be HMAC-signed, so the step sends a bearer token
+// (app_secrets 'pinball_refund'). Payload, as configured on that step:
+//   { event: "refund_issued", order_id, product_id, refunded_amount, email }
+
+export interface PinballRefundPayload {
+  event?: string;
+  order_id?: string | null;
+  product_id?: string | null;
+  refunded_amount?: number | null;
+  email?: string | null;
+}
+
+export interface ParsedPinballRefund {
+  /** Null when Pinball couldn't attach the order; the caller falls back to
+   *  the buyer's latest purchase of this kind. */
+  orderId: string | null;
+  kind: EntitlementKind;
+  email: string;
+}
+
+export type RefundParseResult =
+  { ok: true; refund: ParsedPinballRefund } | { ok: false; reason: string };
+
+export function parsePinballRefund(payload: PinballRefundPayload): RefundParseResult {
+  if (payload.event !== "refund_issued") return { ok: false, reason: "not a refund" };
+  const kind = payload.product_id ? ENTITLEMENT_BY_PINBALL_PRODUCT[payload.product_id] : undefined;
+  if (!kind) return { ok: false, reason: "not an app product" };
+  const email = normalizeEmail(payload.email);
+  const orderId =
+    typeof payload.order_id === "string" && payload.order_id ? payload.order_id : null;
+  if (!orderId && !email.includes("@")) return { ok: false, reason: "no order or email" };
+  return { ok: true, refund: { orderId, kind, email } };
+}
+
+/** Constant-time check of an `Authorization: Bearer <secret>` header. */
+export function bearerMatches(header: string | null, secret: string): boolean {
+  if (!header || !secret) return false;
+  const token = header.replace(/^Bearer\s+/i, "").trim();
+  return timingSafeEqual(token, secret);
+}
