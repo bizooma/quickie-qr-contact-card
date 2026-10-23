@@ -1,4 +1,9 @@
 # Roadmap
+## Security audit — database (part 1)
+- [x] Apply the nine approved database fixes in one generated migration without changing history.
+- [x] Replace teammate profile reads and extend existing reminder cleanup in app code.
+- [x] Verify live policies, grants, functions, and focused/full tests; provide applied SQL.
+- [ ] Publish the teammate-name RPC integration and reminder cleanup call (requires user publication request).
 ## Phase 1 (built)
 - [x] Auth (email + Google), onboarding
 - [x] Card builder, live preview, autosave

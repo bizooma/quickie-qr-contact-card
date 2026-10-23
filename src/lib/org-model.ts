@@ -31,3 +31,8 @@ export function inviteUrl(origin: string, token: string): string {
 export function newInviteToken(): string {
   return (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, "");
 }
+
+/** The team RPC exposes names only, never another member's private profile. */
+export function teamNames(rows: ReadonlyArray<{ id: string; display_name: string | null }>): Record<string, string> {
+  return Object.fromEntries(rows.map((row) => [row.id, row.display_name ?? ""]));
+}
