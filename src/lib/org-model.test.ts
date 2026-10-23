@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canChangeRole, canRemoveMember, inviteUrl, isOrgAdmin, newInviteToken } from "./org-model";
+import { canChangeRole, canRemoveMember, inviteUrl, isOrgAdmin, newInviteToken, teamNames } from "./org-model";
 
 describe("isOrgAdmin", () => {
   it("treats owner and admin as managers", () => {
@@ -40,5 +40,18 @@ describe("invite helpers", () => {
     const t = newInviteToken();
     expect(t).toMatch(/^[0-9a-f]{64}$/);
     expect(newInviteToken()).not.toBe(t);
+  });
+});
+
+describe("team member names", () => {
+  it("maps the restricted RPC names without including private profile fields", () => {
+    const row = { id: "member-1", display_name: "Kale", stripe_customer_id: "private" };
+    expect(teamNames([row])).toEqual({ "member-1": "Kale" });
+  });
+  it("preserves the teammate fallback for missing names", () => {
+    expect(teamNames([{ id: "member-2", display_name: null }])).toEqual({ "member-2": "" });
+  });
+  it("handles a team with no name rows", () => {
+    expect(teamNames([])).toEqual({});
   });
 });
