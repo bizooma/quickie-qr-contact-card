@@ -610,6 +610,7 @@ function Landing() {
                   "1 digital card with QR code & your own link",
                   "Share-back contact capture, unlimited",
                   `${free.scan} AI card scans / month (1 card = 1 scan)`,
+                  `${free.follow_up} AI follow-up drafts, ${free.enrich} contact enrichments & ${free.summarize} note summaries / month`,
                   "Views, saves & click analytics",
                   "Export contacts to your phone or any CRM (CSV)",
                   "Push & webhook notifications",

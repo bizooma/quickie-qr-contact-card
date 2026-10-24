@@ -645,6 +645,7 @@ function AdminPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Input
                 type="email"
+                aria-label="Email to comp"
                 value={grantEmail}
                 onChange={(e) => setGrantEmail(e.target.value)}
                 placeholder="person@example.com"

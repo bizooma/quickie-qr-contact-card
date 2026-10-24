@@ -52,7 +52,13 @@ export function parseVCard(text: string): ScannedContact | null {
         out["email"] = out["email"] || value;
         break;
       case "URL":
-        out["website"] = out["website"] || value;
+        if (/linkedin\.com\//i.test(value)) out["linkedin"] = out["linkedin"] || value;
+        else out["website"] = out["website"] || value;
+        break;
+      case "X-SOCIALPROFILE":
+        if (/linkedin/i.test(m[2] ?? "") || /linkedin\.com\//i.test(value))
+          out["linkedin"] = out["linkedin"] || value;
+        else extras.push(value);
         break;
       case "NOTE":
         extras.push(value);
@@ -74,6 +80,7 @@ export function parseVCard(text: string): ScannedContact | null {
     email: out["email"] ?? null,
     phone: out["phone"] ?? null,
     website: out["website"] ?? null,
+    linkedin_url: out["linkedin"] ?? null,
     address: out["address"] ?? null,
     extra: extras.length ? extras.join("\n") : null,
     source_image_index: 0,
@@ -125,6 +132,7 @@ export function parseMeCard(text: string): ScannedContact | null {
     email: out["email"] ?? null,
     phone: out["phone"] ?? null,
     website: out["website"] ?? null,
+    linkedin_url: null,
     address: out["address"] ?? null,
     extra: out["note"] ?? null,
     source_image_index: 0,
@@ -167,8 +175,9 @@ export function decodeQrText(text: string): DecodedQr {
         email: null,
         phone: null,
         website: null,
+        linkedin_url: url,
         address: null,
-        extra: `LinkedIn: ${url}`,
+        extra: null,
         source_image_index: 0,
         headshot_box: null,
       },
@@ -211,6 +220,7 @@ export function mergeScannedContacts(ai: ScannedContact[], qr: ScannedContact[])
         email: q.email ?? match.email,
         phone: q.phone ?? match.phone,
         website: q.website ?? match.website,
+        linkedin_url: q.linkedin_url ?? match.linkedin_url,
         address: q.address ?? match.address,
         extra: [q.extra, match.extra].filter(Boolean).join("\n") || null,
         source_image_index: match.source_image_index,

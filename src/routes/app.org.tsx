@@ -514,6 +514,7 @@ function TeamCardsSection({
         </Select>
         <Input
           className="w-36"
+          aria-label="Card label"
           value={label}
           maxLength={40}
           onChange={(e) => setLabel(e.target.value)}

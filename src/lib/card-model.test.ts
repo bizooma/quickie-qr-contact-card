@@ -61,6 +61,14 @@ describe("vCard", () => {
     expect(v).toContain("NOTE:Met at Web Summit");
   });
 
+  it("adds the contact's LinkedIn profile to the phone contact", () => {
+    const v = buildContactVCard({
+      full_name: "Maria Chen",
+      linkedin_url: "linkedin.com/in/maria",
+    });
+    expect(v).toContain("URL;TYPE=LinkedIn:https://linkedin.com/in/maria");
+  });
+
   it("joins a batch into one multi-contact vcf and skips empty names", () => {
     const vcf = contactsToVcf([
       { full_name: "A One", email: "a@x.com" },
@@ -83,6 +91,8 @@ describe("CSV export", () => {
         phone: null,
         company: null,
         job_title: null,
+        website: null,
+        linkedin_url: null,
         address: null,
         met_at: null,
         source: "shareback",
@@ -93,6 +103,30 @@ describe("CSV export", () => {
       },
     ]);
     expect((csv.split("\r\n")[1] ?? "").startsWith("'=HYPERLINK(1)")).toBe(true);
+  });
+
+  it("exports website and LinkedIn in their own columns", () => {
+    const csv = contactsToCsv([
+      {
+        full_name: "Maria Chen",
+        email: null,
+        phone: null,
+        company: "Globex",
+        job_title: null,
+        website: "globex.com",
+        linkedin_url: "https://linkedin.com/in/maria",
+        address: null,
+        met_at: null,
+        source: "scan",
+        card_label: null,
+        tags: [],
+        note: null,
+        created_at: "2026-01-01",
+      },
+    ]);
+    const [header, row] = csv.split("\r\n");
+    expect(header?.split(",")).toEqual(expect.arrayContaining(["Website", "LinkedIn"]));
+    expect(row).toContain("globex.com,https://linkedin.com/in/maria");
   });
 });
 

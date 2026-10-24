@@ -17,6 +17,20 @@ const SharebackInputSchema = z.object({
 });
 
 /** Public (unauthenticated): saves a share-back, then pings the card owner. */
+/** The RPC's reasons, in words a visitor can act on. Anything unexpected
+ *  stays generic so database details never reach the public page. */
+export function sharebackErrorMessage(dbMessage: string): string {
+  const m = dbMessage.toLowerCase();
+  if (m.includes("too many submissions"))
+    return "This card is getting a lot of submissions right now — please try again in a few minutes.";
+  if (m.includes("card not found")) return "This card no longer exists.";
+  if (m.includes("email or phone required"))
+    return "Add an email or phone number so they can reach you.";
+  if (m.includes("name required")) return "Add your name.";
+  if (m.includes("input too long")) return "One of the fields is too long.";
+  return "Couldn't send your details. Please try again.";
+}
+
 export const submitShareback = createServerFn({ method: "POST" })
   .validator(SharebackInputSchema)
   .handler(async ({ data }) => {
@@ -27,15 +41,17 @@ export const submitShareback = createServerFn({ method: "POST" })
     // The SECURITY DEFINER RPC revalidates lengths and requires email-or-phone.
     // Per-request only: never mutate the shared admin client's headers. An empty
     // value explicitly means no visitor IP, not the server's outgoing address.
-    const { error } = await supabaseAdmin.rpc("submit_shareback", {
-      _slug: data.slug,
-      _name: data.name,
-      _email: data.email,
-      _phone: data.phone,
-      _company: data.company,
-      _note: data.note,
-    }).setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
-    if (error) throw new Error("Couldn't send your details. Please try again.");
+    const { error } = await supabaseAdmin
+      .rpc("submit_shareback", {
+        _slug: data.slug,
+        _name: data.name,
+        _email: data.email,
+        _phone: data.phone,
+        _company: data.company,
+        _note: data.note,
+      })
+      .setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
+    if (error) throw new Error(sharebackErrorMessage(error.message));
 
     // Notify the owner: web push now, webhook if configured. Both best-effort.
     try {

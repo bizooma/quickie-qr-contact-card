@@ -246,6 +246,8 @@ function ContactDetail() {
       company: c!.company,
       email: c!.email,
       phone: c!.phone,
+      website: c!.website,
+      linkedin_url: c!.linkedin_url,
       address: c!.address,
       note: c!.met_at ? `Met at ${c!.met_at}` : null,
     });
@@ -627,6 +629,7 @@ function ContactDetail() {
           className="mt-3 flex gap-2"
         >
           <Input
+            aria-label="Custom tag"
             placeholder="Custom tag, e.g. Met at Web Summit"
             value={tag}
             onChange={(e) => setTag(e.target.value)}
@@ -736,8 +739,9 @@ function ContactDetail() {
           ] as const
         ).map(([k, l]) => (
           <div key={k} className="space-y-1">
-            <Label>{l}</Label>
+            <Label htmlFor={`detail-${k}`}>{l}</Label>
             <Input
+              id={`detail-${k}`}
               value={form[k] ?? ""}
               onChange={(e) => setForm({ ...form, [k]: e.target.value })}
             />

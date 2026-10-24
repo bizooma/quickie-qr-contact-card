@@ -73,6 +73,7 @@ function RemindPicker({
         </Button>
       </div>
       <Input
+        aria-label="Follow-up note"
         placeholder="What to follow up about (optional)"
         maxLength={300}
         value={note}

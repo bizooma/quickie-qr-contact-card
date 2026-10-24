@@ -194,6 +194,7 @@ export type ContactVCardInput = {
   email?: string | null | undefined;
   phone?: string | null | undefined;
   website?: string | null | undefined;
+  linkedin_url?: string | null | undefined;
   address?: string | null | undefined;
   note?: string | null | undefined;
 };
@@ -211,6 +212,7 @@ export function buildContactVCard(c: ContactVCardInput): string {
   if (c.phone?.trim()) lines.push(`TEL;TYPE=CELL,VOICE:${esc(c.phone.trim())}`);
   if (c.email?.trim()) lines.push(`EMAIL;TYPE=INTERNET,WORK:${esc(c.email.trim())}`);
   if (c.website?.trim()) lines.push(`URL:${esc(normalizeUrl(c.website))}`);
+  if (c.linkedin_url?.trim()) lines.push(`URL;TYPE=LinkedIn:${esc(normalizeUrl(c.linkedin_url))}`);
   if (c.address?.trim()) lines.push(`ADR;TYPE=WORK:;;${esc(c.address.trim())};;;;`);
   if (c.note?.trim()) lines.push(`NOTE:${esc(c.note.trim())}`);
   lines.push("END:VCARD");
@@ -233,6 +235,8 @@ export type ContactRow = {
   phone: string | null;
   company: string | null;
   job_title: string | null;
+  website: string | null;
+  linkedin_url: string | null;
   address: string | null;
   met_at: string | null;
   source: string;
@@ -255,6 +259,8 @@ export function contactsToCsv(rows: ContactRow[]): string {
     "Phone",
     "Company",
     "Title",
+    "Website",
+    "LinkedIn",
     "Address",
     "Met at",
     "Source",
@@ -270,6 +276,8 @@ export function contactsToCsv(rows: ContactRow[]): string {
       r.phone ?? "",
       r.company ?? "",
       r.job_title ?? "",
+      r.website ?? "",
+      r.linkedin_url ?? "",
       r.address ?? "",
       r.met_at ?? "",
       r.source,

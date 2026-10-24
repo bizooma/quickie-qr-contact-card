@@ -23,7 +23,12 @@ function CardsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: cards, isLoading } = useQuery({ queryKey: ["cards"], queryFn: listCards });
+  const {
+    data: cards,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({ queryKey: ["cards"], queryFn: listCards });
   const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
   const cardLimit = billing ? PLAN_LIMITS[billing.plan].cards : Infinity;
   const atLimit = !!cards && cards.length >= cardLimit;
@@ -127,6 +132,16 @@ function CardsPage() {
       </div>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : isError ? (
+        <div className="surface p-10 text-center" role="alert">
+          <p className="font-semibold">Couldn't load your cards</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your cards are safe and still live — check your connection and try again.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cards?.map((c) => (
@@ -211,6 +226,7 @@ function CardsPage() {
           <form onSubmit={addCard} className="space-y-4">
             <Input
               autoFocus
+              aria-label="Card label"
               placeholder="e.g. Side business, Personal"
               value={label}
               onChange={(e) => setLabel(e.target.value)}

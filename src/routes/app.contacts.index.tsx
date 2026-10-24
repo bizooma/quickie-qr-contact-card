@@ -29,7 +29,12 @@ const RANGES = { all: "Any time", "7": "Last 7 days", "30": "Last 30 days", "90"
 function ContactsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: contacts = [], isLoading } = useQuery({
+  const {
+    data: contacts = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["contacts"],
     queryFn: listContacts,
   });
@@ -137,6 +142,7 @@ function ContactsPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
+            aria-label="Search contacts"
             placeholder="Search name, company, email…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -207,11 +213,45 @@ function ContactsPage() {
       )}
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : isError ? (
+        <div className="surface p-10 text-center" role="alert">
+          <p className="font-semibold">Couldn't load your contacts</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Check your connection and try again — nothing has been lost.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      ) : filtered.length === 0 && contacts.length > 0 ? (
+        <div className="surface p-10 text-center">
+          <p className="font-semibold">No contacts match</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Try a different search, or clear the filters.
+          </p>
+          <Button
+            variant="ghost"
+            className="mt-3"
+            onClick={() => {
+              setQ("");
+              setTag("all");
+              setCardId("all");
+              setEventId("all");
+              setRange("all");
+            }}
+          >
+            Clear filters
+          </Button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="surface p-10 text-center">
           <p className="font-semibold">No contacts yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            When someone shares their details from your card, they'll appear here.
+            When someone shares their details from your card, they'll appear here. Or{" "}
+            <Link to="/app/scan" className="underline">
+              scan a stack of business cards
+            </Link>
+            .
           </p>
         </div>
       ) : (
@@ -296,15 +336,15 @@ function AddContact({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Add contact</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
-          <Input required placeholder="Name *" value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} />
+          <Input required aria-label="Name" placeholder="Name *" value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} />
           <div className="grid grid-cols-2 gap-2">
-            <Input type="email" placeholder="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-            <Input type="tel" placeholder="Phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-            <Input placeholder="Company" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />
-            <Input placeholder="Title" value={f.job_title} onChange={(e) => setF({ ...f, job_title: e.target.value })} />
+            <Input type="email" aria-label="Email" autoComplete="off" placeholder="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+            <Input type="tel" aria-label="Phone" autoComplete="off" placeholder="Phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+            <Input aria-label="Company" placeholder="Company" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />
+            <Input aria-label="Title" placeholder="Title" value={f.job_title} onChange={(e) => setF({ ...f, job_title: e.target.value })} />
           </div>
-          <Input placeholder="Where you met (e.g. SaaStr 2026)" value={f.met_at} onChange={(e) => setF({ ...f, met_at: e.target.value })} />
-          <Textarea placeholder="Note" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
+          <Input aria-label="Where you met" placeholder="Where you met (e.g. SaaStr 2026)" value={f.met_at} onChange={(e) => setF({ ...f, met_at: e.target.value })} />
+          <Textarea aria-label="Note" placeholder="Note" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
           <Button type="submit" className="w-full" disabled={busy}>Save contact</Button>
         </form>
       </DialogContent>
