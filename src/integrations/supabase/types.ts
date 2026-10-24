@@ -846,6 +846,24 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_events: {
+        Row: {
+          created_at: string
+          id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          type?: string
+        }
+        Relationships: []
+      }
       site_events: {
         Row: {
           created_at: string
@@ -908,6 +926,7 @@ export type Database = {
         Returns: undefined
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
+      cleanup_stale_data: { Args: never; Returns: Json }
       consume_starter_credit: {
         Args: { _kind: string; _user: string }
         Returns: undefined

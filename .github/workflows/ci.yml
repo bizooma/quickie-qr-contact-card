@@ -20,3 +20,5 @@ jobs:
       # writes its own compact style, so it would fail on every Lovable edit.
       - name: Lint
         run: bun run lint:ci
+      - name: Build
+        run: bun run build
