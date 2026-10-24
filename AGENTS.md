@@ -16,3 +16,4 @@
 - Pure card logic (vCard, CSV, slugs) lives in `src/lib/card-model.ts` with unit tests. Why: testable without network.
 - Team member names use the membership-scoped `team_member_names` RPC, not teammate profile reads. Why: expose names without revealing private billing, grants, or webhooks.
 - Public RPC abuse tracking stays in private database functions/tables; the existing authorized reminders cron calls its cleanup RPC. Why: contain limits without a new service or schedule.
+- Server-mediated public RPCs forward visitor IP through a request-scoped header trusted only for service-role calls; missing visitor headers skip per-IP limits. Why: the database's network headers otherwise identify the app server and merge visitors into one counter.

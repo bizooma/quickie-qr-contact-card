@@ -135,6 +135,32 @@ export type Database = {
           },
         ]
       }
+      card_slug_history: {
+        Row: {
+          card_id: string
+          created_at: string
+          old_slug: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          old_slug: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          old_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_slug_history_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_views: {
         Row: {
           card_id: string
@@ -666,6 +692,7 @@ export type Database = {
           order_number: number | null
           payload: Json | null
           pinball_order_id: string
+          refunded_at: string | null
         }
         Insert: {
           amount_cents?: number | null
@@ -679,6 +706,7 @@ export type Database = {
           order_number?: number | null
           payload?: Json | null
           pinball_order_id: string
+          refunded_at?: string | null
         }
         Update: {
           amount_cents?: number | null
@@ -692,6 +720,7 @@ export type Database = {
           order_number?: number | null
           payload?: Json | null
           pinball_order_id?: string
+          refunded_at?: string | null
         }
         Relationships: []
       }
@@ -864,6 +893,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_team_invite: {
+        Args: { _token: string; _user: string }
+        Returns: Json
+      }
       admin_analytics: { Args: never; Returns: Json }
       admin_overview: { Args: never; Returns: Json }
       apply_purchase_entitlements: {
@@ -875,10 +908,6 @@ export type Database = {
         Returns: undefined
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
-      accept_team_invite: {
-        Args: { _token: string; _user: string }
-        Returns: Json
-      }
       consume_starter_credit: {
         Args: { _kind: string; _user: string }
         Returns: undefined
@@ -904,6 +933,10 @@ export type Database = {
       }
       org_role_of: { Args: { _org: string }; Returns: string }
       org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
+      premium_card_insights: {
+        Args: { p_card?: string; p_since: string }
+        Returns: Json
+      }
       record_app_purchase: {
         Args: {
           _amount_cents: number
@@ -917,6 +950,11 @@ export type Database = {
         }
         Returns: Json
       }
+      refund_app_purchase: {
+        Args: { _kind: string; _order_id: string }
+        Returns: Json
+      }
+      resolve_card_slug: { Args: { _slug: string }; Returns: string }
       restore_entitlement_plan: { Args: { _user: string }; Returns: undefined }
       rpc_client_ip_hash: { Args: never; Returns: string }
       submit_shareback: {
@@ -930,7 +968,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      team_seat_count: { Args: { p_org: string }; Returns: number }
       team_member_names: {
         Args: { p_org: string }
         Returns: {
@@ -938,6 +975,7 @@ export type Database = {
           id: string
         }[]
       }
+      team_seat_count: { Args: { p_org: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
