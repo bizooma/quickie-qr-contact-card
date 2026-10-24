@@ -93,7 +93,24 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
     // subscription event once (if) payment lands.
     const paid =
       session.payment_status === "paid" || session.payment_status === "no_payment_required";
+    if (userId && session.mode === "payment" && paid && session.metadata?.["ck_topup"]) {
+      // One-off scan pack: credits never expire, used after the allowance.
+      must(await supabaseAdmin.rpc("add_topup_credits", { _user: userId }), "top-up credits");
+      return;
+    }
     if (userId && session.mode === "subscription" && paid) {
+      // A subscriber moving to Teams: end the old subscription now that the
+      // new one is paid. Its later "deleted" event matches no row (the id
+      // below replaces it) and is skipped.
+      const old = session.metadata?.["ck_replace_sub"];
+      if (old && old !== session.subscription) {
+        const { getStripe } = await import("@/lib/stripe.server");
+        try {
+          await getStripe().subscriptions.cancel(old);
+        } catch (e) {
+          console.error(`could not cancel replaced subscription ${old}: ${(e as Error).message}`);
+        }
+      }
       must(
         await supabaseAdmin
           .from("profiles")

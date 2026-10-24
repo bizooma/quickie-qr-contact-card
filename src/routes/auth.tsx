@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+type AuthSearch = { mode?: "signin" | "signup"; email?: string };
+
 export const Route = createFileRoute("/auth")({
+  // Buyers arrive from the welcome email as /auth?mode=signup&email=… so the
+  // form is already in signup mode with the email that unlocks their purchase.
+  validateSearch: (s: Record<string, unknown>): AuthSearch => ({
+    ...(s["mode"] === "signup" || s["mode"] === "signin" ? { mode: s["mode"] } : {}),
+    ...(typeof s["email"] === "string" && s["email"].includes("@") ? { email: s["email"] } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — ContactKickstart" },
@@ -27,8 +35,9 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
+  const search = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signin");
+  const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -106,7 +115,9 @@ function AuthPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "signin"
             ? "Sign in to manage your cards."
-            : "Your first card is one minute away."}
+            : search.email
+              ? "Use this email and your purchase unlocks the moment you're in."
+              : "Your first card is one minute away."}
         </p>
         <Button variant="outline" className="mt-8 h-11 w-full" onClick={google}>
           Continue with Google

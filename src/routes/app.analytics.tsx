@@ -13,14 +13,20 @@ export const Route = createFileRoute("/app/analytics")({ head: appHead('Analytic
 
 const sinceIso = (days: number) => startOfDay(subDays(new Date(), days - 1)).toISOString();
 
-async function loadEvents(days: number) {
-  const { data, error } = await supabase
-    .from("card_views")
-    .select("card_id, event_type, created_at")
-    .gte("created_at", sinceIso(days))
-    .limit(10000);
+type Series = {
+  totals: { view: number; save: number; shareback: number; click: number };
+  days: { day: string; view: number; save: number; shareback: number }[];
+};
+
+/** Totals and per-day counts, computed in the database (a plain select
+ *  stops at 1,000 rows and would under-count). */
+async function loadSeries(days: number, cardId: string): Promise<Series> {
+  const { data, error } = await supabase.rpc("card_event_series", {
+    p_since: sinceIso(days),
+    ...(cardId === "all" ? {} : { p_card: cardId }),
+  });
   if (error) throw error;
-  return data;
+  return data as unknown as Series;
 }
 
 type Insights = {
@@ -46,9 +52,9 @@ function Analytics() {
   const [cardId, setCardId] = useState("all");
   const { isPremium } = usePlan();
   const { data: cards = [] } = useQuery({ queryKey: ["cards"], queryFn: listCards });
-  const { data: events = [] } = useQuery({
-    queryKey: ["events", days],
-    queryFn: () => loadEvents(days),
+  const { data: series_ } = useQuery({
+    queryKey: ["events", days, cardId],
+    queryFn: () => loadSeries(days, cardId),
   });
   const { data: insights } = useQuery({
     queryKey: ["insights", days, cardId],
@@ -56,9 +62,10 @@ function Analytics() {
     queryFn: () => loadInsights(days, cardId),
   });
 
-  const filtered = cardId === "all" ? events : events.filter((e) => e.card_id === cardId);
-  const totals = { view: 0, save: 0, shareback: 0, click: 0 } as Record<string, number>;
-  for (const e of filtered) totals[e.event_type] = (totals[e.event_type] ?? 0) + 1;
+  const totals = (series_?.totals ?? { view: 0, save: 0, shareback: 0, click: 0 }) as Record<
+    string,
+    number
+  >;
 
   // Premium: unique visitors, devices, referrers and most-tapped links come
   // from the server; conversion only needs the counts everyone can read.
@@ -78,12 +85,17 @@ function Analytics() {
       const d = format(subDays(new Date(), i), "MMM d");
       map.set(d, { day: d, view: 0, save: 0, shareback: 0 });
     }
-    for (const e of filtered) {
-      const r = map.get(format(new Date(e.created_at), "MMM d"));
-      if (r) r[e.event_type as "view"]++;
+    for (const d of series_?.days ?? []) {
+      // Days are UTC dates; label them the same way the axis does.
+      const r = map.get(format(new Date(`${d.day}T12:00:00Z`), "MMM d"));
+      if (r) {
+        r.view += d.view;
+        r.save += d.save;
+        r.shareback += d.shareback;
+      }
     }
     return Array.from(map.values());
-  }, [filtered, days]);
+  }, [series_, days]);
 
   const tiles = [
     { k: "view", label: "Views" },

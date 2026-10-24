@@ -29,11 +29,15 @@ export type Database = {
       ai_usage: {
         Row: {
           created_at: string
+          credit: boolean
           id: string
           kind: string
+          reservation: string | null
           user_id: string
         }
         Insert: {
+          credit?: boolean
+          reservation?: string | null
           created_at?: string
           id?: string
           kind: string
@@ -632,6 +636,7 @@ export type Database = {
           team_seats: number
           updated_at: string
           webhook_url: string | null
+          winback_sent_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -654,6 +659,7 @@ export type Database = {
           team_seats?: number
           updated_at?: string
           webhook_url?: string | null
+          winback_sent_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -676,6 +682,7 @@ export type Database = {
           team_seats?: number
           updated_at?: string
           webhook_url?: string | null
+          winback_sent_at?: string | null
         }
         Relationships: []
       }
@@ -926,7 +933,25 @@ export type Database = {
         Returns: undefined
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
+      add_topup_credits: { Args: { _user: string }; Returns: undefined }
       cleanup_stale_data: { Args: never; Returns: Json }
+      card_event_series: {
+        Args: { p_card?: string; p_since: string }
+        Returns: Json
+      }
+      org_event_totals: {
+        Args: { p_org: string; p_since: string }
+        Returns: Json
+      }
+      reserve_ai_usage: {
+        Args: { _kind: string; _limit: number; _units: number; _user: string }
+        Returns: Json
+      }
+      settle_ai_usage: {
+        Args: { _actual: number; _reservation: string }
+        Returns: undefined
+      }
+      winback_candidates: { Args: { p_limit?: number }; Returns: string[] }
       consume_starter_credit: {
         Args: { _kind: string; _user: string }
         Returns: undefined

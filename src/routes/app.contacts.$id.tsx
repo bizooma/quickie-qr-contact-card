@@ -1,5 +1,5 @@
 import { appHead } from "@/lib/seo";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -56,7 +56,10 @@ import type { FollowUpDraft } from "@/lib/ai-model";
 import { ContactReminders } from "@/components/contacts/Reminders";
 import { listEvents } from "@/lib/events-api";
 
-export const Route = createFileRoute("/app/contacts/$id")({ head: appHead('Contact', 'Contact details, notes and follow-ups.'), component: ContactDetail });
+export const Route = createFileRoute("/app/contacts/$id")({
+  head: appHead("Contact", "Contact details, notes and follow-ups."),
+  component: ContactDetail,
+});
 
 const DETAIL_FIELDS = [
   "full_name",
@@ -134,18 +137,25 @@ function ContactDetail() {
       });
   }, [data?.contact]);
 
+  // Edits used to vanish unless you scrolled down to "Save details" — surface a
+  // sticky save bar whenever any detail field differs from what's stored.
+  const stored = data?.contact as Record<string, unknown> | null | undefined;
+  const dirty =
+    !!stored && DETAIL_FIELDS.some((k) => (form[k] ?? "") !== ((stored[k] as string | null) ?? ""));
+
   // Warn before closing the tab while detail edits haven't been saved.
   useEffect(() => {
-    const c = data?.contact;
-    if (!c) return;
-    const dirty = DETAIL_FIELDS.some(
-      (k) => (form[k] ?? "") !== (((c as Record<string, unknown>)[k] as string | null) ?? ""),
-    );
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [form, data?.contact]);
+  }, [dirty]);
+  // In-app navigation with unsaved edits asks first (tab close is handled above).
+  useBlocker({
+    shouldBlockFn: () =>
+      dirty && !window.confirm("You have unsaved changes. Leave without saving?"),
+    enableBeforeUnload: false,
+  });
 
   if (loadFailed && !data)
     return (
@@ -173,11 +183,6 @@ function ContactDetail() {
     qc.invalidateQueries({ queryKey: ["contacts"] });
   };
 
-  // Edits used to vanish unless you scrolled down to "Save details" — surface a
-  // sticky save bar whenever any detail field differs from what's stored.
-  const dirty = DETAIL_FIELDS.some(
-    (k) => (form[k] ?? "") !== (((c as Record<string, unknown>)[k] as string | null) ?? ""),
-  );
   const discardEdits = () =>
     setForm(
       Object.fromEntries(
@@ -764,6 +769,7 @@ function ContactDetail() {
 
       {dirty && (
         <div
+          data-savebar
           className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl border bg-background/95 p-3 pl-4 shadow-lg backdrop-blur md:bottom-6"
           role="status"
         >

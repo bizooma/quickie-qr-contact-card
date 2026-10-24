@@ -14,6 +14,7 @@ export function stripeEnv() {
     premiumAnnualPriceId: process.env["STRIPE_PRICE_ID_PREMIUM_ANNUAL"] ?? "",
     teamPriceId: process.env["STRIPE_PRICE_ID_TEAM"] ?? "",
     teamAnnualPriceId: process.env["STRIPE_PRICE_ID_TEAM_ANNUAL"] ?? "",
+    topupPriceId: process.env["STRIPE_PRICE_ID_TOPUP"] ?? "", // one-off scan pack
     webhookSecret: process.env["STRIPE_WEBHOOK_SECRET"] ?? "",
   };
 }

@@ -127,6 +127,19 @@ export function usageUnits(kind: UsageKind, cardsRead = 1): number {
   return kind === "scan" ? Math.max(1, cardsRead) : 1;
 }
 
+/** Sent too many AI requests in a short time (any plan). */
+export function rateLimitMessage(): string {
+  return "You're sending AI requests very quickly — wait a few minutes and try again.";
+}
+
+// One-off scan top-up pack, sold in-app through Stripe (STRIPE_PRICE_ID_TOPUP).
+// Credits never expire, like the starter pack, and are used after the
+// monthly allowance.
+export const TOPUP_USD = 5;
+export const TOPUP_SCANS = 50;
+export const TOPUP_FOLLOW_UPS = 50;
+export const TOPUP_LABEL = `${TOPUP_SCANS} scans + ${TOPUP_FOLLOW_UPS} follow-up drafts for $${TOPUP_USD}`;
+
 /** A batch needs more scans than are left (but some are). */
 export function scansLeftMessage(available: number, now = new Date()): string {
   return `You have ${available} scan${available === 1 ? "" : "s"} left this month (${SCAN_UNIT_NOTE}) — remove some photos and try again. Your allowance resets on ${formatResetDate(now)}.`;
@@ -161,5 +174,5 @@ export function limitReachedMessage(plan: PlanId, kind: UsageKind, now = new Dat
       ? `${used} Need more right now? Upgrade to Pro (${PRO_PRICE_LABEL}).`
       : `${used} Need more right now? Pro includes ${pro} a month (${PRO_PRICE_LABEL}).`;
   }
-  return `${used} Need more right now? Premium has higher limits.`;
+  return `${used} Need more right now? Premium has no monthly cap.`;
 }

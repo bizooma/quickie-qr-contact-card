@@ -34,9 +34,10 @@ export const scanCards = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(ScanCardsInputSchema)
   .handler(async ({ data, context }) => {
-    const { assertWithinLimit, recordUsage } = await import("./usage.server");
-    // 1 card = 1 scan: every photo holds at least one card.
-    await assertWithinLimit(context.userId, "scan", data.images.length);
+    const { reserveUsage, settleUsage } = await import("./usage.server");
+    // 1 card = 1 scan: every photo holds at least one card. Reserved before
+    // the call so parallel requests can't all slip past the allowance.
+    const reservation = await reserveUsage(context.userId, "scan", data.images.length);
     const client = await getAnthropic();
     const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
@@ -80,16 +81,14 @@ export const scanCards = createServerFn({ method: "POST" })
     });
 
     if (response.stop_reason === "refusal") {
+      await settleUsage(reservation, 0);
       throw new Error("The AI declined to process these images. Try different photos.");
     }
     if (!response.parsed_output) {
+      await settleUsage(reservation, 0);
       throw new Error("Could not read the cards from these photos. Try clearer, closer shots.");
     }
-    await recordUsage(
-      context.userId,
-      "scan",
-      usageUnits("scan", response.parsed_output.contacts.length),
-    );
+    await settleUsage(reservation, usageUnits("scan", response.parsed_output.contacts.length));
     return response.parsed_output;
   });
 
@@ -102,6 +101,7 @@ export const scanMyCard = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { assertSelfScanAllowance, recordSelfScan } = await import("./usage.server");
     await assertSelfScanAllowance(context.userId, SELF_SCANS_PER_DAY);
+    await recordSelfScan(context.userId); // counts whatever the photo turns out to be
     const client = await getAnthropic();
     const { betaZodOutputFormat } = await import("@anthropic-ai/sdk/helpers/beta/zod");
 
@@ -163,7 +163,6 @@ export const scanMyCard = createServerFn({ method: "POST" })
     if (!response.parsed_output.is_business_card) {
       throw new Error("That doesn't look like a business card. Try a photo of your card.");
     }
-    await recordSelfScan(context.userId);
     return response.parsed_output;
   });
 
@@ -172,8 +171,8 @@ export const draftFollowUp = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(FollowUpInputSchema)
   .handler(async ({ data, context }) => {
-    const { assertWithinLimit, recordUsage } = await import("./usage.server");
-    await assertWithinLimit(context.userId, "follow_up");
+    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const reservation = await reserveUsage(context.userId, "follow_up");
     const { supabase } = context;
     const [c, n, t, card] = await Promise.all([
       supabase.from("contacts").select("*").eq("id", data.contactId).maybeSingle(),
@@ -237,9 +236,10 @@ export const draftFollowUp = createServerFn({ method: "POST" })
     });
 
     if (response.stop_reason === "refusal" || !response.parsed_output) {
+      await settleUsage(reservation, 0);
       throw new Error("Could not draft a follow-up for this contact. Try again.");
     }
-    await recordUsage(context.userId, "follow_up");
+    await settleUsage(reservation, 1);
     return response.parsed_output;
   });
 
@@ -248,8 +248,8 @@ export const enrichContact = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(EnrichInputSchema)
   .handler(async ({ data, context }) => {
-    const { assertWithinLimit, recordUsage } = await import("./usage.server");
-    await assertWithinLimit(context.userId, "enrich");
+    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const reservation = await reserveUsage(context.userId, "enrich");
     const { data: contact, error } = await context.supabase
       .from("contacts")
       .select("full_name, email, company, job_title, website, linkedin_url")
@@ -306,6 +306,7 @@ export const enrichContact = createServerFn({ method: "POST" })
       });
 
       if (response.stop_reason === "refusal") {
+        await settleUsage(reservation, 0);
         throw new Error("The AI declined to research this contact.");
       }
       if (response.stop_reason === "pause_turn") {
@@ -313,11 +314,13 @@ export const enrichContact = createServerFn({ method: "POST" })
         continue;
       }
       if (!response.parsed_output) {
+        await settleUsage(reservation, 0);
         throw new Error("Could not enrich this contact. Try again.");
       }
-      await recordUsage(context.userId, "enrich");
+      await settleUsage(reservation, 1);
       return response.parsed_output;
     }
+    await settleUsage(reservation, 0);
     throw new Error("Research took too long. Try again.");
   });
 
@@ -326,8 +329,8 @@ export const summarizeNote = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(SummarizeNoteInputSchema)
   .handler(async ({ data, context }) => {
-    const { assertWithinLimit, recordUsage } = await import("./usage.server");
-    await assertWithinLimit(context.userId, "summarize");
+    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const reservation = await reserveUsage(context.userId, "summarize");
     const { data: note, error } = await context.supabase
       .from("contact_notes")
       .select("body")
@@ -353,11 +356,13 @@ export const summarizeNote = createServerFn({ method: "POST" })
     });
 
     if (response.stop_reason === "refusal") {
+      await settleUsage(reservation, 0);
       throw new Error("The AI declined to summarize this note.");
     }
     if (!response.parsed_output) {
+      await settleUsage(reservation, 0);
       throw new Error("Could not summarize this note. Try again.");
     }
-    await recordUsage(context.userId, "summarize");
+    await settleUsage(reservation, 1);
     return response.parsed_output;
   });

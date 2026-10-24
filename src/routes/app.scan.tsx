@@ -1,6 +1,6 @@
 import { appHead } from "@/lib/seo";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
   Camera,
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { scanCards } from "@/lib/ai.functions";
+import { getBillingState } from "@/lib/billing.functions";
 import { notifyNewContacts } from "@/lib/capture.functions";
 import { SCAN_IMAGE_LIMIT, type ScannedContact } from "@/lib/ai-model";
 import {
@@ -34,7 +35,11 @@ import { decodeQrText, mergeScannedContacts } from "@/lib/scan-decode";
 import { contactsToVcf } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
 
-export const Route = createFileRoute("/app/scan")({ head: appHead('Scan a card', 'Photograph a paper business card to save it as a contact.'), component: ScanPage });
+export const Route = createFileRoute("/app/scan")({
+  head: appHead("Scan a card", "Photograph a paper business card to save it as a contact."),
+  validateSearch: (s: Record<string, unknown>) => (s["welcome"] ? { welcome: 1 as const } : {}),
+  component: ScanPage,
+});
 
 type EditableContact = ScannedContact & { include: boolean; headshot: CroppedHeadshot | null };
 
@@ -42,6 +47,11 @@ function ScanPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { welcome } = Route.useSearch();
+  const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
+  // Starter-pack buyers see what they bought the moment they land here.
+  const unlocked =
+    !!billing && billing.credits.scan > 0 && (welcome === 1 || billing.usage.scan.used === 0);
   const fileRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<PreparedImage[]>([]);
   const [metAt, setMetAt] = useState("");
@@ -209,6 +219,22 @@ function ScanPage() {
       <p className="mb-6 text-sm text-muted-foreground">
         Snap or upload photos of paper cards — AI turns them into contacts you can follow up with.
       </p>
+      {unlocked && !results && !savedBatch && (
+        <div className="mb-6 rounded-xl border border-brand/40 bg-brand-soft/40 px-4 py-3 text-sm">
+          <p className="font-semibold">
+            Your {billing.credits.scan} AI card scans and {billing.credits.follow_up} follow-up
+            drafts are unlocked.
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Photograph your first stack below — a few cards per photo is fine. Want your own digital
+            card first?{" "}
+            <Link to="/app/onboarding" className="underline">
+              Set it up here
+            </Link>
+            .
+          </p>
+        </div>
+      )}
 
       <input
         ref={fileRef}
