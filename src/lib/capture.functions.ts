@@ -21,7 +21,12 @@ export const submitShareback = createServerFn({ method: "POST" })
   .validator(SharebackInputSchema)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getRequestHeaders } = await import("@tanstack/react-start/server");
+    const { sharebackVisitorIp } = await import("./shareback-ip");
+    const visitorIp = sharebackVisitorIp(getRequestHeaders());
     // The SECURITY DEFINER RPC revalidates lengths and requires email-or-phone.
+    // Per-request only: never mutate the shared admin client's headers. An empty
+    // value explicitly means no visitor IP, not the server's outgoing address.
     const { error } = await supabaseAdmin.rpc("submit_shareback", {
       _slug: data.slug,
       _name: data.name,
@@ -29,7 +34,7 @@ export const submitShareback = createServerFn({ method: "POST" })
       _phone: data.phone,
       _company: data.company,
       _note: data.note,
-    });
+    }).setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
     if (error) throw new Error("Couldn't send your details. Please try again.");
 
     // Notify the owner: web push now, webhook if configured. Both best-effort.

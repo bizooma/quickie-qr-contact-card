@@ -1,4 +1,7 @@
 # Roadmap
+## Share-back visitor-counter fix
+- [ ] Forward request-scoped visitor identity; keep missing-header requests on the per-card ceiling only.
+- [ ] Apply and verify a narrow database helper change and regression tests.
 ## Security audit — database (part 1)
 - [x] Apply the nine approved database fixes in one generated migration without changing history.
 - [x] Replace teammate profile reads and extend existing reminder cleanup in app code.
