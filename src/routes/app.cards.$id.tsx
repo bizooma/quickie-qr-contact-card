@@ -187,7 +187,7 @@ function Editor({
     const { error } = await supabase.from("cards").update({ slug: s }).eq("id", cardId);
     if (error) { toast.error(error.code === "23505" ? "That address is taken" : error.message); return; }
     setCard((c) => ({ ...c, slug: s }));
-    toast.success("Card address updated — old QR codes will stop working");
+    toast.success("Card address updated — your old link and printed QR codes now forward here");
   }
 
   async function upload(kind: "headshot_path" | "logo_path", file?: File) {
@@ -394,6 +394,9 @@ function Editor({
                   Update
                 </Button>
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Changing it is safe: your old link and printed QR codes keep forwarding here.
+              </p>
             </Field>
             <AlertDialog>
               <AlertDialogTrigger asChild>
