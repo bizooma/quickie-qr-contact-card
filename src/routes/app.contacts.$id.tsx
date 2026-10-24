@@ -8,6 +8,7 @@ import {
   Loader2,
   MapPin,
   Mic,
+  Pencil,
   Square,
   Mail,
   Phone,
@@ -38,7 +39,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { removeMedia, signedUrls } from "@/lib/media";
+import { removeMedia, signedUrls, uploadContactImage } from "@/lib/media";
+import { PhotoEditor } from "@/components/PhotoEditor";
 import { SUGGESTED_TAGS } from "@/lib/contacts-api";
 import { buildContactVCard, companyDomain, companyLogoUrl, initials } from "@/lib/card-model";
 import { downloadFile, VCF_MIME } from "@/lib/download";
@@ -98,11 +100,16 @@ function ContactDetail() {
     isError: loadFailed,
   } = useQuery({ queryKey: ["contact", id], queryFn: () => loadContact(id) });
   const photoPath = data?.contact?.photo_path ?? null;
-  const { data: photoUrl } = useQuery({
-    queryKey: ["contact-photo", photoPath],
-    enabled: !!photoPath,
-    queryFn: async () => (photoPath ? ((await signedUrls([photoPath]))[photoPath] ?? null) : null),
+  const logoPath = data?.contact?.logo_path ?? null;
+  const { data: imageUrls = {} } = useQuery({
+    queryKey: ["contact-images", photoPath, logoPath],
+    enabled: !!(photoPath || logoPath),
+    queryFn: () => signedUrls([photoPath, logoPath]),
   });
+  const photoUrl = photoPath ? (imageUrls[photoPath] ?? null) : null;
+  const ownLogoUrl = logoPath ? (imageUrls[logoPath] ?? null) : null;
+  // Which image the photo editor is open on.
+  const [editing, setEditing] = useState<"photo" | "logo" | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [fromVoice, setFromVoice] = useState(false);
@@ -362,9 +369,42 @@ function ContactDetail() {
   // company domain (manual entries, share-backs from personal emails) get
   // the ContactKickstart badge until an edit or enrichment adds one.
   const logoDomain = companyDomain({ website: c.website, email: c.email });
-  const hasCompanyLogo = !!logoDomain && !logoError;
-  const bannerLogo = hasCompanyLogo ? companyLogoUrl(logoDomain, 256) : "/brand/logo-badge.webp";
+  const hasCompanyLogo = !!ownLogoUrl || (!!logoDomain && !logoError);
+  const bannerLogo =
+    ownLogoUrl ??
+    (hasCompanyLogo && logoDomain ? companyLogoUrl(logoDomain, 256) : "/brand/logo-badge.webp");
   const bannerAlt = hasCompanyLogo ? `${c.company || logoDomain} logo` : "ContactKickstart logo";
+
+  // Photo editor results: upload, point the contact at the new file, drop the old one.
+  async function saveImage(kind: "photo" | "logo", blob: Blob) {
+    if (!user) return;
+    const column = kind === "photo" ? "photo_path" : "logo_path";
+    const old = c![column];
+    const path = await uploadContactImage(user.id, blob);
+    const { error } = await supabase
+      .from("contacts")
+      .update(kind === "photo" ? { photo_path: path } : { logo_path: path })
+      .eq("id", c!.id);
+    if (error) {
+      void removeMedia([path]);
+      throw new Error(error.message);
+    }
+    if (old) void removeMedia([old]);
+    refresh();
+    toast.success(kind === "photo" ? "Photo updated" : "Company logo updated");
+  }
+  async function removeImage(kind: "photo" | "logo") {
+    const column = kind === "photo" ? "photo_path" : "logo_path";
+    const old = c![column];
+    const { error } = await supabase
+      .from("contacts")
+      .update(kind === "photo" ? { photo_path: null } : { logo_path: null })
+      .eq("id", c!.id);
+    if (error) throw new Error(error.message);
+    if (old) void removeMedia([old]);
+    setLogoError(false);
+    refresh();
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -393,20 +433,59 @@ function ContactDetail() {
               loading="lazy"
               onError={() => setLogoError(true)}
             />
+            <button
+              type="button"
+              onClick={() => setEditing("logo")}
+              aria-label="Edit company logo"
+              title="Edit company logo"
+              className="absolute -right-2 -top-2 z-20 rounded-full border bg-background p-1.5 text-muted-foreground shadow hover:text-foreground"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
           </span>
         </div>
         <div className="relative z-10 -mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={`Photo of ${c.full_name}`}
-              className="h-24 w-24 rounded-full border-4 border-card object-cover shadow md:h-28 md:w-28"
-            />
-          ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-card bg-[image:linear-gradient(var(--brand-soft),var(--brand-soft))] text-2xl font-semibold text-accent-foreground shadow md:h-28 md:w-28">
-              {initials(c.full_name)}
-            </div>
-          )}
+          <div className="relative">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={`Photo of ${c.full_name}`}
+                className="h-24 w-24 rounded-full border-4 border-card object-cover shadow md:h-28 md:w-28"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-card bg-[image:linear-gradient(var(--brand-soft),var(--brand-soft))] text-2xl font-semibold text-accent-foreground shadow md:h-28 md:w-28">
+                {initials(c.full_name)}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setEditing("photo")}
+              aria-label={photoUrl ? "Edit photo" : "Add photo"}
+              title={photoUrl ? "Edit photo" : "Add photo"}
+              className="absolute bottom-0 right-0 rounded-full border bg-background p-1.5 text-muted-foreground shadow hover:text-foreground"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <PhotoEditor
+            open={editing === "photo"}
+            onOpenChange={(o) => !o && setEditing(null)}
+            title={photoUrl ? "Edit photo" : "Add a photo"}
+            sourceUrl={photoUrl}
+            shape="circle"
+            onSave={(b) => saveImage("photo", b)}
+            onRemove={photoUrl ? () => removeImage("photo") : undefined}
+          />
+          <PhotoEditor
+            open={editing === "logo"}
+            onOpenChange={(o) => !o && setEditing(null)}
+            title="Company logo"
+            sourceUrl={ownLogoUrl}
+            shape="square"
+            output="image/png"
+            onSave={(b) => saveImage("logo", b)}
+            onRemove={ownLogoUrl ? () => removeImage("logo") : undefined}
+          />
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-bold">{c.full_name}</h1>
             {(c.job_title || c.company) && (

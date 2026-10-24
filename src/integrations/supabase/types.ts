@@ -448,6 +448,7 @@ export type Database = {
           id: string
           job_title: string | null
           linkedin_url: string | null
+          logo_path: string | null
           met_at: string | null
           note: string | null
           phone: string | null
@@ -468,6 +469,7 @@ export type Database = {
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
+          logo_path?: string | null
           met_at?: string | null
           note?: string | null
           phone?: string | null
@@ -488,6 +490,7 @@ export type Database = {
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
+          logo_path?: string | null
           met_at?: string | null
           note?: string | null
           phone?: string | null

@@ -15,15 +15,20 @@ export async function uploadCardImage(userId: string, file: File): Promise<strin
   return path;
 }
 
-/** Stores a contact's headshot (cropped from a scanned card) under the owner's folder. */
-export async function uploadContactPhoto(userId: string, blob: Blob): Promise<string> {
-  const path = `${userId}/contact-photos/${crypto.randomUUID()}.jpg`;
+/** Stores a contact's photo or company logo (cropped from a scanned card or
+ *  edited by the owner) under the owner's folder. */
+export async function uploadContactImage(userId: string, blob: Blob): Promise<string> {
+  const type = blob.type === "image/png" ? "image/png" : "image/jpeg";
+  const path = `${userId}/contact-photos/${crypto.randomUUID()}.${type === "image/png" ? "png" : "jpg"}`;
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    .upload(path, blob, { contentType: type, upsert: false });
   if (error) throw error;
   return path;
 }
+
+/** Stores a contact's headshot (cropped from a scanned card) under the owner's folder. */
+export const uploadContactPhoto = uploadContactImage;
 
 /** Stores a card's Open Graph preview image at a stable per-card path. */
 export async function uploadOgImage(userId: string, cardId: string, blob: Blob): Promise<string> {
