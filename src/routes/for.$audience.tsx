@@ -5,6 +5,7 @@ import { LiveCardButton, LiveCardDialog } from "@/components/LiveCardDialog";
 import { useAuth } from "@/hooks/use-auth";
 import { AUDIENCES } from "@/lib/audiences";
 import { logSiteEvent } from "@/lib/site-events";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 export const Route = createFileRoute("/for/$audience")({
   loader: ({ params }) => {
@@ -43,9 +44,12 @@ function AudiencePage() {
             className="h-14 w-auto md:h-20"
           />
         </Link>
-        <Button asChild size="sm" variant="ghost">
-          <Link to={to}>{user ? "Open app" : "Sign in"}</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" variant="ghost">
+            <Link to={to}>{user ? "Open app" : "Sign in"}</Link>
+          </Button>
+          {user && <ProfileMenu />}
+        </div>
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pb-14 pt-8 text-center">

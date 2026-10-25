@@ -15,7 +15,8 @@ import { signPublicCardMedia, submitShareback } from "@/lib/capture.functions";
 // Absolute URL so crawlers accept it from any serving domain.
 const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
 
-type PublicCardData = CardData & { og_path?: string | null };
+// shareback_open is false once a free owner has collected their share-backs (0032).
+type PublicCardData = CardData & { og_path?: string | null; shareback_open?: boolean };
 
 async function loadCard(slug: string) {
   const { data, error } = await supabase.rpc("get_public_card", { _slug: slug });
@@ -188,7 +189,9 @@ function PublicCard() {
             .then(undefined, () => {});
         }}
         actions={
-          <div className="grid grid-cols-2 gap-2">
+          <div
+            className={`grid gap-2 ${card.shareback_open === false ? "grid-cols-1" : "grid-cols-2"}`}
+          >
             <button
               onClick={saveContact}
               className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
@@ -197,14 +200,19 @@ function PublicCard() {
               <Download className="h-4 w-4" />
               Save contact
             </button>
-            <button
-              onClick={() => setOpen(true)}
-              className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
-              style={{ borderColor: card.accent_color, color: contrastText(card.background_color) }}
-            >
-              <Send className="h-4 w-4" />
-              Share yours
-            </button>
+            {card.shareback_open !== false && (
+              <button
+                onClick={() => setOpen(true)}
+                className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{
+                  borderColor: card.accent_color,
+                  color: contrastText(card.background_color),
+                }}
+              >
+                <Send className="h-4 w-4" />
+                Share yours
+              </button>
+            )}
           </div>
         }
       />

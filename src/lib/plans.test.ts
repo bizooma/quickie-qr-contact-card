@@ -30,6 +30,8 @@ import {
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   remaining,
+  FREE_SHAREBACK_LIMIT,
+  sharebackAllowanceLine,
 } from "./plans";
 
 describe("normalizePlan", () => {
@@ -53,20 +55,21 @@ describe("effectivePlan", () => {
 });
 
 describe("limits", () => {
-  it("free is capped, Pro gets 100 scans + 100 drafts, Premium a 500 fair-use ceiling", () => {
-    expect(monthlyLimit("free", "scan")).toBe(5);
+  it("free has no AI, Pro gets 100 scans + 100 drafts, Premium a 300 fair-use ceiling", () => {
+    for (const kind of ["scan", "enrich", "follow_up", "summarize"] as const) {
+      expect(monthlyLimit("free", kind)).toBe(0);
+      expect(isWithinLimit("free", kind, 0)).toBe(false);
+    }
     expect(monthlyLimit("pro", "scan")).toBe(100);
     expect(monthlyLimit("pro", "follow_up")).toBe(100);
-    expect(monthlyLimit("premium", "scan")).toBe(500);
-    expect(monthlyLimit("premium", "follow_up")).toBe(500);
+    expect(monthlyLimit("premium", "scan")).toBe(300);
+    expect(monthlyLimit("premium", "follow_up")).toBe(300);
     expect(monthlyLimit("premium", "summarize")).toBe(Infinity);
-    expect(isWithinLimit("free", "scan", 4)).toBe(true);
-    expect(isWithinLimit("free", "scan", 5)).toBe(false);
     expect(isWithinLimit("pro", "scan", 99)).toBe(true);
     expect(isWithinLimit("pro", "scan", 100)).toBe(false);
     expect(isWithinLimit("pro", "follow_up", 100)).toBe(false);
-    expect(isWithinLimit("premium", "scan", 499)).toBe(true);
-    expect(isWithinLimit("premium", "scan", 500)).toBe(false);
+    expect(isWithinLimit("premium", "scan", 299)).toBe(true);
+    expect(isWithinLimit("premium", "scan", 300)).toBe(false);
   });
   it("caps enrichment at 100 a month on Pro and Premium", () => {
     expect(monthlyLimit("pro", "enrich")).toBe(100);
@@ -78,9 +81,9 @@ describe("limits", () => {
     expect(PLAN_LIMITS.pro.cards).toBe(3);
     expect(PLAN_LIMITS.premium.cards).toBe(Infinity);
   });
-  it("remaining clamps at zero and stays Infinity for pro", () => {
-    expect(remaining("free", "enrich", 2)).toBe(3);
-    expect(remaining("free", "enrich", 99)).toBe(0);
+  it("remaining clamps at zero and stays Infinity for unlimited kinds", () => {
+    expect(remaining("pro", "scan", 40)).toBe(60);
+    expect(remaining("free", "enrich", 0)).toBe(0);
     expect(remaining("pro", "enrich", 99)).toBe(1);
     expect(remaining("pro", "summarize", 99)).toBe(Infinity);
   });
@@ -125,17 +128,34 @@ describe("limitReachedMessage", () => {
   const oct = new Date("2026-10-19T12:00:00Z");
   it("tells Pro when the allowance resets and points at Premium", () => {
     expect(limitReachedMessage("pro", "scan", oct)).toBe(
-      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium includes 500 a month ($12/mo).",
+      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium includes 300 a month ($12/mo).",
     );
     expect(limitReachedMessage("pro", "follow_up", oct)).toContain(
       "You've used your 100 follow-up drafts for this month",
     );
   });
-  it("points free accounts at Pro", () => {
-    const msg = limitReachedMessage("free", "scan", oct);
-    expect(msg).toContain("You've used your 5 free scans for this month");
-    expect(msg).toContain("resets on Nov 1");
-    expect(msg).toContain("Pro includes 100 a month");
+  it("tells free accounts each AI feature comes with Pro", () => {
+    expect(limitReachedMessage("free", "scan", oct)).toBe(
+      "AI card scans come with Pro — 100 a month, $8/mo. Scanning QR codes and digital contact cards stays free.",
+    );
+    expect(limitReachedMessage("free", "follow_up", oct)).toBe(
+      "AI follow-up drafts come with Pro — 100 a month, $8/mo. Or add a top-up pack.",
+    );
+    expect(limitReachedMessage("free", "enrich", oct)).toBe(
+      "AI contact enrichments come with Pro — 100 a month, $8/mo.",
+    );
+    expect(limitReachedMessage("free", "summarize", oct)).toBe(
+      "AI note summaries come with Pro — $8/mo.",
+    );
+  });
+});
+
+describe("free share-backs", () => {
+  it("counts down to the 5-contact cap, then says the form is hidden", () => {
+    expect(FREE_SHAREBACK_LIMIT).toBe(5);
+    expect(sharebackAllowanceLine(2)).toBe("3 of 5 free share-backs left — unlimited on Pro.");
+    expect(sharebackAllowanceLine(5)).toContain("form is hidden on your card");
+    expect(sharebackAllowanceLine(9)).toContain("form is hidden on your card");
   });
 });
 
@@ -196,7 +216,7 @@ describe("rate limit and top-up", () => {
   it("points Premium at top-ups, and says only the reset date for enrichment", () => {
     const oct = new Date("2026-10-19T12:00:00Z");
     expect(limitReachedMessage("premium", "scan", oct)).toBe(
-      "You've used your 500 scans for this month — your allowance resets on Nov 1. Need more right now? Add a top-up pack in Settings.",
+      "You've used your 300 scans for this month — your allowance resets on Nov 1. Need more right now? Add a top-up pack in Settings.",
     );
     expect(limitReachedMessage("premium", "enrich", oct)).toBe(
       "You've used your 100 enrichments for this month — your allowance resets on Nov 1.",

@@ -8,6 +8,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   effectivePlan,
   formatResetDate,
+  FREE_SELF_SCANS,
   KIND_LABELS,
   limitReachedMessage,
   monthlyLimit,
@@ -151,11 +152,23 @@ async function ownerOf(reservation: string): Promise<string | null> {
 }
 
 // ---- Own-card scans --------------------------------------------------------
-// Scanning your own business card is free on every plan, so it doesn't touch
-// the monthly scan allowance; a rolling daily cap keeps it from being used as
-// an unmetered scanner for other people's cards.
+// Scanning your own business card doesn't touch the monthly scan allowance; a
+// rolling daily cap keeps it from being used as an unmetered scanner for other
+// people's cards, and free accounts get FREE_SELF_SCANS in total.
 
 export async function assertSelfScanAllowance(userId: string, perDay: number): Promise<void> {
+  if ((await getPlan(userId)) === "free") {
+    const { count: total } = await supabaseAdmin
+      .from("ai_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("kind", "self_scan");
+    if ((total ?? 0) >= FREE_SELF_SCANS) {
+      throw new Error(
+        `You've used your ${FREE_SELF_SCANS} free card reads — type your details in instead, or upgrade to Pro for AI scanning.`,
+      );
+    }
+  }
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { count } = await supabaseAdmin
     .from("ai_usage")

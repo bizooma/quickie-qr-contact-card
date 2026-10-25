@@ -10,6 +10,7 @@ import {
   slugify,
   SLUG_RE,
   type CardData,
+  lockedCardIds,
 } from "./card-model";
 
 const card: CardData = {
@@ -161,5 +162,22 @@ describe("companyDomain", () => {
     expect(companyLogoUrl("belayreports.com")).toBe(
       "https://www.google.com/s2/favicons?domain=belayreports.com&sz=128",
     );
+  });
+});
+
+describe("lockedCardIds", () => {
+  const u = "user-1";
+  const cards = [
+    { id: "b", user_id: u, org_id: null, created_at: "2026-10-12T00:00:00+00:00" },
+    { id: "a", user_id: u, org_id: null, created_at: "2026-10-10T00:00:00+00:00" },
+    { id: "t", user_id: u, org_id: "org-1", created_at: "2026-10-01T00:00:00+00:00" },
+    { id: "x", user_id: "someone-else", org_id: null, created_at: "2026-10-01T00:00:00+00:00" },
+  ];
+  it("locks every personal card but the oldest on free", () => {
+    expect([...lockedCardIds(cards, u, "free")]).toEqual(["b"]);
+  });
+  it("locks nothing on paid plans", () => {
+    expect(lockedCardIds(cards, u, "pro").size).toBe(0);
+    expect(lockedCardIds(cards, u, "premium").size).toBe(0);
   });
 });

@@ -21,6 +21,7 @@ import { usePlan } from "@/components/PremiumGate";
 import { EventModeBar } from "@/components/contacts/EventMode";
 import { BulkRemindButton, FollowUpsPanel } from "@/components/contacts/Reminders";
 import { listEvents } from "@/lib/events-api";
+import { SharebackNote } from "@/components/SharebackNote";
 
 export const Route = createFileRoute("/app/contacts/")({ head: appHead('Contacts', "Search, tag and export the contacts you've captured."), component: ContactsPage });
 
@@ -134,6 +135,7 @@ function ContactsPage() {
         countFor={(id) => contacts.filter((c) => c.event_id === id).length}
         onShowEvent={setEventId}
       />
+      <SharebackNote className="mb-4" />
       <FollowUpsPanel />
       <div
         className={`mb-5 grid gap-2 ${events.length ? "sm:grid-cols-[1fr_auto_auto_auto_auto]" : "sm:grid-cols-[1fr_auto_auto_auto]"}`}

@@ -102,8 +102,8 @@ export const scanCards = createServerFn({ method: "POST" })
   });
 
 /** Reads the user's OWN paper business card (front, optionally back) to build
- *  their digital card. Free on every plan, so it skips the monthly scan
- *  allowance; a daily cap guards against misuse instead. */
+ *  their digital card. It skips the monthly scan allowance; a daily cap
+ *  guards against misuse, and free accounts get FREE_SELF_SCANS in total. */
 export const scanMyCard = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(ScanMyCardInputSchema)

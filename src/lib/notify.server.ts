@@ -157,12 +157,15 @@ export type WebhookContact = {
   created_at: string;
 };
 
-/** POSTs a new-contact event to the user's webhook URL, if one is configured. */
+/** POSTs a new-contact event to the user's webhook URL, if one is configured.
+ *  Paid plans only: a free account keeps its URL but nothing is sent. */
 export async function postContactWebhook(
   userId: string,
   contacts: WebhookContact[],
 ): Promise<void> {
   if (!contacts.length) return;
+  const { getPlan } = await import("./usage.server");
+  if ((await getPlan(userId)) === "free") return;
   const { data: prof } = await supabaseAdmin
     .from("profiles")
     .select("webhook_url")

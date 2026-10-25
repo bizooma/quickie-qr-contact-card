@@ -1,5 +1,5 @@
 import { appHead } from "@/lib/seo";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -57,6 +57,7 @@ import {
   allowanceLine,
   annualFreeMonths,
   creditEligible,
+  FREE_SHAREBACK_LIMIT,
   KIND_LABELS,
   PLAN_NAMES,
   PREMIUM_ANNUAL_PRICE_LABEL,
@@ -77,6 +78,7 @@ import {
   USAGE_KINDS,
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
+import { ProUpsell, usePlan } from "@/components/PremiumGate";
 
 export const Route = createFileRoute("/app/settings")({ head: appHead('Settings', 'Manage your profile, cards and account.'), component: Settings });
 
@@ -84,6 +86,7 @@ function Settings() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const del = useServerFn(deleteMyAccount);
+  const { plan } = usePlan();
   const { data: cards = [] } = useQuery({ queryKey: ["cards"], queryFn: listCards });
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -188,18 +191,28 @@ function Settings() {
       </section>
       <section className="space-y-4">
         <h2 className="text-lg font-bold">Notifications & integrations</h2>
-        <PushToggle />
-        <WebhookField
-          initial={profile?.webhook_url ?? ""}
-          onSave={async (url) => {
-            const { error } = await supabase
-              .from("profiles")
-              .update({ webhook_url: url || null })
-              .eq("id", user!.id);
-            if (error) toast.error(error.message);
-            else toast.success(url ? "Webhook saved" : "Webhook removed");
-          }}
-        />
+        {plan === "free" ? (
+          <ProUpsell feature="An instant alert when someone shares their details">
+            <p className="text-sm text-muted-foreground">
+              Pro can also send every new contact to Zapier or your CRM through a webhook.
+            </p>
+          </ProUpsell>
+        ) : (
+          <>
+            <PushToggle />
+            <WebhookField
+              initial={profile?.webhook_url ?? ""}
+              onSave={async (url) => {
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({ webhook_url: url || null })
+                  .eq("id", user!.id);
+                if (error) toast.error(error.message);
+                else toast.success(url ? "Webhook saved" : "Webhook removed");
+              }}
+            />
+          </>
+        )}
       </section>
       <section className="space-y-3">
         <Button variant="outline" onClick={signOut}>
@@ -387,6 +400,13 @@ function PlanSection() {
   } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
   const [seats, setSeats] = useState(TEAM_MIN_SEATS);
 
+  // The avatar menu links here as #plan and #top-ups; both render only once
+  // billing has loaded, so scroll after that.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (billing && hash) document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+  }, [billing, hash]);
+
   // Back from Stripe Checkout: thank the user and refetch until the webhook
   // has flipped the plan (it usually lands within a few seconds).
   useEffect(() => {
@@ -449,7 +469,7 @@ function PlanSection() {
   if (!billing) return null;
   const paid = billing.plan !== "free";
   return (
-    <section className="space-y-3">
+    <section id="plan" className="scroll-mt-20 space-y-3">
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-bold">Plan & usage</h2>
         <span
@@ -473,10 +493,16 @@ function PlanSection() {
                   )}
                 </span>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {u.limit === null ? `${u.used} this month` : allowanceLine(k, u.used, u.limit)}
+                  {u.limit === null
+                    ? `${u.used} this month`
+                    : u.limit === 0
+                      ? bonus > 0
+                        ? `${bonus} credits left · never expire`
+                        : "Comes with Pro"
+                      : allowanceLine(k, u.used, u.limit)}
                 </span>
               </div>
-              {u.limit !== null && (
+              {u.limit !== null && u.limit > 0 && (
                 <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
                   <div
                     className={`h-full rounded-full ${pct >= 100 ? "bg-destructive" : "bg-brand"}`}
@@ -484,7 +510,7 @@ function PlanSection() {
                   />
                 </div>
               )}
-              {u.limit !== null && bonus > 0 && (
+              {u.limit !== null && u.limit > 0 && bonus > 0 && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   +{bonus} starter credits — used after your monthly allowance, never expire
                 </p>
@@ -492,6 +518,25 @@ function PlanSection() {
             </div>
           );
         })}
+        {billing.sharebacksUsed !== null && (
+          <div>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+              <span className="font-medium">Share-backs</span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {Math.max(0, FREE_SHAREBACK_LIMIT - billing.sharebacksUsed)} of{" "}
+                {FREE_SHAREBACK_LIMIT} free left · unlimited on Pro
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full ${billing.sharebacksUsed >= FREE_SHAREBACK_LIMIT ? "bg-destructive" : "bg-brand"}`}
+                style={{
+                  width: `${Math.min(100, Math.round((billing.sharebacksUsed / FREE_SHAREBACK_LIMIT) * 100))}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
       {billing.planExpiresAt && billing.plan !== "free" && !billing.hasSubscription && (
         <p className="rounded-xl border border-brand/40 bg-brand-soft/40 px-3 py-2 text-xs">
@@ -507,7 +552,7 @@ function PlanSection() {
           manages billing.
         </p>
       ) : billing.plan === "premium" ? (
-        <div className="flex flex-wrap gap-2">
+        <div id="top-ups" className="flex scroll-mt-20 flex-wrap gap-2">
           {billing.hasSubscription && (
             <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
               Manage billing
@@ -592,7 +637,10 @@ function PlanSection() {
             )}
           </div>
           {billing.topupPacks.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div id="top-ups" className="flex scroll-mt-20 flex-wrap items-center gap-2">
+              <span className="w-full text-xs font-semibold text-muted-foreground">
+                Top-ups · credits never expire
+              </span>
               {billing.topupPacks.map((pack) => (
                 <Button
                   key={pack}
@@ -653,15 +701,19 @@ function PlanSection() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
-            free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus {PLAN_LIMITS.pro.enrich} AI contact
-            enrichments a month, note summaries, event mode, and up to 3 cards. Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL}{" "}
-            with {premiumAnnualFreeMonths()} months free): everything in Pro, with{" "}
-            {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, email signatures, follow-up reminders, and advanced
-            analytics. Teams ({TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat
-            minimum): a team workspace with everything in Premium for every member. Plans
-            auto-renew; cancelling stops the renewal and your plan runs to the end of the period
-            you've paid for. Every account keeps one live digital card (link + QR) free for life.
+            Free is for trying ContactKickstart: one card, {FREE_SHAREBACK_LIMIT} share-backs and
+            QR-code scanning, without AI. Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with{" "}
+            {annualFreeMonths()} months free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus{" "}
+            {PLAN_LIMITS.pro.enrich} AI contact enrichments a month, note summaries, unlimited
+            share-backs, instant lead alerts, the Zapier webhook, event mode, and up to 3 cards.
+            Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
+            {premiumAnnualFreeMonths()} months free): everything in Pro, with{" "}
+            {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, email
+            signatures, follow-up reminders, and advanced analytics. Teams ({TEAM_SEAT_PRICE_LABEL}
+            /mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with everything in Premium for
+            every member. Plans auto-renew; cancelling stops the renewal and your plan runs to the
+            end of the period you've paid for. Every account keeps one live digital card (link + QR)
+            free for life.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

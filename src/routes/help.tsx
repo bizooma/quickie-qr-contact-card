@@ -88,7 +88,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "Share-back: their details come to you",
-        "Your card has a “Share yours” button. When someone fills it in, they land in your Contacts and you get a notification. This works on the free plan, unlimited.",
+        "Your card has a “Share yours” button. When someone fills it in, they land in your Contacts and you get a notification. Free accounts collect up to 5 this way; Pro and Premium are unlimited.",
       ],
       [
         "Scan paper business cards",
@@ -118,11 +118,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "Push notifications",
-        "Turn on push in Settings → Notifications to get pinged the moment someone shares their details back.",
+        "On Pro and Premium, turn on push in Settings → Notifications to get pinged the moment someone shares their details back.",
       ],
       [
         "Webhooks (Make, Zapier, your CRM)",
-        "Paste a webhook URL in Settings and every new contact is POSTed to it as JSON — name, email, phone, company, address and source.",
+        "On Pro and Premium, paste a webhook URL in Settings and every new contact is POSTed to it as JSON — name, email, phone, company, address and source.",
       ],
     ],
   },
@@ -150,7 +150,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "What's free, forever",
-        "One card with QR and link, unlimited share-back capture, analytics, notifications, and 5 AI card scans a month. No credit card to start. Every account keeps one live digital card (link + QR) free for life — including after a paid plan ends.",
+        "Free is for trying ContactKickstart: one card with QR and link, 5 share-backs, QR-code scanning, analytics and CSV export. AI features, unlimited share-backs and lead alerts come with Pro. No credit card to start. Every account keeps its digital cards live for life — including after a paid plan ends. On free you can edit one of them; the rest stay live but locked until you upgrade.",
       ],
       [
         "What Pro adds ($8/mo, or $80/yr)",

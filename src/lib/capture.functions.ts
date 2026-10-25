@@ -21,6 +21,8 @@ const SharebackInputSchema = z.object({
  *  stays generic so database details never reach the public page. */
 export function sharebackErrorMessage(dbMessage: string): string {
   const m = dbMessage.toLowerCase();
+  if (m.includes("shareback closed"))
+    return "This card isn't collecting contact details right now — save their contact instead.";
   if (m.includes("too many submissions"))
     return "This card is getting a lot of submissions right now — please try again in a few minutes.";
   if (m.includes("card not found")) return "This card no longer exists.";
@@ -53,14 +55,16 @@ export const submitShareback = createServerFn({ method: "POST" })
       .setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
     if (error) throw new Error(sharebackErrorMessage(error.message));
 
-    // Notify the owner: web push now, webhook if configured. Both best-effort.
+    // Notify the owner: web push now, webhook if configured. Both best-effort,
+    // and both paid-only (instant lead alerts are a Pro feature).
     try {
       const { data: card } = await supabaseAdmin
         .from("cards")
         .select("user_id, label")
         .eq("slug", data.slug.toLowerCase())
         .maybeSingle();
-      if (card) {
+      const { getPlan } = await import("./usage.server");
+      if (card && (await getPlan(card.user_id)) !== "free") {
         const { sendPushToUser, postContactWebhook } = await import("./notify.server");
         await Promise.all([
           sendPushToUser(card.user_id),

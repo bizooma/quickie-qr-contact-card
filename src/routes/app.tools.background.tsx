@@ -641,7 +641,7 @@ function Studio({
       />
 
       {/* Preview: sticky so it stays in view while editing on a phone. */}
-      <div className="sticky top-0 z-20 -mx-1 bg-background px-1 pb-3 pt-2 lg:top-6 lg:pt-0">
+      <div className="sticky top-14 z-20 -mx-1 bg-background px-1 pb-3 pt-2 lg:top-20 lg:pt-0">
         <div
           ref={stageRef}
           className="relative w-full select-none overflow-hidden rounded-xl border shadow-sm"
