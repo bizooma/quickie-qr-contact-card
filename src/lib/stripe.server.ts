@@ -14,7 +14,13 @@ export function stripeEnv() {
     premiumAnnualPriceId: process.env["STRIPE_PRICE_ID_PREMIUM_ANNUAL"] ?? "",
     teamPriceId: process.env["STRIPE_PRICE_ID_TEAM"] ?? "",
     teamAnnualPriceId: process.env["STRIPE_PRICE_ID_TEAM_ANNUAL"] ?? "",
-    topupPriceId: process.env["STRIPE_PRICE_ID_TOPUP"] ?? "", // one-off scan pack
+    // One-off top-up packs (plans.ts TOPUP_PACKS); STRIPE_PRICE_ID_TOPUP is the
+    // older name for the small pack.
+    topupPriceIds: {
+      small:
+        process.env["STRIPE_PRICE_ID_TOPUP_SMALL"] ?? process.env["STRIPE_PRICE_ID_TOPUP"] ?? "",
+      large: process.env["STRIPE_PRICE_ID_TOPUP_LARGE"] ?? "",
+    },
     webhookSecret: process.env["STRIPE_WEBHOOK_SECRET"] ?? "",
   };
 }

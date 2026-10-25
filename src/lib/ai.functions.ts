@@ -15,7 +15,11 @@ import {
 } from "./ai-model";
 import { usageUnits } from "./plans";
 
-const MODEL = "claude-opus-5-5";
+// Card OCR, drafts and summaries run on Sonnet: about half of Opus's price per
+// unit, which is what the plan allowances and top-up packs are priced against
+// (plans.ts). Enrichment keeps Opus for the research and verification quality.
+const FAST_MODEL = "claude-sonnet-5-5";
+const RESEARCH_MODEL = "claude-opus-5-5";
 
 // Load inside handlers only: *.functions.ts ships to the client bundle (same rule
 // as client.server.ts), and the SDK must never leak there.
@@ -34,7 +38,7 @@ export const scanCards = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(ScanCardsInputSchema)
   .handler(async ({ data, context }) => {
-    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const { reserveUsage, settleUsage, logAiCall } = await import("./usage.server");
     // 1 card = 1 scan: every photo holds at least one card. Reserved before
     // the call so parallel requests can't all slip past the allowance.
     const reservation = await reserveUsage(context.userId, "scan", data.images.length);
@@ -42,7 +46,7 @@ export const scanCards = createServerFn({ method: "POST" })
     const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
     const response = await client.messages.parse({
-      model: MODEL,
+      model: FAST_MODEL,
       max_tokens: 16000,
       system:
         "You extract contact details from photos of paper business cards. " +
@@ -77,8 +81,10 @@ export const scanCards = createServerFn({ method: "POST" })
           ],
         },
       ],
-      output_config: { format: zodOutputFormat(ScanResultSchema) },
+      // Structured extraction: medium effort keeps reasoning tokens (the main cost) down.
+      output_config: { format: zodOutputFormat(ScanResultSchema), effort: "medium" },
     });
+    void logAiCall(context.userId, "scan", FAST_MODEL, response.usage);
 
     if (response.stop_reason === "refusal") {
       await settleUsage(reservation, 0);
@@ -99,14 +105,14 @@ export const scanMyCard = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(ScanMyCardInputSchema)
   .handler(async ({ data, context }) => {
-    const { assertSelfScanAllowance, recordSelfScan } = await import("./usage.server");
+    const { assertSelfScanAllowance, recordSelfScan, logAiCall } = await import("./usage.server");
     await assertSelfScanAllowance(context.userId, SELF_SCANS_PER_DAY);
     await recordSelfScan(context.userId); // counts whatever the photo turns out to be
     const client = await getAnthropic();
     const { betaZodOutputFormat } = await import("@anthropic-ai/sdk/helpers/beta/zod");
 
     const response = await client.beta.messages.parse({
-      model: MODEL,
+      model: FAST_MODEL,
       max_tokens: 16000,
       // On a policy decline the API retries on a fallback model in the same call.
       betas: ["server-side-fallback-2026-07-01"],
@@ -153,6 +159,7 @@ export const scanMyCard = createServerFn({ method: "POST" })
       ],
       output_config: { format: betaZodOutputFormat(OwnCardScanSchema) },
     });
+    void logAiCall(context.userId, "self_scan", FAST_MODEL, response.usage);
 
     if (response.stop_reason === "refusal") {
       throw new Error("The AI declined to read this photo. Try a different shot of your card.");
@@ -171,7 +178,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(FollowUpInputSchema)
   .handler(async ({ data, context }) => {
-    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const { reserveUsage, settleUsage, logAiCall } = await import("./usage.server");
     const reservation = await reserveUsage(context.userId, "follow_up");
     const { supabase } = context;
     const [c, n, t, card] = await Promise.all([
@@ -211,7 +218,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
     const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
     const response = await client.messages.parse({
-      model: MODEL,
+      model: FAST_MODEL,
       max_tokens: 16000,
       system:
         "You write short, warm, specific follow-up emails after networking conversations. " +
@@ -234,6 +241,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
       ],
       output_config: { format: zodOutputFormat(FollowUpDraftSchema) },
     });
+    void logAiCall(context.userId, "follow_up", FAST_MODEL, response.usage);
 
     if (response.stop_reason === "refusal" || !response.parsed_output) {
       await settleUsage(reservation, 0);
@@ -248,7 +256,7 @@ export const enrichContact = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(EnrichInputSchema)
   .handler(async ({ data, context }) => {
-    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const { reserveUsage, settleUsage, logAiCall } = await import("./usage.server");
     const reservation = await reserveUsage(context.userId, "enrich");
     const { data: contact, error } = await context.supabase
       .from("contacts")
@@ -289,7 +297,7 @@ export const enrichContact = createServerFn({ method: "POST" })
     // Server-side web search can pause long turns; continue a bounded number of times.
     for (let turn = 0; turn < 3; turn++) {
       const response = await client.messages.parse({
-        model: MODEL,
+        model: RESEARCH_MODEL,
         max_tokens: 16000,
         system:
           "You enrich contact records using web search. Search for the person by name + company, " +
@@ -304,6 +312,7 @@ export const enrichContact = createServerFn({ method: "POST" })
         messages,
         output_config: { format: zodOutputFormat(EnrichmentResultSchema) },
       });
+      void logAiCall(context.userId, "enrich", RESEARCH_MODEL, response.usage);
 
       if (response.stop_reason === "refusal") {
         await settleUsage(reservation, 0);
@@ -329,7 +338,7 @@ export const summarizeNote = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(SummarizeNoteInputSchema)
   .handler(async ({ data, context }) => {
-    const { reserveUsage, settleUsage } = await import("./usage.server");
+    const { reserveUsage, settleUsage, logAiCall } = await import("./usage.server");
     const reservation = await reserveUsage(context.userId, "summarize");
     const { data: note, error } = await context.supabase
       .from("contact_notes")
@@ -343,7 +352,7 @@ export const summarizeNote = createServerFn({ method: "POST" })
     const { zodOutputFormat } = await import("@anthropic-ai/sdk/helpers/zod");
 
     const response = await client.messages.parse({
-      model: MODEL,
+      model: FAST_MODEL,
       max_tokens: 16000,
       system:
         "You summarize notes a professional took after meeting someone (often raw voice " +
@@ -352,8 +361,9 @@ export const summarizeNote = createServerFn({ method: "POST" })
         "short sentence. Use only what the note says — never invent details. Return an empty " +
         "next_steps array if none are implied.",
       messages: [{ role: "user", content: `Summarize this note:\n\n${note.body}` }],
-      output_config: { format: zodOutputFormat(NoteSummarySchema) },
+      output_config: { format: zodOutputFormat(NoteSummarySchema), effort: "medium" },
     });
+    void logAiCall(context.userId, "summarize", FAST_MODEL, response.usage);
 
     if (response.stop_reason === "refusal") {
       await settleUsage(reservation, 0);

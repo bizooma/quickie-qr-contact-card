@@ -3,7 +3,15 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireActiveAuth } from "@/lib/auth-guard";
-import { effectivePlan, monthlyLimit, USAGE_KINDS, type PlanId, type UsageKind } from "./plans";
+import {
+  effectivePlan,
+  monthlyLimit,
+  USAGE_KINDS,
+  type PlanId,
+  type UsageKind,
+  TOPUP_PACKS,
+  type TopupPack,
+} from "./plans";
 
 // Billing server functions. SDK and admin imports stay inside handlers —
 // this file ships to the client bundle.
@@ -40,7 +48,8 @@ export type BillingState = {
   premiumAnnualConfigured: boolean;
   teamConfigured: boolean;
   teamAnnualConfigured: boolean;
-  topupConfigured: boolean;
+  /** Top-up packs with a Stripe price configured. */
+  topupPacks: TopupPack[];
   hasSubscription: boolean;
   planExpiresAt: string | null; // a dated plan (Founding Year, comp) ends here
   coveredByTeam: string | null; // Premium comes from a seat on this team
@@ -94,7 +103,9 @@ export const getBillingState = createServerFn({ method: "POST" })
       premiumAnnualConfigured: isStripeConfigured() && !!stripeEnv().premiumAnnualPriceId,
       teamConfigured: isStripeConfigured() && !!stripeEnv().teamPriceId,
       teamAnnualConfigured: isStripeConfigured() && !!stripeEnv().teamAnnualPriceId,
-      topupConfigured: isStripeConfigured() && !!stripeEnv().topupPriceId,
+      topupPacks: isStripeConfigured()
+        ? (Object.keys(TOPUP_PACKS) as TopupPack[]).filter((p) => !!stripeEnv().topupPriceIds[p])
+        : [],
       hasSubscription: !!profile?.stripe_subscription_id,
       planExpiresAt: profile?.plan_expires_at ?? null,
       coveredByTeam,
@@ -106,6 +117,7 @@ export const getBillingState = createServerFn({ method: "POST" })
 
 const CheckoutSchema = z.object({
   plan: z.enum(["pro", "premium", "team", "topup"]).default("pro"),
+  pack: z.enum(["small", "large"]).default("small"), // top-up only
   interval: z.enum(["month", "year"]).default("month"),
   seats: z.number().int().min(3).max(500).optional(), // team plan only
 });
@@ -138,13 +150,20 @@ export const createCheckout = createServerFn({ method: "POST" })
         : {};
 
     if (data.plan === "topup") {
-      if (!env.topupPriceId) throw new Error("Top-ups aren't available yet.");
+      const price = env.topupPriceIds[data.pack];
+      if (!price) throw new Error("Top-ups aren't available yet.");
+      const pack = TOPUP_PACKS[data.pack];
       const session = await getStripe().checkout.sessions.create({
         mode: "payment",
-        line_items: [{ price: env.topupPriceId, quantity: 1 }],
+        line_items: [{ price, quantity: 1 }],
         client_reference_id: context.userId,
-        // The webhook adds the credits when payment lands.
-        metadata: { ck_topup: "1" },
+        // The webhook adds the credits when payment lands; the size rides along
+        // so the webhook never has to guess which pack was bought.
+        metadata: {
+          ck_topup: data.pack,
+          ck_topup_scans: String(pack.scans),
+          ck_topup_follow_ups: String(pack.followUps),
+        },
         ...customer,
         allow_promotion_codes: true,
         success_url: `${origin}/app/settings?billing=success`,

@@ -26,6 +26,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_calls: {
+        Row: {
+          cache_read_tokens: number
+          created_at: string
+          id: string
+          input_tokens: number
+          kind: string
+          model: string
+          output_tokens: number
+          user_id: string | null
+          web_searches: number
+        }
+        Insert: {
+          cache_read_tokens?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          kind: string
+          model: string
+          output_tokens?: number
+          user_id?: string | null
+          web_searches?: number
+        }
+        Update: {
+          cache_read_tokens?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number
+          kind?: string
+          model?: string
+          output_tokens?: number
+          user_id?: string | null
+          web_searches?: number
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           created_at: string
@@ -933,7 +969,7 @@ export type Database = {
         Returns: undefined
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
-      add_topup_credits: { Args: { _user: string }; Returns: undefined }
+      add_topup_credits: { Args: { _follow_ups: number; _scans: number; _user: string }; Returns: undefined }
       cleanup_stale_data: { Args: never; Returns: Json }
       card_event_series: {
         Args: { p_card?: string; p_since: string }

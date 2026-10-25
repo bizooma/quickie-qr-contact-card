@@ -8,10 +8,8 @@ import {
   PRO_AI_BENEFIT,
   rateLimitMessage,
   scansLeftMessage,
-  TOPUP_FOLLOW_UPS,
-  TOPUP_LABEL,
-  TOPUP_SCANS,
-  TOPUP_USD,
+  TOPUP_PACKS,
+  topupLabel,
   usageUnits,
   effectivePlan,
   isWithinLimit,
@@ -182,11 +180,10 @@ describe("rate limit and top-up", () => {
   it("has a plain rate-limit message", () => {
     expect(rateLimitMessage()).toContain("wait a few minutes");
   });
-  it("describes the top-up pack from its numbers", () => {
-    expect(TOPUP_LABEL).toBe(
-      `${TOPUP_SCANS} scans + ${TOPUP_FOLLOW_UPS} follow-up drafts for $${TOPUP_USD}`,
-    );
-    expect(TOPUP_SCANS).toBe(50);
+  it("describes the top-up packs from their numbers", () => {
+    expect(topupLabel("small")).toBe("25 scans + 25 follow-up drafts for $5");
+    expect(topupLabel("large")).toBe("60 scans + 60 follow-up drafts for $10");
+    expect(TOPUP_PACKS.large.scans).toBeGreaterThan(TOPUP_PACKS.small.scans);
   });
   it("points Pro at Premium's uncapped plan", () => {
     expect(limitReachedMessage("pro", "scan", new Date("2026-10-19T12:00:00Z"))).toContain(

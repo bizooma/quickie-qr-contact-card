@@ -179,3 +179,35 @@ export async function recordSelfScan(userId: string): Promise<void> {
     // Swallowed on purpose.
   }
 }
+
+type CallUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens?: number | null;
+  server_tool_use?: { web_search_requests?: number | null } | null;
+};
+
+/** Per-call token log (ai_calls): the basis for pricing packs and plans from
+ *  real numbers. Best-effort — never fails the AI call. */
+export async function logAiCall(
+  userId: string,
+  kind: string,
+  model: string,
+  usage: CallUsage | null | undefined,
+): Promise<void> {
+  if (!usage) return;
+  try {
+    const { error } = await supabaseAdmin.from("ai_calls").insert({
+      user_id: userId,
+      kind,
+      model,
+      input_tokens: usage.input_tokens ?? 0,
+      output_tokens: usage.output_tokens ?? 0,
+      cache_read_tokens: usage.cache_read_input_tokens ?? 0,
+      web_searches: usage.server_tool_use?.web_search_requests ?? 0,
+    });
+    if (error) console.error(`ai_calls insert failed: ${error.message}`);
+  } catch (e) {
+    console.error(`logAiCall failed: ${(e as Error).message}`);
+  }
+}

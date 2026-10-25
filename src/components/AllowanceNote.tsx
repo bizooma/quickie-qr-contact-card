@@ -12,7 +12,8 @@ import {
   PREMIUM_PRICE_LABEL,
   PRO_PRICE_LABEL,
   SCAN_UNIT_NOTE,
-  TOPUP_LABEL,
+  topupLabel,
+  type TopupPack,
   type PlanId,
   type UsageKind,
 } from "@/lib/plans";
@@ -29,7 +30,7 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
   const credits = creditEligible(kind) ? data.credits[kind] : 0;
   const left = Math.max(0, u.limit - u.used);
   const runningLow = left > 0 && left <= Math.ceil(u.limit * 0.2);
-  const topup = data.topupConfigured && creditEligible(kind);
+  const packs = creditEligible(kind) ? data.topupPacks : [];
 
   if (left === 0 && credits === 0) {
     return (
@@ -41,7 +42,7 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
           {limitReachedMessage(data.plan, kind)}
         </p>
-        <UpgradeButtons plan={data.plan} topup={topup} />
+        <UpgradeButtons plan={data.plan} packs={packs} />
       </div>
     );
   }
@@ -58,7 +59,7 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
       </p>
       {runningLow && (
         <div className="mt-1.5">
-          <UpgradeButtons plan={data.plan} topup={topup} />
+          <UpgradeButtons plan={data.plan} packs={packs} />
         </div>
       )}
     </div>
@@ -66,15 +67,17 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
 }
 
 /** Straight to Stripe Checkout; Settings stays the fallback when billing isn't set up. */
-function UpgradeButtons({ plan, topup }: { plan: PlanId; topup: boolean }) {
+function UpgradeButtons({ plan, packs }: { plan: PlanId; packs: TopupPack[] }) {
   const [busy, setBusy] = useState(false);
   const next = plan === "free" ? "pro" : "premium";
   const label =
     plan === "free" ? `Upgrade to Pro — ${PRO_PRICE_LABEL}` : `Go Premium — ${PREMIUM_PRICE_LABEL}`;
-  async function go(target: "pro" | "premium" | "topup") {
+  async function go(target: "pro" | "premium" | "topup", pack?: TopupPack) {
     setBusy(true);
     try {
-      const { url } = await createCheckout({ data: { plan: target, interval: "month" } });
+      const { url } = await createCheckout({
+        data: { plan: target, interval: "month", ...(pack ? { pack } : {}) },
+      });
       window.location.href = url;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start checkout");
@@ -88,11 +91,17 @@ function UpgradeButtons({ plan, topup }: { plan: PlanId; topup: boolean }) {
         <Sparkles className="h-3.5 w-3.5" />
         {label}
       </Button>
-      {topup && (
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => void go("topup")}>
-          Add {TOPUP_LABEL}
+      {packs.map((pack) => (
+        <Button
+          key={pack}
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => void go("topup", pack)}
+        >
+          Add {topupLabel(pack)}
         </Button>
-      )}
+      ))}
     </div>
   );
 }

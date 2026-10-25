@@ -52,7 +52,8 @@ import {
   TEAM_SEAT_ANNUAL_PRICE_LABEL,
   TEAM_SEAT_PRICE_LABEL,
   teamAnnualFreeMonths,
-  TOPUP_LABEL,
+  topupLabel,
+  type TopupPack,
   USAGE_KINDS,
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
@@ -326,11 +327,12 @@ function PlanSection() {
     plan: "pro" | "premium" | "team" | "topup",
     interval: "month" | "year" = "month",
     seats?: number,
+    pack?: TopupPack,
   ) {
     setBusy(true);
     try {
       const { url } = await createCheckout({
-        data: { plan, interval, ...(seats ? { seats } : {}) },
+        data: { plan, interval, ...(seats ? { seats } : {}), ...(pack ? { pack } : {}) },
       });
       window.location.href = url;
     } catch (err) {
@@ -491,10 +493,19 @@ function PlanSection() {
               </>
             )}
           </div>
-          {billing.topupConfigured && (
-            <Button variant="outline" disabled={busy} onClick={() => upgrade("topup")}>
-              Add {TOPUP_LABEL}
-            </Button>
+          {billing.topupPacks.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {billing.topupPacks.map((pack) => (
+                <Button
+                  key={pack}
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => upgrade("topup", "month", undefined, pack)}
+                >
+                  Add {topupLabel(pack)}
+                </Button>
+              ))}
+            </div>
           )}
           {billing.teamConfigured && billing.teamSeats < TEAM_MIN_SEATS && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
