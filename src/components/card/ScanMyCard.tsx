@@ -8,6 +8,7 @@ import { SELF_SCAN_IMAGE_LIMIT } from "@/lib/ai-model";
 import { cropCardImage, prepareImage, type PreparedImage } from "@/lib/image-prep";
 import { uploadCardImage } from "@/lib/media";
 import { ownCardToFields, type ScannedCardFields } from "@/lib/own-card";
+import { cn } from "@/lib/utils";
 
 async function uploadCrop(
   userId: string,
@@ -27,8 +28,9 @@ async function uploadCrop(
   }
 }
 
-/** Photograph your own paper business card (front, optionally back) and get
- *  back digital-card fields: details, brand colors, logo and photo. */
+/** Photograph your own paper business card and get back digital-card fields:
+ *  details, brand colors, logo and photo. The button opens the camera on
+ *  phones; "choose a photo" picks existing photos (front and back). */
 export function ScanMyCard({
   onScanned,
   label = "Scan my business card",
@@ -41,7 +43,8 @@ export function ScanMyCard({
   className?: string;
 }) {
   const { user } = useAuth();
-  const input = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
+  const library = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
   async function handle(files: FileList | null) {
@@ -63,14 +66,29 @@ export function ScanMyCard({
       toast.error(err instanceof Error ? err.message : "Could not read your card");
     } finally {
       setBusy(false);
-      if (input.current) input.current.value = "";
+      if (camera.current) camera.current.value = "";
+      if (library.current) library.current.value = "";
     }
   }
 
   return (
-    <>
+    <div
+      className={cn(
+        "flex flex-col items-center gap-1.5",
+        className?.includes("w-full") && "w-full",
+      )}
+    >
+      {/* capture opens the rear camera directly instead of the photo library. */}
       <input
-        ref={input}
+        ref={camera}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => void handle(e.target.files)}
+      />
+      <input
+        ref={library}
         type="file"
         accept="image/*"
         multiple
@@ -82,11 +100,20 @@ export function ScanMyCard({
         variant={variant}
         className={className}
         disabled={busy}
-        onClick={() => input.current?.click()}
+        onClick={() => camera.current?.click()}
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
         {busy ? "Reading your card…" : label}
       </Button>
-    </>
+      {!busy && (
+        <button
+          type="button"
+          onClick={() => library.current?.click()}
+          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          or choose a photo
+        </button>
+      )}
+    </div>
   );
 }

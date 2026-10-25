@@ -8,7 +8,7 @@ export type UsageKind = "scan" | "enrich" | "follow_up" | "summarize";
 export const USAGE_KINDS: UsageKind[] = ["scan", "enrich", "follow_up", "summarize"];
 
 export const KIND_LABELS: Record<UsageKind, string> = {
-  scan: "AI card scans",
+  scan: "Card scans",
   enrich: "Contact enrichments",
   follow_up: "Follow-up drafts",
   summarize: "Note summaries",
@@ -43,7 +43,7 @@ export const FREE_SELF_SCANS = 3;
 
 /** Paid-only features, named once for upsell copy. */
 export const PRO_ONLY_FEATURES =
-  "AI card scanning, follow-up drafts, contact enrichment, instant lead alerts and the Zapier webhook";
+  "Card scanning, follow-up drafts, contact enrichment, instant lead alerts and the Zapier webhook";
 
 export const PLAN_NAMES: Record<PlanId, string> = { free: "Free", pro: "Pro", premium: "Premium" };
 
@@ -137,9 +137,9 @@ export function formatResetDate(now = new Date()): string {
 export const REFERRAL_BONUS_SCANS = 5;
 
 /** Premium's AI allowance in one line, for pricing and plan copy. */
-export const PREMIUM_AI_BENEFIT = `${PLAN_LIMITS.premium.scan} AI card scans + ${PLAN_LIMITS.premium.follow_up} follow-up drafts a month — far more than most people use.`;
+export const PREMIUM_AI_BENEFIT = `${PLAN_LIMITS.premium.scan} card scans + ${PLAN_LIMITS.premium.follow_up} follow-up drafts a month — far more than most people use.`;
 
-export const PRO_AI_BENEFIT = `${PLAN_LIMITS.pro.scan} AI card scans + ${PLAN_LIMITS.pro.follow_up} follow-up drafts every month — resets monthly.`;
+export const PRO_AI_BENEFIT = `${PLAN_LIMITS.pro.scan} card scans + ${PLAN_LIMITS.pro.follow_up} follow-up drafts every month — resets monthly.`;
 
 /** How scans are counted: per business card read, not per photo or batch. */
 export const SCAN_UNIT_NOTE = "1 card = 1 scan";
@@ -153,7 +153,7 @@ export function usageUnits(kind: UsageKind, cardsRead = 1): number {
 
 /** Sent too many AI requests in a short time (any plan). */
 export function rateLimitMessage(): string {
-  return "You're sending AI requests very quickly — wait a few minutes and try again.";
+  return "You're sending requests very quickly — wait a few minutes and try again.";
 }
 
 // One-off top-up packs, sold in-app through Stripe (STRIPE_PRICE_ID_TOPUP_SMALL /
@@ -194,12 +194,12 @@ export function allowanceLine(
   return `${left} of ${limit} ${KIND_NOUNS[kind]} left this month · resets ${formatResetDate(now)}`;
 }
 
-/** "AI card scans" etc., for "… come with Pro" lines. */
+/** "Card scans" etc., for "… come with Pro" lines. */
 const AI_FEATURE_NAMES: Record<UsageKind, string> = {
-  scan: "AI card scans",
-  enrich: "AI contact enrichments",
-  follow_up: "AI follow-up drafts",
-  summarize: "AI note summaries",
+  scan: "Card scans",
+  enrich: "Contact enrichments",
+  follow_up: "Follow-up drafts",
+  summarize: "Note summaries",
 };
 
 /** Shown (server-side, never silently) when a capped kind runs out, or when

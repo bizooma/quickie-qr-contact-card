@@ -84,7 +84,7 @@ export const AUDIENCES: Record<string, Audience> = {
         d: "Visitors tap “Share yours” and land in your contacts, tagged and time-stamped while you keep hosting.",
       },
       {
-        t: "AI follow-up drafts",
+        t: "Follow-up drafts",
         d: "Draft the “great meeting you at 42 Oak St” email from your notes in one tap.",
       },
       {
@@ -108,7 +108,7 @@ export const AUDIENCES: Record<string, Audience> = {
       },
       {
         t: "Follow-ups slip",
-        d: "The best candidates get three offers while their card sits in a pile. Capture now, draft the follow-up with AI.",
+        d: "The best candidates get three offers while their card sits in a pile. Capture now, draft the follow-up in a tap.",
       },
       {
         t: "Typos lose people",
@@ -126,11 +126,11 @@ export const AUDIENCES: Record<string, Audience> = {
       },
       {
         t: "Scan their cards too",
-        d: "Photograph candidate or client cards and the AI files them — headshot included.",
+        d: "Photograph candidate or client cards and the scanner files them — headshot included.",
       },
       {
         t: "Tag and follow up",
-        d: "Tag by role or event, then draft personalized follow-up emails with AI before the fair ends.",
+        d: "Tag by role or event, then draft personalized follow-up emails before the fair ends.",
       },
     ],
     cta: "Create your recruiter card",

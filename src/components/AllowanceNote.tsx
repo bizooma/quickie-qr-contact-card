@@ -54,7 +54,7 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
         className={`text-xs ${runningLow ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}
       >
         {u.limit === 0
-          ? `${credits} AI ${KIND_NOUNS[kind]} left from your credits · never expire`
+          ? `${credits} ${KIND_NOUNS[kind]} left from your credits · never expire`
           : left === 0
             ? `This month's allowance is used up — using your starter credits (${credits} left) · resets ${formatResetDate()}`
             : allowanceLine(kind, u.used, u.limit)}

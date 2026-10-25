@@ -552,7 +552,7 @@ function ContactDetail() {
           title={canEnrich(c) ? undefined : "Add a company or email first"}
         >
           {enriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-          {enriching ? "Researching…" : "Enrich with AI"}
+          {enriching ? "Researching…" : "Enrich contact"}
         </Button>
       </div>
 
@@ -562,7 +562,7 @@ function ContactDetail() {
             <div>
               <h2 className="flex items-center gap-2 text-sm font-bold">
                 <Sparkles className="h-4 w-4 text-brand" />
-                AI suggestions
+                Suggestions
               </h2>
               {enrichSummary && (
                 <p className="mt-1 text-xs text-muted-foreground">{enrichSummary}</p>
@@ -644,7 +644,7 @@ function ContactDetail() {
               ) : (
                 <Sparkles className="h-4 w-4" />
               )}
-              {drafting ? "Drafting…" : "Draft follow-up email with AI"}
+              {drafting ? "Drafting…" : "Draft follow-up email"}
             </Button>
             <AllowanceNote kind="follow_up" className="mt-2" />
           </>
@@ -797,7 +797,7 @@ function ContactDetail() {
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    {summarizingId === n.id ? "Summarizing…" : "Summarize with AI"}
+                    {summarizingId === n.id ? "Summarizing…" : "Summarize"}
                   </Button>
                 )}
               </div>
