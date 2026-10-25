@@ -6,6 +6,7 @@ import {
   Camera,
   CheckCircle2,
   Loader2,
+  Pencil,
   ScanLine,
   Smartphone,
   Sparkles,
@@ -30,6 +31,7 @@ import {
   type PreparedImage,
 } from "@/lib/image-prep";
 import { uploadContactPhoto } from "@/lib/media";
+import { PhotoEditor } from "@/components/PhotoEditor";
 import { decodeQrFromImage } from "@/lib/qr-decode";
 import { decodeQrText, mergeScannedContacts } from "@/lib/scan-decode";
 import { contactsToVcf } from "@/lib/card-model";
@@ -57,6 +59,8 @@ function ScanPage() {
   const [metAt, setMetAt] = useState("");
   const [scanning, setScanning] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Index of the scanned card whose photo is open in the editor.
+  const [editingPhoto, setEditingPhoto] = useState<number | null>(null);
   const [results, setResults] = useState<EditableContact[] | null>(null);
   const [savedBatch, setSavedBatch] = useState<EditableContact[] | null>(null);
 
@@ -322,13 +326,24 @@ function ScanPage() {
                     aria-label={`Include ${c.full_name || "this card"}`}
                   />
                   <span className="text-sm font-semibold">Card {i + 1}</span>
-                  {c.headshot && (
+                  {c.headshot ? (
                     <div className="group relative ml-auto">
-                      <img
-                        src={c.headshot.previewUrl}
-                        alt={`Photo of ${c.full_name || "this contact"} from the card`}
-                        className="h-12 w-12 rounded-full border object-cover"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditingPhoto(i)}
+                        aria-label="Edit this photo"
+                        title="Edit this photo"
+                        className="block rounded-full"
+                      >
+                        <img
+                          src={c.headshot.previewUrl}
+                          alt={`Photo of ${c.full_name || "this contact"} from the card`}
+                          className="h-12 w-12 rounded-full border object-cover"
+                        />
+                        <span className="absolute -bottom-1 -left-1 rounded-full border bg-background p-0.5 text-muted-foreground">
+                          <Pencil className="h-3 w-3" />
+                        </span>
+                      </button>
                       <button
                         onClick={() => edit(i, { headshot: null })}
                         aria-label="Don't save this photo"
@@ -338,7 +353,29 @@ function ScanPage() {
                         <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto"
+                      onClick={() => setEditingPhoto(i)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Add photo
+                    </Button>
                   )}
+                  <PhotoEditor
+                    open={editingPhoto === i}
+                    onOpenChange={(o) => !o && setEditingPhoto(null)}
+                    title={c.headshot ? "Edit photo" : "Add a photo"}
+                    sourceUrl={c.headshot?.previewUrl ?? null}
+                    shape="circle"
+                    onSave={async (blob) => {
+                      edit(i, { headshot: { blob, previewUrl: URL.createObjectURL(blob) } });
+                    }}
+                    onRemove={c.headshot ? async () => edit(i, { headshot: null }) : undefined}
+                  />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {(

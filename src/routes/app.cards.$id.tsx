@@ -2,7 +2,8 @@ import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cloneElement, isValidElement, useCallback, useEffect, useId, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, Check, ExternalLink, Eye, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Check, ExternalLink, Eye, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
+import { PhotoEditor } from "@/components/PhotoEditor";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -311,12 +312,14 @@ function Editor({
                 round
                 onPick={(f) => upload("headshot_path", f)}
                 onClear={() => set("headshot_path", null)}
+                onEdit={(b) => upload("headshot_path", new File([b], "headshot.jpg", { type: b.type }))}
               />
               <ImagePick
                 label="Company logo"
                 url={card.logo_path ? urls[card.logo_path] : null}
                 onPick={(f) => upload("logo_path", f)}
                 onClear={() => set("logo_path", null)}
+                onEdit={(b) => upload("logo_path", new File([b], "logo.png", { type: b.type }))}
               />
             </div>
             <Field label="Card name">
@@ -683,16 +686,31 @@ function ColorRow({ label, value, presets, onChange }: { label: string; value: s
   );
 }
 
-function ImagePick({ label, url, round, onPick, onClear }: { label: string; url: string | null | undefined; round?: boolean; onPick: (f?: File) => void; onClear: () => void }) {
+function ImagePick({ label, url, round, onPick, onClear, onEdit }: { label: string; url: string | null | undefined; round?: boolean; onPick: (f?: File) => void; onClear: () => void; onEdit: (b: Blob) => void | Promise<void> }) {
+  const [editing, setEditing] = useState(false);
   return (
     <div className="space-y-1.5"><Label>{label}</Label>
       <div className="flex items-center gap-3">
         <label className={cn("flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden border border-dashed bg-muted", round ? "rounded-full" : "rounded-xl")}>
           {url ? <img src={url} alt="" className={cn("h-full w-full", round ? "object-cover" : "object-contain p-1")} /> : <ImagePlus className="h-5 w-5 text-muted-foreground" />}
-          <input type="file" accept="image/*" className="sr-only" onChange={(e) => onPick(e.target.files?.[0])} />
+          <input type="file" accept="image/*" className="sr-only" aria-label={`Choose ${label.toLowerCase()}`} onChange={(e) => onPick(e.target.files?.[0])} />
         </label>
-        {url && <Button size="sm" variant="ghost" onClick={onClear}>Remove</Button>}
+        {url && (
+          <div className="flex flex-col gap-1">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" />Edit</Button>
+            <Button size="sm" variant="ghost" onClick={onClear}>Remove</Button>
+          </div>
+        )}
       </div>
+      <PhotoEditor
+        open={editing}
+        onOpenChange={setEditing}
+        title={`Edit ${label.toLowerCase()}`}
+        sourceUrl={url ?? null}
+        shape={round ? "circle" : "square"}
+        output={round ? "image/jpeg" : "image/png"}
+        onSave={async (b) => { await onEdit(b); }}
+      />
     </div>
   );
 }
