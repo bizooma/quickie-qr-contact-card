@@ -26,6 +26,7 @@ import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppOrgRouteImport } from './routes/app.org'
 import { Route as AppQrRouteImport } from './routes/app.qr'
+import { Route as AppRoadmapRouteImport } from './routes/app.roadmap'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AuthResetRouteImport } from './routes/auth_.reset'
@@ -126,6 +127,11 @@ const AppQrRoute = AppQrRouteImport.update({
   path: '/qr',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRoadmapRoute = AppRoadmapRouteImport.update({
+  id: '/roadmap',
+  path: '/roadmap',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/org': typeof AppOrgRoute
   '/app/qr': typeof AppQrRoute
+  '/app/roadmap': typeof AppRoadmapRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/reset': typeof AuthResetRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/org': typeof AppOrgRoute
   '/app/qr': typeof AppQrRoute
+  '/app/roadmap': typeof AppRoadmapRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/reset': typeof AuthResetRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/org': typeof AppOrgRoute
   '/app/qr': typeof AppQrRoute
+  '/app/roadmap': typeof AppRoadmapRoute
   '/app/scan': typeof AppScanRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth_/reset': typeof AuthResetRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/app/onboarding'
     | '/app/org'
     | '/app/qr'
+    | '/app/roadmap'
     | '/app/scan'
     | '/app/settings'
     | '/auth/reset'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/app/onboarding'
     | '/app/org'
     | '/app/qr'
+    | '/app/roadmap'
     | '/app/scan'
     | '/app/settings'
     | '/auth/reset'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/app/onboarding'
     | '/app/org'
     | '/app/qr'
+    | '/app/roadmap'
     | '/app/scan'
     | '/app/settings'
     | '/auth_/reset'
@@ -537,6 +549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppQrRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/roadmap': {
+      id: '/app/roadmap'
+      path: '/roadmap'
+      fullPath: '/app/roadmap'
+      preLoaderRoute: typeof AppRoadmapRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/scan': {
       id: '/app/scan'
       path: '/scan'
@@ -644,6 +663,7 @@ interface AppRouteChildren {
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppOrgRoute: typeof AppOrgRoute
   AppQrRoute: typeof AppQrRoute
+  AppRoadmapRoute: typeof AppRoadmapRoute
   AppScanRoute: typeof AppScanRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -662,6 +682,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOnboardingRoute: AppOnboardingRoute,
   AppOrgRoute: AppOrgRoute,
   AppQrRoute: AppQrRoute,
+  AppRoadmapRoute: AppRoadmapRoute,
   AppScanRoute: AppScanRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,

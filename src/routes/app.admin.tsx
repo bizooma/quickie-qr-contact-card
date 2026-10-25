@@ -36,15 +36,18 @@ import {
   getAdminAnalytics,
   getAdminOverview,
   getUserActivity,
+  listFeatureRequests,
   listSignupGrants,
   OWNER_EMAIL,
   resetUserPassword,
   setUserPlan,
+  setFeatureRequestStatus,
   setUserSuspended,
   type AdminUserRow,
   type CompTerm,
   type DayPoint,
 } from "@/lib/admin.functions";
+import { REQUEST_STATUSES, ROADMAP_ITEMS, requestStatusLabel } from "@/lib/roadmap";
 
 const COMP_OPTIONS: { value: string; label: string }[] = [
   { value: "pro:month", label: "Pro · 1 month" },
@@ -133,6 +136,22 @@ function AdminPage() {
   const usersRef = useRef<HTMLElement>(null);
   const teamsRef = useRef<HTMLElement>(null);
   const analyticsRef = useRef<HTMLElement>(null);
+
+  const { data: feedback } = useQuery({
+    queryKey: ["admin-feature-requests"],
+    enabled: !!me?.is_admin,
+    queryFn: () => listFeatureRequests(),
+  });
+  async function setRequestStatus(id: string, status: string) {
+    try {
+      await setFeatureRequestStatus({
+        data: { id, status: status as (typeof REQUEST_STATUSES)[number] },
+      });
+      qc.invalidateQueries({ queryKey: ["admin-feature-requests"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update the request");
+    }
+  }
 
   const { data: activity } = useQuery({
     queryKey: ["user-activity", expandedUser],
@@ -632,6 +651,55 @@ function AdminPage() {
             </div>
           </div>
         )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-bold">Roadmap votes & feature requests</h2>
+        <div className="surface space-y-4 p-5">
+          <ul className="grid gap-1 text-sm sm:grid-cols-2">
+            {[...ROADMAP_ITEMS]
+              .sort((a, b) => (feedback?.votes[b.key] ?? 0) - (feedback?.votes[a.key] ?? 0))
+              .map((item) => (
+                <li key={item.key} className="flex justify-between gap-3">
+                  <span className="truncate">{item.title}</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {feedback?.votes[item.key] ?? 0}
+                  </span>
+                </li>
+              ))}
+          </ul>
+          {feedback && feedback.requests.length === 0 && (
+            <p className="text-sm text-muted-foreground">No feature requests yet.</p>
+          )}
+          {feedback && feedback.requests.length > 0 && (
+            <ul className="divide-y text-sm">
+              {feedback.requests.map((r) => (
+                <li key={r.id} className="space-y-1 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="min-w-0 truncate text-xs text-muted-foreground">
+                      {r.display_name || r.email || "Unknown"}
+                      {r.email && r.display_name ? ` · ${r.email}` : ""} ·{" "}
+                      {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                    </p>
+                    <Select value={r.status} onValueChange={(v) => void setRequestStatus(r.id, v)}>
+                      <SelectTrigger className="h-8 w-36 text-xs" aria-label="Request status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REQUEST_STATUSES.map((st) => (
+                          <SelectItem key={st} value={st}>
+                            {requestStatusLabel(st)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="whitespace-pre-wrap">{r.body}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
       {isOwner && (

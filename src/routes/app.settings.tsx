@@ -118,6 +118,19 @@ function Settings() {
         </div>
         <ThemePicker />
         <Button onClick={saveProfile}>Save</Button>
+        <Link
+          to="/app/roadmap"
+          className="surface flex items-center gap-3 px-4 py-3 hover:bg-muted/50"
+        >
+          <Rocket className="h-4 w-4 text-brand" />
+          <span className="flex-1">
+            <span className="block text-sm font-medium">Roadmap & requests</span>
+            <span className="block text-xs text-muted-foreground">
+              See what's coming, vote for what you want, and request features
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
       </section>
       <PlanSection />
       <section>
@@ -148,7 +161,6 @@ function Settings() {
         </ul>
       </section>
       <TipsSection />
-      <RoadmapSection />
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Install the app</h2>
         <InstallInstructions />
@@ -184,67 +196,6 @@ function Settings() {
   );
 }
 
-const ROADMAP: { title: string; desc: string; plans?: string }[] = [
-  {
-    title: "Apple Wallet & Google Wallet card",
-    desc: "Your QR code in your phone's Wallet, a double-press away from the lock screen.",
-    plans: "Pro & Premium",
-  },
-  {
-    title: "NFC tap cards & stickers",
-    desc: "Tap a phone to share your card. Branded cards and stickers you can order, plus “write my card to a tag” on Android.",
-  },
-  {
-    title: "CRM sync",
-    desc: "New contacts flow straight into HubSpot, Salesforce, or your Google or Outlook contacts. (Webhooks to Make and Zapier already work today.)",
-  },
-  {
-    title: "Custom questions on your “Share yours” form",
-    desc: "Ask people what they're looking for, their budget, or anything else when they share their details.",
-  },
-  {
-    title: "Weekly summary email",
-    desc: "Every Monday: views, saves, new leads, and who's due a follow-up.",
-  },
-  {
-    title: "Referral program",
-    desc: "Give a friend a free month of Pro and get one yourself.",
-  },
-];
-
-/** What's being built next, so people know it's coming. */
-function RoadmapSection() {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-bold">Coming soon</h2>
-      <p className="text-sm text-muted-foreground">
-        What we're building next. Want something sooner? Email{" "}
-        <a href="mailto:support@myaisummit.dev" className="underline">
-          support@myaisummit.dev
-        </a>
-        .
-      </p>
-      <ul className="surface divide-y">
-        {ROADMAP.map((r) => (
-          <li key={r.title} className="flex items-start gap-3 px-4 py-3">
-            <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">
-                {r.title}
-                {r.plans && (
-                  <span className="ml-2 inline-block whitespace-nowrap rounded-full bg-brand-soft px-2 py-0.5 align-middle text-[10px] font-bold text-foreground">
-                    {r.plans}
-                  </span>
-                )}
-              </p>
-              <p className="text-xs text-muted-foreground">{r.desc}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 /** Brings back every "how this works" tip the user turned off. */
 function TipsSection() {

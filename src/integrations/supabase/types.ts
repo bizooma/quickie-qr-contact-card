@@ -544,6 +544,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_requests: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       org_invites: {
         Row: {
           accepted_at: string | null
@@ -865,6 +892,24 @@ export type Database = {
         }
         Relationships: []
       }
+      roadmap_votes: {
+        Row: {
+          created_at: string
+          item_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          item_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          item_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rpc_rate_limits: {
         Row: {
           card_id: string | null
@@ -1007,6 +1052,7 @@ export type Database = {
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
       add_topup_credits: { Args: { _follow_ups: number; _scans: number; _user: string }; Returns: undefined }
       record_signup_attribution: { Args: { _attrib: Json; _user: string }; Returns: Json }
+      roadmap_vote_counts: { Args: never; Returns: Json }
       cleanup_stale_data: { Args: never; Returns: Json }
       card_event_series: {
         Args: { p_card?: string; p_since: string }
