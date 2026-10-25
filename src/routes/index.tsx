@@ -27,6 +27,7 @@ import {
   PREMIUM_ANNUAL_USD,
   PREMIUM_PRICE_LABEL,
   premiumAnnualFreeMonths,
+  PREMIUM_AI_BENEFIT,
   PRO_AI_BENEFIT,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_ANNUAL_USD,
@@ -657,7 +658,7 @@ function Landing() {
                   "Up to 3 digital cards",
                   PRO_AI_BENEFIT,
                   "1 card = 1 scan, so 100 scans reads 100 cards",
-                  "AI contact enrichment & note summaries",
+                  `${PLAN_LIMITS.pro.enrich} AI contact enrichments a month & note summaries`,
                   "Event mode: tag everyone you meet at an event",
                   "Everything in Free",
                 ].map((t) => (
@@ -701,7 +702,7 @@ function Landing() {
                   "Advanced analytics",
                   "Email signature builder",
                   "Follow-up reminders on your phone",
-                  "Everything in Pro, with higher AI limits",
+                  `Everything in Pro, with ${PREMIUM_AI_BENEFIT.replace(/\.$/, "")}`,
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />

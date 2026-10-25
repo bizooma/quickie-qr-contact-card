@@ -53,18 +53,25 @@ describe("effectivePlan", () => {
 });
 
 describe("limits", () => {
-  it("free is capped, Pro gets 100 scans + 100 drafts a month, Premium has no cap", () => {
+  it("free is capped, Pro gets 100 scans + 100 drafts, Premium a 500 fair-use ceiling", () => {
     expect(monthlyLimit("free", "scan")).toBe(5);
     expect(monthlyLimit("pro", "scan")).toBe(100);
     expect(monthlyLimit("pro", "follow_up")).toBe(100);
-    expect(monthlyLimit("premium", "scan")).toBe(Infinity);
-    expect(monthlyLimit("premium", "follow_up")).toBe(Infinity);
+    expect(monthlyLimit("premium", "scan")).toBe(500);
+    expect(monthlyLimit("premium", "follow_up")).toBe(500);
+    expect(monthlyLimit("premium", "summarize")).toBe(Infinity);
     expect(isWithinLimit("free", "scan", 4)).toBe(true);
     expect(isWithinLimit("free", "scan", 5)).toBe(false);
     expect(isWithinLimit("pro", "scan", 99)).toBe(true);
     expect(isWithinLimit("pro", "scan", 100)).toBe(false);
     expect(isWithinLimit("pro", "follow_up", 100)).toBe(false);
-    expect(isWithinLimit("premium", "scan", 1_000_000)).toBe(true);
+    expect(isWithinLimit("premium", "scan", 499)).toBe(true);
+    expect(isWithinLimit("premium", "scan", 500)).toBe(false);
+  });
+  it("caps enrichment at 100 a month on Pro and Premium", () => {
+    expect(monthlyLimit("pro", "enrich")).toBe(100);
+    expect(monthlyLimit("premium", "enrich")).toBe(100);
+    expect(isWithinLimit("premium", "enrich", 100)).toBe(false);
   });
   it("cards: 1 free, 3 pro, unlimited premium", () => {
     expect(PLAN_LIMITS.free.cards).toBe(1);
@@ -74,7 +81,8 @@ describe("limits", () => {
   it("remaining clamps at zero and stays Infinity for pro", () => {
     expect(remaining("free", "enrich", 2)).toBe(3);
     expect(remaining("free", "enrich", 99)).toBe(0);
-    expect(remaining("pro", "enrich", 99)).toBe(Infinity);
+    expect(remaining("pro", "enrich", 99)).toBe(1);
+    expect(remaining("pro", "summarize", 99)).toBe(Infinity);
   });
   it("starter credits only cover scans and follow-ups", () => {
     expect(creditEligible("scan")).toBe(true);
@@ -117,7 +125,7 @@ describe("limitReachedMessage", () => {
   const oct = new Date("2026-10-19T12:00:00Z");
   it("tells Pro when the allowance resets and points at Premium", () => {
     expect(limitReachedMessage("pro", "scan", oct)).toBe(
-      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium has no monthly cap.",
+      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium includes 500 a month ($12/mo).",
     );
     expect(limitReachedMessage("pro", "follow_up", oct)).toContain(
       "You've used your 100 follow-up drafts for this month",
@@ -185,9 +193,16 @@ describe("rate limit and top-up", () => {
     expect(topupLabel("large")).toBe("60 scans + 60 follow-up drafts for $10");
     expect(TOPUP_PACKS.large.scans).toBeGreaterThan(TOPUP_PACKS.small.scans);
   });
-  it("points Pro at Premium's uncapped plan", () => {
-    expect(limitReachedMessage("pro", "scan", new Date("2026-10-19T12:00:00Z"))).toContain(
-      "Premium has no monthly cap",
+  it("points Premium at top-ups, and says only the reset date for enrichment", () => {
+    const oct = new Date("2026-10-19T12:00:00Z");
+    expect(limitReachedMessage("premium", "scan", oct)).toBe(
+      "You've used your 500 scans for this month — your allowance resets on Nov 1. Need more right now? Add a top-up pack in Settings.",
+    );
+    expect(limitReachedMessage("premium", "enrich", oct)).toBe(
+      "You've used your 100 enrichments for this month — your allowance resets on Nov 1.",
+    );
+    expect(limitReachedMessage("pro", "enrich", oct)).toBe(
+      "You've used your 100 enrichments for this month — your allowance resets on Nov 1.",
     );
   });
 });

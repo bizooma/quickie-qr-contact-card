@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PRO_AI_BENEFIT } from "@/lib/plans";
+import { PRO_AI_BENEFIT, PLAN_LIMITS, PREMIUM_AI_BENEFIT } from "@/lib/plans";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
@@ -154,11 +154,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "What Pro adds ($8/mo, or $80/yr)",
-        `Up to 3 cards, event mode, AI contact enrichment and note summaries, and ${PRO_AI_BENEFIT.replace(/\.$/, "")} (on the 1st, UTC; unused scans and drafts don't roll over). Settings shows what's left. Upgrade from Settings; cancel anytime and it runs to the end of the period.`,
+        `Up to 3 cards, event mode, ${PLAN_LIMITS.pro.enrich} AI contact enrichments a month, note summaries, and ${PRO_AI_BENEFIT.replace(/\.$/, "")} (on the 1st, UTC; unused scans and drafts don't roll over). Settings shows what's left. Upgrade from Settings; cancel anytime and it runs to the end of the period.`,
       ],
       [
         "What Premium adds ($12/mo, or $120/yr)",
-        "Everything in Pro with higher AI limits, plus unlimited personal cards, the email signature builder, and advanced analytics.",
+        `Everything in Pro, with ${PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, the email signature builder, and advanced analytics. Need more in a busy month? Add a top-up pack in Settings.`,
       ],
       [
         "What Teams adds ($10/user/mo, or $100/user/yr)",
