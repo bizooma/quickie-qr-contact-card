@@ -84,13 +84,15 @@ function UpgradeButtons({ plan, packs }: { plan: PlanId; packs: TopupPack[] }) {
       setBusy(false);
     }
   }
-  if (plan === "premium") return null;
+  if (plan === "premium" && packs.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" disabled={busy} onClick={() => void go(next)}>
-        <Sparkles className="h-3.5 w-3.5" />
-        {label}
-      </Button>
+      {plan !== "premium" && (
+        <Button size="sm" disabled={busy} onClick={() => void go(next)}>
+          <Sparkles className="h-3.5 w-3.5" />
+          {label}
+        </Button>
+      )}
       {packs.map((pack) => (
         <Button
           key={pack}

@@ -15,15 +15,18 @@ export const KIND_LABELS: Record<UsageKind, string> = {
 };
 
 /** Monthly allowances (reset on the 1st, UTC; no rollover); Infinity = no
- *  cap. Cards is a total, not monthly. */
+ *  cap. Cards is a total, not monthly. Enrichment (web research on Opus, the
+ *  priciest call) is capped on every plan; Premium's scans and drafts carry a
+ *  fair-use ceiling far above normal use, so no account can cost more in AI
+ *  than it pays. */
 export const PLAN_LIMITS: Record<PlanId, { cards: number } & Record<UsageKind, number>> = {
   free: { cards: 1, scan: 5, enrich: 5, follow_up: 15, summarize: 15 },
-  pro: { cards: 3, scan: 100, enrich: Infinity, follow_up: 100, summarize: Infinity },
+  pro: { cards: 3, scan: 100, enrich: 100, follow_up: 100, summarize: Infinity },
   premium: {
     cards: Infinity,
-    scan: Infinity,
-    enrich: Infinity,
-    follow_up: Infinity,
+    scan: 500,
+    enrich: 100,
+    follow_up: 500,
     summarize: Infinity,
   },
 };
@@ -119,6 +122,9 @@ export function formatResetDate(now = new Date()): string {
  *  (mirrors record_signup_attribution in the database). */
 export const REFERRAL_BONUS_SCANS = 5;
 
+/** Premium's AI allowance in one line, for pricing and plan copy. */
+export const PREMIUM_AI_BENEFIT = `${PLAN_LIMITS.premium.scan} AI card scans + ${PLAN_LIMITS.premium.follow_up} follow-up drafts a month — far more than most people use.`;
+
 export const PRO_AI_BENEFIT = `${PLAN_LIMITS.pro.scan} AI card scans + ${PLAN_LIMITS.pro.follow_up} follow-up drafts every month — resets monthly.`;
 
 /** How scans are counted: per business card read, not per photo or batch. */
@@ -184,5 +190,11 @@ export function limitReachedMessage(plan: PlanId, kind: UsageKind, now = new Dat
       ? `${used} Need more right now? Upgrade to Pro (${PRO_PRICE_LABEL}).`
       : `${used} Need more right now? Pro includes ${pro} a month (${PRO_PRICE_LABEL}).`;
   }
-  return `${used} Need more right now? Premium has no monthly cap.`;
+  const premium = monthlyLimit("premium", kind);
+  if (plan === "pro" && premium > monthlyLimit("pro", kind)) {
+    return `${used} Need more right now? Premium includes ${premium} a month (${PREMIUM_PRICE_LABEL}).`;
+  }
+  return creditEligible(kind)
+    ? `${used} Need more right now? Add a top-up pack in Settings.`
+    : used;
 }

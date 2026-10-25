@@ -63,6 +63,8 @@ import {
   PREMIUM_PRICE_LABEL,
   premiumAnnualFreeMonths,
   PRO_AI_BENEFIT,
+  PREMIUM_AI_BENEFIT,
+  PLAN_LIMITS,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   SCAN_UNIT_NOTE,
@@ -516,6 +518,16 @@ function PlanSection() {
               Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo
             </Button>
           )}
+          {billing.topupPacks.map((pack) => (
+            <Button
+              key={pack}
+              variant="outline"
+              disabled={busy}
+              onClick={() => upgrade("topup", "month", undefined, pack)}
+            >
+              Add {topupLabel(pack)}
+            </Button>
+          ))}
         </div>
       ) : (
         <div className="space-y-2">
@@ -642,10 +654,10 @@ function PlanSection() {
           )}
           <p className="text-xs text-muted-foreground">
             Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()} months
-            free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus AI enrichment and note summaries, event
-            mode, and up to 3 cards. Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL}{" "}
-            with {premiumAnnualFreeMonths()} months free): everything in Pro with higher AI limits,
-            plus unlimited personal cards, email signatures, follow-up reminders, and advanced
+            free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus {PLAN_LIMITS.pro.enrich} AI contact
+            enrichments a month, note summaries, event mode, and up to 3 cards. Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL}{" "}
+            with {premiumAnnualFreeMonths()} months free): everything in Pro, with{" "}
+            {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, email signatures, follow-up reminders, and advanced
             analytics. Teams ({TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS}-seat
             minimum): a team workspace with everything in Premium for every member. Plans
             auto-renew; cancelling stops the renewal and your plan runs to the end of the period
