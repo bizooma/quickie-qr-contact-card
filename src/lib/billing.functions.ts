@@ -3,7 +3,15 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireActiveAuth } from "@/lib/auth-guard";
-import { effectivePlan, monthlyLimit, USAGE_KINDS, type PlanId, type UsageKind } from "./plans";
+import {
+  effectivePlan,
+  monthlyLimit,
+  USAGE_KINDS,
+  type PlanId,
+  type UsageKind,
+  TOPUP_PACKS,
+  type TopupPack,
+} from "./plans";
 
 // Billing server functions. SDK and admin imports stay inside handlers —
 // this file ships to the client bundle.
@@ -40,7 +48,11 @@ export type BillingState = {
   premiumAnnualConfigured: boolean;
   teamConfigured: boolean;
   teamAnnualConfigured: boolean;
+  /** Top-up packs with a Stripe price configured. */
+  topupPacks: TopupPack[];
   hasSubscription: boolean;
+  planExpiresAt: string | null; // a dated plan (Founding Year, comp) ends here
+  coveredByTeam: string | null; // Premium comes from a seat on this team
   teamSeats: number; // seats this user has purchased (0 = not a team owner)
   credits: { scan: number; follow_up: number }; // one-time starter-pack credits
   usage: Record<UsageKind, { used: number; limit: number | null }>; // null limit = unlimited
@@ -60,9 +72,23 @@ export const getBillingState = createServerFn({ method: "POST" })
     const credits = await getStarterCredits(context.userId);
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("stripe_subscription_id, team_seats")
+      .select("stripe_subscription_id, team_seats, plan, plan_expires_at")
       .eq("id", context.userId)
       .maybeSingle();
+    // Premium from a team seat (not the user's own plan): name the team so the
+    // settings page doesn't offer billing they don't have.
+    let coveredByTeam: string | null = null;
+    if (
+      plan === "premium" &&
+      effectivePlan(profile?.plan, profile?.plan_expires_at) !== "premium"
+    ) {
+      const { data: m } = await supabaseAdmin
+        .from("org_members")
+        .select("orgs(name)")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      coveredByTeam = (m as { orgs?: { name?: string } | null } | null)?.orgs?.name ?? "your team";
+    }
     const usage = Object.fromEntries(
       USAGE_KINDS.map((k, i) => {
         const limit = monthlyLimit(plan, k);
@@ -77,7 +103,12 @@ export const getBillingState = createServerFn({ method: "POST" })
       premiumAnnualConfigured: isStripeConfigured() && !!stripeEnv().premiumAnnualPriceId,
       teamConfigured: isStripeConfigured() && !!stripeEnv().teamPriceId,
       teamAnnualConfigured: isStripeConfigured() && !!stripeEnv().teamAnnualPriceId,
+      topupPacks: isStripeConfigured()
+        ? (Object.keys(TOPUP_PACKS) as TopupPack[]).filter((p) => !!stripeEnv().topupPriceIds[p])
+        : [],
       hasSubscription: !!profile?.stripe_subscription_id,
+      planExpiresAt: profile?.plan_expires_at ?? null,
+      coveredByTeam,
       teamSeats: profile?.team_seats ?? 0,
       credits,
       usage,
@@ -85,13 +116,16 @@ export const getBillingState = createServerFn({ method: "POST" })
   });
 
 const CheckoutSchema = z.object({
-  plan: z.enum(["pro", "premium", "team"]).default("pro"),
+  plan: z.enum(["pro", "premium", "team", "topup"]).default("pro"),
+  pack: z.enum(["small", "large"]).default("small"), // top-up only
   interval: z.enum(["month", "year"]).default("month"),
   seats: z.number().int().min(3).max(500).optional(), // team plan only
 });
 
-/** Starts a Stripe Checkout subscription — Pro or Premium (monthly/annual,
- *  one seat) or Teams (per-seat quantity, 3-seat minimum). Returns the URL. */
+/** Starts a Stripe Checkout — Pro or Premium (monthly/annual, one seat),
+ *  Teams (per-seat quantity, 3-seat minimum), or a one-off scan top-up.
+ *  Returns the URL. A Pro/Premium subscriber can buy Teams: the webhook
+ *  cancels their old subscription once the Teams one is paid. */
 export const createCheckout = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(CheckoutSchema)
@@ -106,17 +140,54 @@ export const createCheckout = createServerFn({ method: "POST" })
       .select("plan, plan_expires_at, stripe_customer_id, stripe_subscription_id")
       .eq("id", context.userId)
       .maybeSingle();
+    const env = stripeEnv();
+    const origin = requestOrigin();
+    const email = typeof context.claims["email"] === "string" ? context.claims["email"] : undefined;
+    const customer = profile?.stripe_customer_id
+      ? { customer: profile.stripe_customer_id }
+      : email
+        ? { customer_email: email }
+        : {};
+
+    if (data.plan === "topup") {
+      const price = env.topupPriceIds[data.pack];
+      if (!price) throw new Error("Top-ups aren't available yet.");
+      const pack = TOPUP_PACKS[data.pack];
+      const session = await getStripe().checkout.sessions.create({
+        mode: "payment",
+        line_items: [{ price, quantity: 1 }],
+        client_reference_id: context.userId,
+        // The webhook adds the credits when payment lands; the size rides along
+        // so the webhook never has to guess which pack was bought.
+        metadata: {
+          ck_topup: data.pack,
+          ck_topup_scans: String(pack.scans),
+          ck_topup_follow_ups: String(pack.followUps),
+        },
+        ...customer,
+        allow_promotion_codes: true,
+        success_url: `${origin}/app/settings?billing=success`,
+        cancel_url: `${origin}/app/settings?billing=cancelled`,
+      });
+      if (!session.url) throw new Error("Stripe did not return a checkout link. Try again.");
+      return { url: session.url };
+    }
+
     // Effective plan, so a lapsed dated entitlement doesn't block re-buying.
     const current = effectivePlan(profile?.plan, profile?.plan_expires_at);
     if (data.plan !== "team" && current === "premium")
       throw new Error("You're already on Premium.");
     if (data.plan === "pro" && current === "pro") throw new Error("You're already on Pro.");
-    if (profile?.stripe_subscription_id) {
+    if (profile?.stripe_subscription_id && data.plan !== "team") {
       // One subscription per account: switching tiers goes through the portal.
       throw new Error("You already have a subscription — use Manage billing to change plans.");
     }
+    // Moving a subscriber onto Teams replaces their subscription (see webhook).
+    const replaceSub =
+      data.plan === "team" && profile?.stripe_subscription_id
+        ? { ck_replace_sub: profile.stripe_subscription_id }
+        : {};
 
-    const env = stripeEnv();
     const price =
       data.plan === "team"
         ? data.interval === "year"
@@ -140,20 +211,14 @@ export const createCheckout = createServerFn({ method: "POST" })
     }
     const seats = data.plan === "team" ? Math.max(3, data.seats ?? 3) : 1;
 
-    const origin = requestOrigin();
-    const email = typeof context.claims["email"] === "string" ? context.claims["email"] : undefined;
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price, quantity: seats }],
       client_reference_id: context.userId,
       // The webhook reads the tier from metadata (session + subscription).
-      metadata: { ck_plan: data.plan, ck_seats: String(seats) },
+      metadata: { ck_plan: data.plan, ck_seats: String(seats), ...replaceSub },
       subscription_data: { metadata: { ck_plan: data.plan, ck_seats: String(seats) } },
-      ...(profile?.stripe_customer_id
-        ? { customer: profile.stripe_customer_id }
-        : email
-          ? { customer_email: email }
-          : {}),
+      ...customer,
       allow_promotion_codes: true,
       success_url: `${origin}/app/settings?billing=success`,
       cancel_url: `${origin}/app/settings?billing=cancelled`,

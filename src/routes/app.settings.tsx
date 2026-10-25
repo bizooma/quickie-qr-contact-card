@@ -52,6 +52,8 @@ import {
   TEAM_SEAT_ANNUAL_PRICE_LABEL,
   TEAM_SEAT_PRICE_LABEL,
   teamAnnualFreeMonths,
+  topupLabel,
+  type TopupPack,
   USAGE_KINDS,
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
@@ -290,6 +292,8 @@ function ThemePicker() {
   );
 }
 
+const daysUntil = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 864e5);
+
 /** Current plan, this month's AI usage, and the upgrade/manage actions. */
 function PlanSection() {
   const qc = useQueryClient();
@@ -320,14 +324,15 @@ function PlanSection() {
   }, [qc]);
 
   async function upgrade(
-    plan: "pro" | "premium" | "team",
+    plan: "pro" | "premium" | "team" | "topup",
     interval: "month" | "year" = "month",
     seats?: number,
+    pack?: TopupPack,
   ) {
     setBusy(true);
     try {
       const { url } = await createCheckout({
-        data: { plan, interval, ...(seats ? { seats } : {}) },
+        data: { plan, interval, ...(seats ? { seats } : {}), ...(pack ? { pack } : {}) },
       });
       window.location.href = url;
     } catch (err) {
@@ -406,10 +411,32 @@ function PlanSection() {
           );
         })}
       </div>
-      {billing.plan === "premium" ? (
-        <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
-          Manage billing
-        </Button>
+      {billing.planExpiresAt && billing.plan !== "free" && !billing.hasSubscription && (
+        <p className="rounded-xl border border-brand/40 bg-brand-soft/40 px-3 py-2 text-xs">
+          Your {PLAN_NAMES[billing.plan]} plan runs until{" "}
+          {new Date(billing.planExpiresAt).toLocaleDateString()}
+          {daysUntil(billing.planExpiresAt) <= 30 &&
+            " — after that your account moves to the free plan. Keep everything by subscribing below."}
+        </p>
+      )}
+      {billing.coveredByTeam ? (
+        <p className="text-sm text-muted-foreground">
+          Premium is covered by your seat on <strong>{billing.coveredByTeam}</strong>. The team owner
+          manages billing.
+        </p>
+      ) : billing.plan === "premium" ? (
+        <div className="flex flex-wrap gap-2">
+          {billing.hasSubscription && (
+            <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
+              Manage billing
+            </Button>
+          )}
+          {billing.teamConfigured && billing.teamSeats < TEAM_MIN_SEATS && (
+            <Button variant="outline" disabled={busy} onClick={() => upgrade("team", "month", seats)}>
+              Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
@@ -466,7 +493,21 @@ function PlanSection() {
               </>
             )}
           </div>
-          {billing.teamConfigured && !billing.hasSubscription && (
+          {billing.topupPacks.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {billing.topupPacks.map((pack) => (
+                <Button
+                  key={pack}
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => upgrade("topup", "month", undefined, pack)}
+                >
+                  Add {topupLabel(pack)}
+                </Button>
+              ))}
+            </div>
+          )}
+          {billing.teamConfigured && billing.teamSeats < TEAM_MIN_SEATS && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <div className="flex items-center gap-1 rounded-xl border px-2 py-1">
                 <button
@@ -494,7 +535,8 @@ function PlanSection() {
                 disabled={busy}
                 onClick={() => upgrade("team", "month", seats)}
               >
-                Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo
+                {billing.hasSubscription ? "Switch to Teams" : "Get Teams"} — {TEAM_SEAT_PRICE_LABEL}
+                /mo
               </Button>
               {billing.teamAnnualConfigured && (
                 <Button

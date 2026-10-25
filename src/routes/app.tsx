@@ -212,7 +212,7 @@ function AppLayout() {
         <Link
           to="/app/qr"
           aria-label="Show my QR code"
-          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float transition-transform active:scale-95 md:hidden"
+          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float transition-transform active:scale-95 md:hidden [body:has([data-savebar])_&]:hidden"
         >
           <QrCode className="h-6 w-6" />
         </Link>

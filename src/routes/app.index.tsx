@@ -14,6 +14,8 @@ import { createCard, createCardFromScan, listCards, type CardRow } from "@/lib/c
 import { initials } from "@/lib/card-model";
 import type { ScannedCardFields } from "@/lib/own-card";
 import { signedUrls } from "@/lib/media";
+import { getBillingState } from "@/lib/billing.functions";
+import { PLAN_LIMITS, PLAN_NAMES } from "@/lib/plans";
 
 export const Route = createFileRoute("/app/")({ head: appHead('My cards', 'All your digital business cards in one place.'), component: CardsPage });
 
@@ -22,6 +24,9 @@ function CardsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: cards, isLoading } = useQuery({ queryKey: ["cards"], queryFn: listCards });
+  const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
+  const cardLimit = billing ? PLAN_LIMITS[billing.plan].cards : Infinity;
+  const atLimit = !!cards && cards.length >= cardLimit;
   const [qrCard, setQrCard] = useState<CardRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [label, setLabel] = useState("");
@@ -40,8 +45,23 @@ function CardsPage() {
   });
 
   useEffect(() => {
-    if (cards && cards.length === 0) navigate({ to: "/app/onboarding" });
-  }, [cards, navigate]);
+    if (!cards || cards.length !== 0 || !billing) return;
+    // Someone who bought the starter pack came for the scanner, not a card
+    // (only 1 in 4 accounts had ever scanned). First visit goes there.
+    const key = user ? `ck-welcomed:${user.id}` : null;
+    let welcomed = false;
+    try {
+      welcomed = !!key && localStorage.getItem(key) === "1";
+      if (key) localStorage.setItem(key, "1");
+    } catch {
+      // Storage blocked: fall through to onboarding.
+    }
+    if (!welcomed && billing.credits.scan > 0 && billing.usage.scan.used === 0) {
+      navigate({ to: "/app/scan", search: { welcome: 1 } });
+    } else {
+      navigate({ to: "/app/onboarding" });
+    }
+  }, [cards, billing, user, navigate]);
 
   async function addCardFromScan(fields: ScannedCardFields) {
     if (!user) return;
@@ -84,10 +104,26 @@ function CardsPage() {
             {"Tap a card to edit.\nChanges go live instantly."}
           </p>
         </div>
-        <Button onClick={() => setNewOpen(true)}>
-          <Plus className="h-4 w-4" />
-          New card
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button onClick={() => setNewOpen(true)} disabled={atLimit}>
+            <Plus className="h-4 w-4" />
+            New card
+          </Button>
+          {billing && cardLimit !== Infinity && (
+            <p className="text-xs text-muted-foreground">
+              {cards?.length ?? 0} of {cardLimit} card{cardLimit === 1 ? "" : "s"} on{" "}
+              {PLAN_NAMES[billing.plan]}
+              {atLimit && (
+                <>
+                  {" · "}
+                  <Link to="/app/settings" className="font-medium text-brand underline">
+                    Upgrade for more
+                  </Link>
+                </>
+              )}
+            </p>
+          )}
+        </div>
       </div>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

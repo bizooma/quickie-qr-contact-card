@@ -93,7 +93,38 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
     // subscription event once (if) payment lands.
     const paid =
       session.payment_status === "paid" || session.payment_status === "no_payment_required";
+    if (userId && session.mode === "payment" && paid && session.metadata?.["ck_topup"]) {
+      // One-off top-up pack: credits never expire, used after the allowance.
+      // createCheckout put the pack size in the metadata.
+      const scans = Number(session.metadata["ck_topup_scans"]);
+      const followUps = Number(session.metadata["ck_topup_follow_ups"]);
+      if (!Number.isInteger(scans) || !Number.isInteger(followUps) || scans < 0 || followUps < 0) {
+        console.error(`stripe session ${session.id}: top-up without a pack size, nothing credited`);
+        return;
+      }
+      must(
+        await supabaseAdmin.rpc("add_topup_credits", {
+          _user: userId,
+          _scans: scans,
+          _follow_ups: followUps,
+        }),
+        "top-up credits",
+      );
+      return;
+    }
     if (userId && session.mode === "subscription" && paid) {
+      // A subscriber moving to Teams: end the old subscription now that the
+      // new one is paid. Its later "deleted" event matches no row (the id
+      // below replaces it) and is skipped.
+      const old = session.metadata?.["ck_replace_sub"];
+      if (old && old !== session.subscription) {
+        const { getStripe } = await import("@/lib/stripe.server");
+        try {
+          await getStripe().subscriptions.cancel(old);
+        } catch (e) {
+          console.error(`could not cancel replaced subscription ${old}: ${(e as Error).message}`);
+        }
+      }
       must(
         await supabaseAdmin
           .from("profiles")

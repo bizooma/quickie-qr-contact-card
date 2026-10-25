@@ -29,6 +29,8 @@ import {
   type OrgRole,
 } from "@/lib/org-model";
 import { createCard } from "@/lib/cards-api";
+import { createCheckout, getBillingState } from "@/lib/billing.functions";
+import { TEAM_MIN_SEATS, TEAM_SEAT_PRICE_LABEL } from "@/lib/plans";
 import { initials } from "@/lib/card-model";
 
 export const Route = createFileRoute("/app/org")({ head: appHead('Team', 'Manage your team and members.'), component: OrgPage });
@@ -153,6 +155,21 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
+  const hasTeamsPlan = (billing?.teamSeats ?? 0) >= TEAM_MIN_SEATS;
+
+  async function buyTeams() {
+    setBusy(true);
+    try {
+      const { url } = await createCheckout({
+        data: { plan: "team", interval: "month", seats: TEAM_MIN_SEATS },
+      });
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start checkout");
+      setBusy(false);
+    }
+  }
 
   async function create() {
     if (!user) return;
@@ -196,10 +213,30 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setName(e.target.value)}
         />
       </div>
-      <Button className="w-full" disabled={busy || name.trim().length < 2} onClick={create}>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-        Create team
-      </Button>
+      {hasTeamsPlan ? (
+        <Button className="w-full" disabled={busy || name.trim().length < 2} onClick={create}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          Create team
+        </Button>
+      ) : (
+        <>
+          <Button
+            className="w-full"
+            disabled={busy || !billing || !billing.teamConfigured}
+            onClick={buyTeams}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+            Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS} seats
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {billing && !billing.teamConfigured
+              ? "Teams isn't available yet (billing is still being set up)."
+              : billing?.hasSubscription
+                ? "Your current subscription ends when the Teams plan starts."
+                : "Billed through Stripe; cancel anytime. Then come back here to name your team."}
+          </p>
+        </>
+      )}
       <p className="text-xs text-muted-foreground">
         Got an invite link from someone? Just open it while signed in.
       </p>
@@ -394,7 +431,13 @@ type OrgRow = {
   lock_brand: boolean;
   share_contacts: boolean;
 };
-type CardRowLite = { id: string; user_id: string; label: string; slug: string };
+type CardRowLite = {
+  id: string;
+  user_id: string;
+  label: string;
+  slug: string;
+  org_id: string | null;
+};
 
 function TeamCardsSection({
   org,
@@ -496,28 +539,33 @@ function TeamAnalytics({
   names: Record<string, string>;
 }) {
   const cardIds = useMemo(() => teamCards.map((c) => c.id), [teamCards]);
-  const { data: events = [] } = useQuery({
-    queryKey: ["team-events", cardIds],
-    enabled: cardIds.length > 0,
+  const orgId = teamCards[0]?.org_id;
+  // Counted in the database: the API caps a plain select at 1,000 rows.
+  const { data: stats } = useQuery({
+    queryKey: ["team-events", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const since = new Date(Date.now() - 30 * 864e5).toISOString();
-      const { data, error } = await supabase
-        .from("card_views")
-        .select("card_id, event_type")
-        .in("card_id", cardIds)
-        .gte("created_at", since)
-        .limit(10000);
+      const { data, error } = await supabase.rpc("org_event_totals", {
+        p_org: orgId!,
+        p_since: since,
+      });
       if (error) throw error;
-      return data;
+      return data as unknown as {
+        view: number;
+        save: number;
+        shareback: number;
+        by_card: Record<string, number>;
+      };
     },
   });
   if (!cardIds.length) return null;
-  const totals = { view: 0, save: 0, shareback: 0 } as Record<string, number>;
-  for (const e of events)
-    if (e.event_type in totals) totals[e.event_type] = (totals[e.event_type] ?? 0) + 1;
-  const byCard = new Map<string, number>();
-  for (const e of events)
-    if (e.event_type === "view") byCard.set(e.card_id, (byCard.get(e.card_id) ?? 0) + 1);
+  const totals = {
+    view: stats?.view ?? 0,
+    save: stats?.save ?? 0,
+    shareback: stats?.shareback ?? 0,
+  } as Record<string, number>;
+  const byCard = new Map<string, number>(Object.entries(stats?.by_card ?? {}));
 
   return (
     <section className="space-y-3">

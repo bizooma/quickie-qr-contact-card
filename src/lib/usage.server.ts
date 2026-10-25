@@ -1,17 +1,18 @@
-// Server-only metering: reads the caller's plan, counts this month's usage,
-// and records completed AI actions. Uses the service role throughout so a
+// Server-only metering: reads the caller's plan, reserves usage before an
+// AI call and settles it after (migration 0026). Uses the service role throughout so a
 // client can neither fake nor erase its own usage (authenticated users have
 // SELECT only on ai_usage). Top-level import is safe only from other
 // server-only modules.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
-  creditEligible,
   effectivePlan,
-  isWithinLimit,
+  formatResetDate,
+  KIND_LABELS,
   limitReachedMessage,
   monthlyLimit,
   monthStartIso,
+  rateLimitMessage,
   scansLeftMessage,
   type PlanId,
   type UsageKind,
@@ -52,48 +53,101 @@ export async function getStarterCredits(
   return { scan: data?.credit_scan ?? 0, follow_up: data?.credit_follow_up ?? 0 };
 }
 
-/** Throws a user-facing error when the caller is out of allowance. Order:
- *  the plan's monthly allowance first, then never-expiring starter credits.
- *  `needed` is the least this action will use (for scans, one per photo). */
-export async function assertWithinLimit(
+export type Reservation = {
+  id: string;
+  kind: UsageKind;
+  limit: number;
+  usedBefore: number;
+  units: number;
+};
+
+/** Reserves `units` of usage BEFORE the AI call, atomically in SQL: the
+ *  plan's monthly allowance first, then never-expiring starter credits.
+ *  Throws a user-facing error when out of allowance or sending too fast.
+ *  Always settle the reservation afterwards (settleUsage). */
+export async function reserveUsage(
   userId: string,
   kind: UsageKind,
-  needed = 1,
-): Promise<void> {
+  units = 1,
+): Promise<Reservation> {
   const plan = await getPlan(userId);
   const limit = monthlyLimit(plan, kind);
-  if (limit === Infinity) return; // No cap — skip the count query.
-  const used = await countUsageThisMonth(userId, kind);
-  let available = Math.max(0, limit - used);
-  if (available >= needed) return;
-  // Past the monthly allowance: starter-pack credits still cover it.
-  if (creditEligible(kind)) available += (await getStarterCredits(userId))[kind];
-  if (available >= needed) return;
-  if (available === 0) throw new Error(limitReachedMessage(plan, kind));
-  throw new Error(scansLeftMessage(available));
+  const { data, error } = await supabaseAdmin.rpc("reserve_ai_usage", {
+    _user: userId,
+    _kind: kind,
+    _units: units,
+    _limit: limit === Infinity ? (null as unknown as number) : limit,
+  });
+  if (error) throw new Error("Could not check your allowance. Try again in a moment.");
+  const r = (data ?? {}) as {
+    ok?: boolean;
+    code?: string;
+    available?: number;
+    reservation?: string;
+    used_before?: number;
+  };
+  if (r.ok && r.reservation) {
+    return { id: r.reservation, kind, limit, usedBefore: r.used_before ?? 0, units };
+  }
+  if (r.code === "rate") throw new Error(rateLimitMessage());
+  if (r.code === "cap") {
+    const available = r.available ?? 0;
+    if (available === 0) throw new Error(limitReachedMessage(plan, kind));
+    throw new Error(scansLeftMessage(available));
+  }
+  throw new Error("Could not check your allowance. Try again in a moment.");
 }
 
-/** Records `units` of usage (scans: one per card read). Best-effort: a
- *  metering hiccup must never fail a successful AI action. */
-export async function recordUsage(userId: string, kind: UsageKind, units = 1): Promise<void> {
+/** After the AI call: keep `actual` units (0 when the call failed, which
+ *  releases the reservation and refunds any starter credits). Best-effort:
+ *  a metering hiccup must never fail a successful AI action. */
+export async function settleUsage(reservation: Reservation, actual: number): Promise<void> {
   try {
-    await supabaseAdmin
-      .from("ai_usage")
-      .insert(Array.from({ length: units }, () => ({ user_id: userId, kind })));
-    // Whatever ran past the plan's monthly allowance was covered by one-time
-    // starter credits — consume one per unit (atomically, in SQL).
-    if (!creditEligible(kind)) return;
-    const plan = await getPlan(userId);
-    const limit = monthlyLimit(plan, kind);
-    if (limit === Infinity) return;
-    const used = await countUsageThisMonth(userId, kind); // includes the rows just inserted
-    const over = Math.min(units, used - limit);
-    for (let i = 0; i < over; i++) {
-      await supabaseAdmin.rpc("consume_starter_credit", { _user: userId, _kind: kind });
-    }
-  } catch {
-    // Swallowed on purpose.
+    const { error } = await supabaseAdmin.rpc("settle_ai_usage", {
+      _reservation: reservation.id,
+      _actual: actual,
+    });
+    if (error) console.error(`settle_ai_usage failed: ${error.message}`);
+    if (actual > 0) await warnNearCap(reservation, actual);
+  } catch (e) {
+    console.error(`settleUsage failed: ${(e as Error).message}`);
   }
+}
+
+/** One push when this action crosses 80% or 100% of a capped allowance. */
+async function warnNearCap(r: Reservation, actual: number): Promise<void> {
+  if (r.limit === Infinity) return;
+  const after = r.usedBefore + actual;
+  const crossed = (t: number) => r.usedBefore < t && after >= t;
+  const label = KIND_LABELS[r.kind].toLowerCase();
+  let message: { title: string; body: string } | null = null;
+  if (crossed(r.limit)) {
+    message = {
+      title: `You've used this month's ${label}`,
+      body: `Your allowance resets on ${formatResetDate()}. Need more now? Upgrade in Settings.`,
+    };
+  } else if (crossed(Math.ceil(r.limit * 0.8))) {
+    message = {
+      title: `${Math.max(0, r.limit - after)} ${label} left this month`,
+      body: `You're at 80% of your allowance. It resets on ${formatResetDate()}.`,
+    };
+  }
+  if (!message) return;
+  const { sendPushToUser } = await import("./notify.server");
+  await sendPushToUser(r.id && r.kind ? ((await ownerOf(r.id)) ?? "") : "", {
+    ...message,
+    url: "/app/settings",
+  });
+}
+
+async function ownerOf(reservation: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("ai_usage")
+    .select("user_id")
+    .eq("reservation", reservation)
+    .limit(1)
+    .maybeSingle();
+  return data?.user_id ?? null;
 }
 
 // ---- Own-card scans --------------------------------------------------------
@@ -116,11 +170,44 @@ export async function assertSelfScanAllowance(userId: string, perDay: number): P
   }
 }
 
-/** Best-effort, like recordUsage. */
+/** Recorded BEFORE the AI call, so photos that turn out not to be a card
+ *  still count toward the daily cap. Best-effort. */
 export async function recordSelfScan(userId: string): Promise<void> {
   try {
     await supabaseAdmin.from("ai_usage").insert({ user_id: userId, kind: "self_scan" });
   } catch {
     // Swallowed on purpose.
+  }
+}
+
+type CallUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens?: number | null;
+  server_tool_use?: { web_search_requests?: number | null } | null;
+};
+
+/** Per-call token log (ai_calls): the basis for pricing packs and plans from
+ *  real numbers. Best-effort — never fails the AI call. */
+export async function logAiCall(
+  userId: string,
+  kind: string,
+  model: string,
+  usage: CallUsage | null | undefined,
+): Promise<void> {
+  if (!usage) return;
+  try {
+    const { error } = await supabaseAdmin.from("ai_calls").insert({
+      user_id: userId,
+      kind,
+      model,
+      input_tokens: usage.input_tokens ?? 0,
+      output_tokens: usage.output_tokens ?? 0,
+      cache_read_tokens: usage.cache_read_input_tokens ?? 0,
+      web_searches: usage.server_tool_use?.web_search_requests ?? 0,
+    });
+    if (error) console.error(`ai_calls insert failed: ${error.message}`);
+  } catch (e) {
+    console.error(`logAiCall failed: ${(e as Error).message}`);
   }
 }

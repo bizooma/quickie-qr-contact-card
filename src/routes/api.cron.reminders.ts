@@ -44,6 +44,30 @@ export const Route = createFileRoute("/api/cron/reminders")({
         const { error: staleError } = await supabaseAdmin.rpc("cleanup_stale_data");
         if (staleError) console.error(`cleanup_stale_data failed: ${staleError.message}`);
 
+        // Win-back: one push to people who installed notifications but
+        // haven't opened the app in two weeks.
+        const { data: quiet } = await supabaseAdmin.rpc("winback_candidates", { p_limit: 25 });
+        let winback = 0;
+        if (quiet?.length) {
+          const { sendPushToUser } = await import("@/lib/notify.server");
+          for (const userId of quiet) {
+            try {
+              await sendPushToUser(userId, {
+                title: "Your card pile is waiting",
+                body: "Scan a few cards and let ContactKickstart draft the follow-ups for you.",
+                url: "/app/scan",
+              });
+              winback += 1;
+            } catch {
+              // Best-effort.
+            }
+            await supabaseAdmin
+              .from("profiles")
+              .update({ winback_sent_at: new Date().toISOString() })
+              .eq("id", userId);
+          }
+        }
+
         const { data: due, error } = await supabaseAdmin
           .from("contact_reminders")
           .select("id, user_id, contact_id, note, contacts(full_name)")
@@ -53,7 +77,7 @@ export const Route = createFileRoute("/api/cron/reminders")({
           .order("remind_at")
           .limit(MAX_PER_RUN);
         if (error) return Response.json({ error: "query failed" }, { status: 500 });
-        if (!due?.length) return Response.json({ sent: 0 });
+        if (!due?.length) return Response.json({ sent: 0, winback });
 
         const { reminderMessage } = await import("@/lib/followups");
         const { sendPushToUser } = await import("@/lib/notify.server");
@@ -88,7 +112,7 @@ export const Route = createFileRoute("/api/cron/reminders")({
               list.map((r) => r.id),
             );
         }
-        return Response.json({ sent, reminders: due.length });
+        return Response.json({ sent, reminders: due.length, winback });
       },
     },
   },

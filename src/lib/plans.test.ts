@@ -6,7 +6,10 @@ import {
   formatResetDate,
   nextResetDate,
   PRO_AI_BENEFIT,
+  rateLimitMessage,
   scansLeftMessage,
+  TOPUP_PACKS,
+  topupLabel,
   usageUnits,
   effectivePlan,
   isWithinLimit,
@@ -114,7 +117,7 @@ describe("limitReachedMessage", () => {
   const oct = new Date("2026-10-19T12:00:00Z");
   it("tells Pro when the allowance resets and points at Premium", () => {
     expect(limitReachedMessage("pro", "scan", oct)).toBe(
-      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium has higher limits.",
+      "You've used your 100 scans for this month — your allowance resets on Nov 1. Need more right now? Premium has no monthly cap.",
     );
     expect(limitReachedMessage("pro", "follow_up", oct)).toContain(
       "You've used your 100 follow-up drafts for this month",
@@ -170,5 +173,21 @@ describe("annual pricing", () => {
     expect(PREMIUM_ANNUAL_PRICE_LABEL).toBe("$120/yr");
     expect(TEAM_SEAT_PRICE_LABEL).toBe("$10/user");
     expect(TEAM_SEAT_ANNUAL_PRICE_LABEL).toBe("$100/user/yr");
+  });
+});
+
+describe("rate limit and top-up", () => {
+  it("has a plain rate-limit message", () => {
+    expect(rateLimitMessage()).toContain("wait a few minutes");
+  });
+  it("describes the top-up packs from their numbers", () => {
+    expect(topupLabel("small")).toBe("25 scans + 25 follow-up drafts for $5");
+    expect(topupLabel("large")).toBe("60 scans + 60 follow-up drafts for $10");
+    expect(TOPUP_PACKS.large.scans).toBeGreaterThan(TOPUP_PACKS.small.scans);
+  });
+  it("points Pro at Premium's uncapped plan", () => {
+    expect(limitReachedMessage("pro", "scan", new Date("2026-10-19T12:00:00Z"))).toContain(
+      "Premium has no monthly cap",
+    );
   });
 });
