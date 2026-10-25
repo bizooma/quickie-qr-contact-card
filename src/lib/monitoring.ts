@@ -1,10 +1,7 @@
-// Client error monitoring (Sentry). A DSN is a publishable identifier, not
-// a secret. Until one is set — create the project in Sentry, then paste its
-// DSN here or expose VITE_SENTRY_DSN at build time — this is a no-op and
-// the SDK chunk is never even downloaded.
-const SENTRY_DSN: string =
-  (import.meta.env["VITE_SENTRY_DSN"] as string | undefined) ??
-  "https://efff02bffbb9bed9883ac71936da0690@o4511277693927424.ingest.us.sentry.io/4512241058971648";
+// Client error monitoring (Sentry). The DSN lives in sentry-dsn.ts; without
+// one this is a no-op and the SDK chunk is never even downloaded. The Worker
+// side is wired in server.ts.
+import { SENTRY_DSN } from "./sentry-dsn";
 
 export function initMonitoring() {
   if (!SENTRY_DSN || !import.meta.env.PROD || typeof window === "undefined") return;

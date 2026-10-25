@@ -133,6 +133,7 @@ export async function sendPushToUser(userId: string, message?: PushMessage): Pro
             Authorization: await vapidAuthHeader(sub.endpoint),
             "Content-Length": "0",
           },
+          signal: AbortSignal.timeout(10_000), // a slow push service must not stall the cron
         });
         if (res.status === 404 || res.status === 410) {
           await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);

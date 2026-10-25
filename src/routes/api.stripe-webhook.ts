@@ -6,6 +6,17 @@ import type Stripe from "stripe";
 // Configure the endpoint in Stripe as POST <site>/api/stripe-webhook with
 // events: checkout.session.completed, customer.subscription.updated,
 // customer.subscription.deleted.
+//
+// Every database write is checked: a failure answers 500 so Stripe retries,
+// and each event id is recorded first so a retry of something that did land
+// is a no-op.
+
+/** Thrown for a database failure; the handler turns it into a 500. */
+class WriteFailed extends Error {}
+
+function must(result: { error: { message: string } | null }, what: string): void {
+  if (result.error) throw new WriteFailed(`${what}: ${result.error.message}`);
+}
 
 export const Route = createFileRoute("/api/stripe-webhook")({
   server: {
@@ -35,89 +46,138 @@ export const Route = createFileRoute("/api/stripe-webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Which paid tier a session/subscription buys; set by createCheckout.
-        // A Teams purchase grants the OWNER premium features plus N seats.
-        const tierOf = (meta: Stripe.Metadata | null | undefined) =>
-          meta?.["ck_plan"] === "premium" || meta?.["ck_plan"] === "team" ? "premium" : "pro";
-        const seatsOf = (meta: Stripe.Metadata | null | undefined, quantity?: number | null) => {
-          if (meta?.["ck_plan"] !== "team") return 0;
-          const q = quantity ?? Number(meta?.["ck_seats"] ?? 0);
-          return Number.isFinite(q) && q > 0 ? q : 0;
-        };
-
-        if (event.type === "checkout.session.completed") {
-          const session = event.data.object;
-          const userId = session.client_reference_id;
-          if (userId && session.mode === "subscription") {
-            await supabaseAdmin
-              .from("profiles")
-              .update({
-                plan: tierOf(session.metadata),
-                plan_expires_at: null, // the subscription is the source of truth now
-                team_seats: seatsOf(session.metadata),
-                stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
-                stripe_subscription_id:
-                  typeof session.subscription === "string" ? session.subscription : null,
-              })
-              .eq("id", userId);
-          }
-        } else if (
-          event.type === "customer.subscription.updated" ||
-          event.type === "customer.subscription.deleted"
-        ) {
-          // Match on the subscription id, not the customer: a late or retried
-          // event for an old subscription must not clobber a newer one the
-          // customer has since bought.
-          const sub = event.data.object;
-          const active =
-            event.type !== "customer.subscription.deleted" &&
-            (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due");
-          if (active) {
-            // The live price decides the tier — a portal price switch changes
-            // the price but keeps the checkout-time metadata forever.
-            const env = stripeEnv();
-            const item = sub.items?.data?.[0];
-            const priceId = item?.price?.id;
-            const pricePlan =
-              priceId === env.teamPriceId || priceId === env.teamAnnualPriceId
-                ? "team"
-                : priceId === env.premiumPriceId || priceId === env.premiumAnnualPriceId
-                  ? "premium"
-                  : priceId === env.priceId || priceId === env.annualPriceId
-                    ? "pro"
-                    : null;
-            const ckPlan = pricePlan ?? sub.metadata?.["ck_plan"] ?? "pro";
-            await supabaseAdmin
-              .from("profiles")
-              .update({
-                plan: ckPlan === "premium" || ckPlan === "team" ? "premium" : "pro",
-                plan_expires_at: null,
-                // Seat changes (portal quantity updates) land here.
-                team_seats:
-                  ckPlan === "team" && item?.quantity && item.quantity > 0 ? item.quantity : 0,
-              })
-              .eq("stripe_subscription_id", sub.id);
-          } else {
-            // Fall back to whatever lifetime/year purchase entitlements the
-            // user still holds instead of a hard downgrade to free. Skip
-            // silently when the sub id no longer matches (stale event).
-            const { data: profile } = await supabaseAdmin
-              .from("profiles")
-              .select("id")
-              .eq("stripe_subscription_id", sub.id)
-              .maybeSingle();
-            if (profile?.id) {
-              await supabaseAdmin
-                .from("profiles")
-                .update({ stripe_subscription_id: null, team_seats: 0 })
-                .eq("id", profile.id);
-              await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id });
-            }
-          }
+        // Claim the event id before doing anything. A duplicate (Stripe retry
+        // after a slow response) is acknowledged without being applied twice.
+        const claim = await supabaseAdmin
+          .from("stripe_events")
+          .insert({ id: event.id, type: event.type });
+        if (claim.error) {
+          if (claim.error.code === "23505")
+            return Response.json({ received: true, duplicate: true });
+          console.error(`stripe event ${event.id}: could not record: ${claim.error.message}`);
+          return Response.json({ error: "could not record event" }, { status: 500 });
         }
 
+        try {
+          await applyEvent(event, supabaseAdmin, stripeEnv());
+        } catch (e) {
+          // Release the claim so Stripe's retry gets a real second attempt.
+          await supabaseAdmin.from("stripe_events").delete().eq("id", event.id);
+          console.error(`stripe event ${event.id} (${event.type}) failed: ${(e as Error).message}`);
+          return Response.json({ error: "could not apply event" }, { status: 500 });
+        }
         return Response.json({ received: true });
       },
     },
   },
 });
+
+type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
+type Env = ReturnType<(typeof import("@/lib/stripe.server"))["stripeEnv"]>;
+
+// Which paid tier a session/subscription buys; set by createCheckout.
+// A Teams purchase grants the OWNER premium features plus N seats.
+const tierOf = (meta: Stripe.Metadata | null | undefined) =>
+  meta?.["ck_plan"] === "premium" || meta?.["ck_plan"] === "team" ? "premium" : "pro";
+const seatsOf = (meta: Stripe.Metadata | null | undefined, quantity?: number | null) => {
+  if (meta?.["ck_plan"] !== "team") return 0;
+  const q = quantity ?? Number(meta?.["ck_seats"] ?? 0);
+  return Number.isFinite(q) && q > 0 ? q : 0;
+};
+
+async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): Promise<void> {
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const userId = session.client_reference_id;
+    // Only a paid session grants anything; an unpaid one is followed by a
+    // subscription event once (if) payment lands.
+    const paid =
+      session.payment_status === "paid" || session.payment_status === "no_payment_required";
+    if (userId && session.mode === "subscription" && paid) {
+      must(
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            plan: tierOf(session.metadata),
+            plan_expires_at: null, // the subscription is the source of truth now
+            team_seats: seatsOf(session.metadata),
+            stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+            stripe_subscription_id:
+              typeof session.subscription === "string" ? session.subscription : null,
+          })
+          .eq("id", userId),
+        "checkout update",
+      );
+    }
+    return;
+  }
+
+  if (
+    event.type !== "customer.subscription.updated" &&
+    event.type !== "customer.subscription.deleted"
+  ) {
+    return;
+  }
+
+  // Match on the subscription id, not the customer: a late or retried event
+  // for an old subscription must not clobber a newer one the customer has
+  // since bought.
+  const sub = event.data.object;
+  const gone =
+    event.type === "customer.subscription.deleted" ||
+    sub.status === "canceled" ||
+    sub.status === "incomplete_expired";
+  const active =
+    !gone && (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due");
+
+  if (active) {
+    // The live price decides the tier — a portal price switch changes the
+    // price but keeps the checkout-time metadata forever.
+    const item = sub.items?.data?.[0];
+    const priceId = item?.price?.id;
+    const pricePlan =
+      priceId === env.teamPriceId || priceId === env.teamAnnualPriceId
+        ? "team"
+        : priceId === env.premiumPriceId || priceId === env.premiumAnnualPriceId
+          ? "premium"
+          : priceId === env.priceId || priceId === env.annualPriceId
+            ? "pro"
+            : null;
+    const ckPlan = pricePlan ?? sub.metadata?.["ck_plan"] ?? "pro";
+    must(
+      await supabaseAdmin
+        .from("profiles")
+        .update({
+          plan: ckPlan === "premium" || ckPlan === "team" ? "premium" : "pro",
+          plan_expires_at: null,
+          // Seat changes (portal quantity updates) land here.
+          team_seats: ckPlan === "team" && item?.quantity && item.quantity > 0 ? item.quantity : 0,
+        })
+        .eq("stripe_subscription_id", sub.id),
+      "subscription update",
+    );
+    return;
+  }
+
+  // Not paying right now. Fall back to whatever lifetime/year purchase
+  // entitlements the user still holds instead of a hard downgrade to free.
+  // Skip silently when the sub id no longer matches (stale event).
+  const { data: profile, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("stripe_subscription_id", sub.id)
+    .maybeSingle();
+  if (error) throw new WriteFailed(`profile lookup: ${error.message}`);
+  if (!profile?.id) return;
+  // Keep the link for a subscription that may recover (unpaid, paused,
+  // incomplete): when it becomes active again the update must find this row.
+  // Only a subscription that is truly over is unlinked.
+  must(
+    await supabaseAdmin
+      .from("profiles")
+      .update(gone ? { stripe_subscription_id: null, team_seats: 0 } : { team_seats: 0 })
+      .eq("id", profile.id),
+    "subscription lapse",
+  );
+  must(await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id }), "restore plan");
+}

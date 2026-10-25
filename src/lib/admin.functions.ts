@@ -240,18 +240,10 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
     const admin = await assertPlatformAdmin(context.userId);
     assertOwner(context.claims);
     await assertNotAdminTarget(admin, data.userId);
-    // Media first (nothing references it): the user's folder plus subfolders.
-    for (const prefix of [data.userId, `${data.userId}/contact-photos`, `${data.userId}/og`]) {
-      const { data: files } = await admin.storage.from("card-media").list(prefix, { limit: 1000 });
-      const paths = (files ?? [])
-        .filter((f) => f.id !== null) // folders list with id null
-        .map((f) => `${prefix}/${f.name}`);
-      if (paths.length) await admin.storage.from("card-media").remove(paths);
-    }
-    const { error } = await admin.auth.admin.deleteUser(data.userId);
-    if (error) throw adminFailure("complete that action", error);
-    // Belt and braces for rows that might not cascade from auth.users.
-    await admin.from("profiles").delete().eq("id", data.userId);
+    // Same path as self-deletion: cancels billing, removes every upload
+    // (including subfolders), then the login; rows cascade.
+    const { deleteUserCompletely } = await import("./account-deletion.server");
+    await deleteUserCompletely(data.userId);
     return { ok: true };
   });
 

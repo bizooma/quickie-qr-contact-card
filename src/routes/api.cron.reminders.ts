@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // for their due follow-up reminders, then marks them notified.
 
 const MAX_PER_RUN = 500;
+const MAX_USERS_PER_RUN = 100;
 
 async function secretMatches(provided: string, expected: string): Promise<boolean> {
   const enc = new TextEncoder();
@@ -35,9 +36,13 @@ export const Route = createFileRoute("/api/cron/reminders")({
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
 
-        // Keep private abuse records for one day, even when no reminders are due.
+        // Keep private abuse records for one day, even when no reminders are due,
+        // and prune the tables that otherwise grow forever (views, site events,
+        // delivered push texts, handled Stripe events).
         const { error: cleanupError } = await supabaseAdmin.rpc("cleanup_rpc_rate_limits");
         if (cleanupError) return Response.json({ error: "cleanup failed" }, { status: 500 });
+        const { error: staleError } = await supabaseAdmin.rpc("cleanup_stale_data");
+        if (staleError) console.error(`cleanup_stale_data failed: ${staleError.message}`);
 
         const { data: due, error } = await supabaseAdmin
           .from("contact_reminders")
@@ -55,8 +60,12 @@ export const Route = createFileRoute("/api/cron/reminders")({
         const byUser = new Map<string, typeof due>();
         for (const r of due) byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r]);
 
+        // A Worker may make a limited number of outbound requests per
+        // invocation, and each user costs a few; the rest wait 15 minutes.
         let sent = 0;
+        let users = 0;
         for (const [userId, list] of byUser) {
+          if (++users > MAX_USERS_PER_RUN) break;
           // Reminders are Premium; a lapsed plan just stops the pings.
           const { data: plan } = await supabaseAdmin.rpc("effective_plan", { _user: userId });
           if (plan === "premium") {
