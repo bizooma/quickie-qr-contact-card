@@ -323,3 +323,63 @@ export const getAdminAnalytics = createServerFn({ method: "POST" })
     if (error || !data) throw new Error("Could not load analytics.");
     return data as unknown as AdminAnalytics;
   });
+
+export type FeatureRequestRow = {
+  id: string;
+  body: string;
+  status: string;
+  created_at: string;
+  email: string | null;
+  display_name: string | null;
+};
+
+/** Feature requests, newest first, with who sent them, plus roadmap vote totals. */
+export const listFeatureRequests = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = await assertPlatformAdmin(context.userId);
+    const { data: rows, error } = await admin
+      .from("feature_requests")
+      .select("id, body, status, created_at, user_id")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw adminFailure("load feature requests", error);
+    const ids = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
+    const [{ data: profiles }, users, { data: counts }] = await Promise.all([
+      ids.length
+        ? admin.from("profiles").select("id, display_name").in("id", ids)
+        : Promise.resolve({ data: [] as { id: string; display_name: string | null }[] }),
+      ids.length ? admin.auth.admin.listUsers({ perPage: 1000 }) : Promise.resolve(null),
+      admin.rpc("roadmap_vote_counts"),
+    ]);
+    const nameOf = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+    const emailOf = new Map((users?.data?.users ?? []).map((u) => [u.id, u.email ?? null]));
+    const requests: FeatureRequestRow[] = (rows ?? []).map((r) => ({
+      id: r.id,
+      body: r.body,
+      status: r.status,
+      created_at: r.created_at,
+      email: emailOf.get(r.user_id) ?? null,
+      display_name: nameOf.get(r.user_id) ?? null,
+    }));
+    return { requests, votes: (counts ?? {}) as Record<string, number> };
+  });
+
+/** Triage a request; its author sees the new status on their roadmap page. */
+export const setFeatureRequestStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    z.object({
+      id: z.string().uuid(),
+      status: z.enum(["new", "planned", "in_progress", "done", "declined"]),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const admin = await assertPlatformAdmin(context.userId);
+    const { error } = await admin
+      .from("feature_requests")
+      .update({ status: data.status, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw adminFailure("update that request", error);
+    return { ok: true };
+  });
