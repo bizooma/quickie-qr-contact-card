@@ -864,27 +864,36 @@ export type Database = {
       }
       referrals: {
         Row: {
+          bonus_applied_at: string | null
           bonus_scans: number
           card_id: string | null
           created_at: string
+          first_paid_at: string | null
+          friend_discount_used_at: string | null
           id: string
           owner_user_id: string
           referred_user_id: string
           source: string | null
         }
         Insert: {
+          bonus_applied_at?: string | null
           bonus_scans?: number
           card_id?: string | null
           created_at?: string
+          first_paid_at?: string | null
+          friend_discount_used_at?: string | null
           id?: string
           owner_user_id: string
           referred_user_id: string
           source?: string | null
         }
         Update: {
+          bonus_applied_at?: string | null
           bonus_scans?: number
           card_id?: string | null
           created_at?: string
+          first_paid_at?: string | null
+          friend_discount_used_at?: string | null
           id?: string
           owner_user_id?: string
           referred_user_id?: string
@@ -1053,6 +1062,8 @@ export type Database = {
       add_topup_credits: { Args: { _follow_ups: number; _scans: number; _user: string }; Returns: undefined }
       record_signup_attribution: { Args: { _attrib: Json; _user: string }; Returns: Json }
       roadmap_vote_counts: { Args: never; Returns: Json }
+      my_referral_summary: { Args: never; Returns: Json }
+      referral_reward_state: { Args: { _owner: string }; Returns: Json }
       cleanup_stale_data: { Args: never; Returns: Json }
       card_event_series: {
         Args: { p_card?: string; p_since: string }

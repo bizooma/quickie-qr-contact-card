@@ -21,12 +21,6 @@ export const ROADMAP_STAGES: Record<RoadmapStage, string> = {
 
 export const ROADMAP_ITEMS: RoadmapItem[] = [
   {
-    key: "referral-discount",
-    title: "Referral discount",
-    desc: "Friends you refer get a percentage off their monthly or annual Pro or Premium subscription. (You already earn 5 bonus AI scans for every friend who signs up from your card.)",
-    stage: "next",
-  },
-  {
     key: "contact-import",
     title: "Import your contacts",
     desc: "Bring contacts in from a CSV file, a vCard or Google Contacts, with duplicates merged automatically.",

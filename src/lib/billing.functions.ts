@@ -51,6 +51,8 @@ export type BillingState = {
   /** Top-up packs with a Stripe price configured. */
   topupPacks: TopupPack[];
   hasSubscription: boolean;
+  /** Referral discount on this person's next new Pro/Premium checkout (0 = none). */
+  referralPct: number;
   planExpiresAt: string | null; // a dated plan (Founding Year, comp) ends here
   coveredByTeam: string | null; // Premium comes from a seat on this team
   teamSeats: number; // seats this user has purchased (0 = not a team owner)
@@ -89,6 +91,17 @@ export const getBillingState = createServerFn({ method: "POST" })
         .maybeSingle();
       coveredByTeam = (m as { orgs?: { name?: string } | null } | null)?.orgs?.name ?? "your team";
     }
+    // What a new Pro/Premium checkout would take off (subscribers get theirs
+    // on each renewal instead). Best-effort: billing still loads without it.
+    let referralPct = 0;
+    if (!profile?.stripe_subscription_id) {
+      try {
+        const { referralDiscountFor } = await import("./referral.server");
+        referralPct = (await referralDiscountFor(context.userId, true)).pct;
+      } catch {
+        referralPct = 0;
+      }
+    }
     const usage = Object.fromEntries(
       USAGE_KINDS.map((k, i) => {
         const limit = monthlyLimit(plan, k);
@@ -107,6 +120,7 @@ export const getBillingState = createServerFn({ method: "POST" })
         ? (Object.keys(TOPUP_PACKS) as TopupPack[]).filter((p) => !!stripeEnv().topupPriceIds[p])
         : [],
       hasSubscription: !!profile?.stripe_subscription_id,
+      referralPct,
       planExpiresAt: profile?.plan_expires_at ?? null,
       coveredByTeam,
       teamSeats: profile?.team_seats ?? 0,
@@ -211,15 +225,33 @@ export const createCheckout = createServerFn({ method: "POST" })
     }
     const seats = data.plan === "team" ? Math.max(3, data.seats ?? 3) : 1;
 
+    // Referral discount (referral.ts) on Pro/Premium: the friend's own 20% plus
+    // any referrer rewards, as one first-payment coupon. Stripe allows either a
+    // coupon or promotion codes on a checkout, not both.
+    let discount: { discounts: { coupon: string }[] } | { allow_promotion_codes: true } = {
+      allow_promotion_codes: true,
+    };
+    const refMeta: Record<string, string> = {};
+    if (data.plan !== "team") {
+      const { referralDiscountFor, ensureReferralCoupon } = await import("./referral.server");
+      const ref = await referralDiscountFor(context.userId, true);
+      if (ref.pct > 0) {
+        discount = { discounts: [{ coupon: await ensureReferralCoupon(getStripe(), ref.pct) }] };
+        refMeta["ck_ref_pct"] = String(ref.pct);
+        if (ref.friend) refMeta["ck_ref_friend"] = "1";
+        if (ref.bonusIds.length) refMeta["ck_ref_bonus"] = ref.bonusIds.join(",");
+      }
+    }
+
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price, quantity: seats }],
       client_reference_id: context.userId,
       // The webhook reads the tier from metadata (session + subscription).
-      metadata: { ck_plan: data.plan, ck_seats: String(seats), ...replaceSub },
+      metadata: { ck_plan: data.plan, ck_seats: String(seats), ...replaceSub, ...refMeta },
       subscription_data: { metadata: { ck_plan: data.plan, ck_seats: String(seats) } },
       ...customer,
-      allow_promotion_codes: true,
+      ...discount,
       success_url: `${origin}/app/settings?billing=success`,
       cancel_url: `${origin}/app/settings?billing=cancelled`,
     });
