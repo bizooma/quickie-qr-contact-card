@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { readAttribution } from "@/lib/attribution";
+import { recordSignupAttribution } from "@/lib/attribution.functions";
+import { trackMeta } from "@/lib/meta-pixel";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { FeatureTips } from "@/components/FeatureTip";
 import { isStandalone } from "@/hooks/use-pwa-install";
@@ -62,6 +65,31 @@ function AppLayout() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
+
+  // First load after signup: store the attribution captured on the way in,
+  // credit a referring card owner, and fire Meta's CompleteRegistration once.
+  // The server skips accounts that are old or already recorded.
+  useEffect(() => {
+    if (!user) return;
+    const flag = `ck-attrib-done:${user.id}`;
+    let attrib: Record<string, string> = {};
+    try {
+      if (localStorage.getItem(flag)) return;
+      attrib = readAttribution(localStorage);
+    } catch {
+      return;
+    }
+    recordSignupAttribution({ data: { attrib } })
+      .then((r) => {
+        if (r.stored) trackMeta("CompleteRegistration");
+        try {
+          localStorage.setItem(flag, "1");
+        } catch {
+          // fine — the server dedupes anyway
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   // Opt-in (on the QR screen): launching the installed app opens My QR.
   useEffect(() => {

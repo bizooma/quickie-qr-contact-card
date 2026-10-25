@@ -673,6 +673,7 @@ export type Database = {
           updated_at: string
           webhook_url: string | null
           winback_sent_at: string | null
+          signup_attribution: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -696,6 +697,7 @@ export type Database = {
           updated_at?: string
           webhook_url?: string | null
           winback_sent_at?: string | null
+          signup_attribution?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -719,6 +721,7 @@ export type Database = {
           updated_at?: string
           webhook_url?: string | null
           winback_sent_at?: string | null
+          signup_attribution?: Json | null
         }
         Relationships: []
       }
@@ -826,6 +829,36 @@ export type Database = {
           id?: string
           p256dh?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_scans: number
+          card_id: string | null
+          created_at: string
+          id: string
+          owner_user_id: string
+          referred_user_id: string
+          source: string | null
+        }
+        Insert: {
+          bonus_scans?: number
+          card_id?: string | null
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          referred_user_id: string
+          source?: string | null
+        }
+        Update: {
+          bonus_scans?: number
+          card_id?: string | null
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          referred_user_id?: string
+          source?: string | null
         }
         Relationships: []
       }
@@ -970,6 +1003,7 @@ export type Database = {
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
       add_topup_credits: { Args: { _follow_ups: number; _scans: number; _user: string }; Returns: undefined }
+      record_signup_attribution: { Args: { _attrib: Json; _user: string }; Returns: Json }
       cleanup_stale_data: { Args: never; Returns: Json }
       card_event_series: {
         Args: { p_card?: string; p_since: string }

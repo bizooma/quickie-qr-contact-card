@@ -109,12 +109,12 @@ function Settings() {
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Profile</h2>
         <div className="space-y-1">
-          <Label>Email</Label>
-          <Input value={user?.email ?? ""} disabled />
+          <Label htmlFor="profile-email">Email</Label>
+          <Input id="profile-email" value={user?.email ?? ""} disabled />
         </div>
         <div className="space-y-1">
-          <Label>Display name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Label htmlFor="display-name">Display name</Label>
+          <Input id="display-name" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <ThemePicker />
         <Button onClick={saveProfile}>Save</Button>
@@ -740,6 +740,7 @@ function DangerZone({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <Input
+              aria-label="Type DELETE to confirm"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="DELETE"

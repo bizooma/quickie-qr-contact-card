@@ -23,9 +23,16 @@ vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: { rpc: mocks.rpc, from: mocks.from },
 }));
 
-import { submitShareback } from "./capture.functions";
+import { sharebackErrorMessage, submitShareback } from "./capture.functions";
 
-const input = { slug: "test-card", name: "Test visitor", email: "test@example.com", phone: "", company: "", note: "" };
+const input = {
+  slug: "test-card",
+  name: "Test visitor",
+  email: "test@example.com",
+  phone: "",
+  company: "",
+  note: "",
+};
 
 describe("share-back request-scoped forwarding", () => {
   beforeEach(() => {
@@ -33,7 +40,9 @@ describe("share-back request-scoped forwarding", () => {
     mocks.headers = new Headers();
     mocks.rpc.mockReturnValue({ setHeader: mocks.setHeader });
     mocks.setHeader.mockResolvedValue({ error: null });
-    mocks.from.mockReturnValue({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) });
+    mocks.from.mockReturnValue({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }),
+    });
   });
 
   it("keeps different visitors separate without reusing a previous request's IP", async () => {
@@ -46,7 +55,12 @@ describe("share-back request-scoped forwarding", () => {
       ["x-contactkickstart-visitor-ip", "203.0.113.2"],
     ]);
     expect(mocks.rpc).toHaveBeenCalledWith("submit_shareback", {
-      _slug: "test-card", _name: "Test visitor", _email: "test@example.com", _phone: "", _company: "", _note: "",
+      _slug: "test-card",
+      _name: "Test visitor",
+      _email: "test@example.com",
+      _phone: "",
+      _company: "",
+      _note: "",
     });
   });
 
@@ -57,7 +71,23 @@ describe("share-back request-scoped forwarding", () => {
 
   it("still reports a generic error and skips notifications for rejected submissions", async () => {
     mocks.setHeader.mockResolvedValue({ error: { message: "private database detail" } });
-    await expect(submitShareback({ data: input })).rejects.toThrow("Couldn't send your details. Please try again.");
+    await expect(submitShareback({ data: input })).rejects.toThrow(
+      "Couldn't send your details. Please try again.",
+    );
     expect(mocks.from).not.toHaveBeenCalled();
+  });
+});
+describe("sharebackErrorMessage", () => {
+  it("turns the RPC's reasons into visitor-facing text", () => {
+    expect(
+      sharebackErrorMessage("Too many submissions for this card right now — try again soon"),
+    ).toMatch(/lot of submissions/);
+    expect(sharebackErrorMessage("card not found")).toBe("This card no longer exists.");
+    expect(sharebackErrorMessage("email or phone required")).toMatch(/email or phone/);
+  });
+  it("never leaks unexpected database errors", () => {
+    expect(sharebackErrorMessage('relation "contacts" does not exist')).toBe(
+      "Couldn't send your details. Please try again.",
+    );
   });
 });

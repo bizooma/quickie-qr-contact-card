@@ -1,7 +1,7 @@
 import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useId, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, ExternalLink, Eye, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -385,6 +385,7 @@ function Editor({
                 <div className="flex flex-1 items-center rounded-md border bg-background pl-3 text-sm text-muted-foreground">
                   /c/
                   <input
+                    aria-label="Card address"
                     className="h-9 flex-1 bg-transparent pr-3 text-foreground outline-none"
                     value={slugDraft}
                     onChange={(e) => setSlugDraft(e.target.value)}
@@ -454,6 +455,7 @@ function Editor({
                     </SelectContent>
                   </Select>
                   <Input
+                    aria-label="Link label"
                     placeholder="Label"
                     value={l.label}
                     onChange={(e) =>
@@ -500,6 +502,7 @@ function Editor({
                   </Button>
                 </div>
                 <Input
+                  aria-label="Link URL"
                   placeholder="https://"
                   value={l.url}
                   onChange={(e) => {
@@ -642,7 +645,13 @@ function swap<T>(arr: T[], a: number, b: number): T[] {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1.5"><Label>{label}</Label>{children}</div>;
+  // The label points at the single control inside, so screen readers name it.
+  const id = useId();
+  const control =
+    isValidElement<{ id?: string }>(children) && (children.type === Input || children.type === Textarea)
+      ? cloneElement(children, { id: children.props.id ?? id })
+      : children;
+  return <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label>{control}</div>;
 }
 
 function MultiValue({ title, items, onChange, type, defaultLabel }: { title: string; items: LabeledValue[]; onChange: (v: LabeledValue[]) => void; type: string; defaultLabel: string }) {
@@ -650,8 +659,8 @@ function MultiValue({ title, items, onChange, type, defaultLabel }: { title: str
     <div className="space-y-2"><Label>{title}</Label>
       {items.map((it, i) => (
         <div key={i} className="flex gap-2">
-          <Input className="w-28" value={it.label} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-          <Input type={type} value={it.value} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
+          <Input className="w-28" aria-label={`${title} label`} value={it.label} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+          <Input type={type} aria-label={title} value={it.value} onChange={(e) => onChange(items.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
           <Button size="icon" variant="ghost" onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label="Remove"><X className="h-4 w-4" /></Button>
         </div>
       ))}

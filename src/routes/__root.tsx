@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/use-auth";
 import { initMonitoring } from "@/lib/monitoring";
+import { captureAttribution } from "@/lib/attribution";
+import { initMetaPixel } from "@/lib/meta-pixel";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -133,6 +135,14 @@ function RootComponent() {
   // dev server and HMR otherwise).
   useEffect(() => {
     initMonitoring();
+    // Remember what brought this browser here (UTM, Facebook click, a card's
+    // referral link) for the signup that may follow; load the Meta pixel.
+    try {
+      captureAttribution(localStorage, new URL(window.location.href), document.referrer);
+    } catch {
+      // storage blocked — the signup stays unattributed
+    }
+    initMetaPixel(window.location.pathname);
     if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").catch(() => {
       // Offline support is progressive enhancement; the app works without it.

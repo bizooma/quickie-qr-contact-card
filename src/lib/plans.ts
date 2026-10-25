@@ -115,6 +115,10 @@ export function formatResetDate(now = new Date()): string {
 }
 
 /** The exact Pro AI benefit line used everywhere Pro is described. */
+/** Starter scan credits a card owner earns when a visitor to their card signs up
+ *  (mirrors record_signup_attribution in the database). */
+export const REFERRAL_BONUS_SCANS = 5;
+
 export const PRO_AI_BENEFIT = `${PLAN_LIMITS.pro.scan} AI card scans + ${PLAN_LIMITS.pro.follow_up} follow-up drafts every month — resets monthly.`;
 
 /** How scans are counted: per business card read, not per photo or batch. */

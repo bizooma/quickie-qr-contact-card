@@ -33,9 +33,11 @@ export const ScannedContactSchema = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   website: z.string().nullable(),
+  // The person's LinkedIn profile, as a full URL.
+  linkedin_url: z.string().nullable(),
   // Postal/street address as printed on the card, single line.
   address: z.string().nullable(),
-  // Anything else legible on the card: social handles, taglines, handwritten notes.
+  // Anything else legible on the card: other social handles, taglines, handwritten notes.
   extra: z.string().nullable(),
   // Zero-based index of the uploaded photo this card was found in.
   source_image_index: z.number().int().min(0),

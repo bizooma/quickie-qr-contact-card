@@ -149,6 +149,8 @@ function ScanPage() {
             company: c.company?.trim() || null,
             email: c.email?.trim() || null,
             phone: c.phone?.trim() || null,
+            website: c.website?.trim() || null,
+            linkedin_url: c.linkedin_url?.trim() || null,
             address: c.address?.trim() || null,
             met_at: metAt.trim() || null,
             source: "scan",
@@ -179,12 +181,10 @@ function ScanPage() {
           `${photoFailures} headshot${photoFailures > 1 ? "s" : ""} could not be uploaded — the contact${photoFailures > 1 ? "s were" : " was"} saved without ${photoFailures > 1 ? "them" : "it"}`,
         );
       }
+      // Whatever else was printed (taglines, other handles) becomes a note.
       const extras = (rows ?? []).flatMap((row, i) => {
-        const c = chosen[i];
-        const parts = [c?.website && `Website: ${c.website}`, c?.extra].filter(Boolean);
-        return parts.length
-          ? [{ contact_id: row.id, user_id: user.id, body: (parts as string[]).join("\n") }]
-          : [];
+        const extra = chosen[i]?.extra?.trim();
+        return extra ? [{ contact_id: row.id, user_id: user.id, body: extra }] : [];
       });
       if (extras.length) {
         const { error: nerr } = await supabase.from("contact_notes").insert(extras);
@@ -349,12 +349,16 @@ function ScanPage() {
                       ["email", "Email"],
                       ["phone", "Phone"],
                       ["website", "Website"],
+                      ["linkedin_url", "LinkedIn"],
                       ["address", "Address"],
                     ] as const
                   ).map(([k, l]) => (
                     <div key={k} className="space-y-1">
-                      <Label className="text-xs">{l}</Label>
+                      <Label htmlFor={`scan-${i}-${k}`} className="text-xs">
+                        {l}
+                      </Label>
                       <Input
+                        id={`scan-${i}-${k}`}
                         value={c[k] ?? ""}
                         onChange={(e) => edit(i, { [k]: e.target.value })}
                       />

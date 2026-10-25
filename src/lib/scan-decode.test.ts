@@ -91,6 +91,7 @@ function sc(p: Partial<ScannedContact>): ScannedContact {
     email: null,
     phone: null,
     website: null,
+    linkedin_url: null,
     address: null,
     extra: null,
     source_image_index: 0,

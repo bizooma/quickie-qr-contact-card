@@ -54,7 +54,10 @@ export const scanCards = createServerFn({ method: "POST" })
         "Copy values exactly as printed (correct obvious OCR-style misreads only). " +
         "Normalize phone numbers to include the country code when it is printed. " +
         "Put the postal address in `address` as a single line, exactly as printed. " +
-        "Put social handles, taglines, or handwritten text in `extra`. " +
+        "Put the company or personal website in `website` and the person's LinkedIn profile " +
+        "in `linkedin_url` as a full URL (an @handle or /in/handle next to a LinkedIn icon " +
+        "becomes https://linkedin.com/in/handle). " +
+        "Put other social handles, taglines, or handwritten text in `extra`. " +
         "Use null for anything not on the card — never invent a value. " +
         "Skip anything that is clearly not a business card. " +
         "`source_image_index` is the zero-based position, in the order given, of the photo " +

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { buildVCard, contrastText, type CardData } from "@/lib/card-model";
@@ -218,13 +219,20 @@ function PublicCard() {
         </button>
       </div>
       <footer className="pb-10 text-center">
-        <Link
-          to="/"
+        {/* Referral link: the landing page remembers the card, and a signup from
+            it earns the owner bonus scans (record_signup_attribution). */}
+        <a
+          href={`/?ref=card&c=${encodeURIComponent(slug)}`}
           className="text-xs opacity-60 hover:opacity-100"
           style={{ color: contrastText(card.background_color) }}
+          onClick={() => {
+            supabase
+              .rpc("log_card_event", { _slug: slug, _event: "click", _meta: "Create your own card" })
+              .then(undefined, () => {});
+          }}
         >
           Create your own card · ContactKickstart
-        </Link>
+        </a>
       </footer>
       <ShareBack slug={slug} name={card.full_name} open={open} onOpenChange={setOpen} />
     </div>
@@ -235,10 +243,14 @@ function ShareBack({ slug, name, open, onOpenChange }: { slug: string; name: str
   const [f, setF] = useState({ name: "", email: "", phone: "", company: "", note: "" });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const first = name.split(" ")[0] || "me";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!f.email.trim() && !f.phone.trim()) { toast.error("Add an email or phone number"); return; }
+    if (!f.email.trim() && !f.phone.trim()) {
+      toast.error(`Add an email or phone number so ${first} can reach you.`);
+      return;
+    }
     setBusy(true);
     try {
       // Server function: saves via the same RPC, then notifies the card owner.
@@ -253,8 +265,9 @@ function ShareBack({ slug, name, open, onOpenChange }: { slug: string; name: str
         },
       });
       setDone(true);
-    } catch {
-      toast.error("Couldn't send your details. Please try again.");
+    } catch (err) {
+      // Server function messages are already visitor-safe (sharebackErrorMessage).
+      toast.error(err instanceof Error ? err.message : "Couldn't send your details. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -264,15 +277,48 @@ function ShareBack({ slug, name, open, onOpenChange }: { slug: string; name: str
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <div className="mx-auto w-full max-w-md px-6 pb-8">
-          <DrawerHeader className="px-0"><DrawerTitle>{done ? "Sent!" : `Share your details with ${name.split(" ")[0] || "me"}`}</DrawerTitle></DrawerHeader>
-          {done ? <p className="text-sm text-muted-foreground">Thanks — {name.split(" ")[0]} now has your details.</p> : (
+          <DrawerHeader className="px-0"><DrawerTitle>{done ? "Sent!" : `Share your details with ${first}`}</DrawerTitle></DrawerHeader>
+          {done ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Thanks — {first} now has your details.</p>
+              {/* The viral loop: the person who just shared is the next card owner. */}
+              <Button asChild className="h-11 w-full">
+                <a href={`/?ref=shareback&c=${encodeURIComponent(slug)}`}>Get your own free card</a>
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                A digital card like this one, with your own QR code and share-back form. Free, no credit card.
+              </p>
+            </div>
+          ) : (
             <form onSubmit={submit} className="space-y-3">
-              <Input required maxLength={120} placeholder="Your name *" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-              <Input type="email" maxLength={255} placeholder="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-              <Input type="tel" maxLength={40} placeholder="Phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-              <Input maxLength={120} placeholder="Company" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />
-              <Textarea maxLength={1000} placeholder="Note (where we met, what you need…)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
+              <div className="space-y-1">
+                <Label htmlFor="sb-name">Your name</Label>
+                <Input id="sb-name" required maxLength={120} autoComplete="name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="sb-email">Email</Label>
+                  <Input id="sb-email" type="email" inputMode="email" maxLength={255} autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="sb-phone">Phone</Label>
+                  <Input id="sb-phone" type="tel" inputMode="tel" maxLength={40} autoComplete="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sb-company">Company <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <Input id="sb-company" maxLength={120} autoComplete="organization" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sb-note">Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <Textarea id="sb-note" maxLength={1000} placeholder="Where we met, what you need…" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
+              </div>
+              <p className="text-xs text-muted-foreground">An email or phone number is needed so {first} can reach you.</p>
               <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Sending…" : "Send my details"}</Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Only {first} receives these details, to follow up with you. Delivered by ContactKickstart —{" "}
+                <a href="/privacy" className="underline">privacy</a>.
+              </p>
             </form>
           )}
         </div>
