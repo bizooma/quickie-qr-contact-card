@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AB_STORAGE_KEY, variantMeta, type HeadlineVariant } from "@/lib/ab";
+import { readAttribution } from "@/lib/attribution";
+import { FRIEND_FIRST_PCT } from "@/lib/referral";
 import { logSiteEvent } from "@/lib/site-events";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,6 +42,15 @@ function AuthPage() {
   const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  // Arrived from someone's invite or card link: say what that gets them.
+  const [invited, setInvited] = useState(false);
+  useEffect(() => {
+    try {
+      setInvited(!!readAttribution(localStorage)["ref_card"]);
+    } catch {
+      setInvited(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (user) navigate({ to: "/app" });
@@ -117,7 +128,9 @@ function AuthPage() {
             ? "Sign in to manage your cards."
             : search.email
               ? "Use this email and your purchase unlocks the moment you're in."
-              : "Your first card is one minute away."}
+              : invited
+                ? `You were invited — your first card is free, and you get ${FRIEND_FIRST_PCT}% off your first month of Pro or Premium.`
+                : "Your first card is one minute away."}
         </p>
         <Button variant="outline" className="mt-8 h-11 w-full" onClick={google}>
           Continue with Google

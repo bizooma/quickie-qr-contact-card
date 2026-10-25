@@ -3,7 +3,25 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, ChevronRight, Lightbulb, LogOut, Rocket, Sparkles } from "lucide-react";
+import {
+  Building2,
+  ChevronRight,
+  Copy,
+  Gift,
+  Lightbulb,
+  LogOut,
+  Rocket,
+  Share2,
+  Sparkles,
+} from "lucide-react";
+import {
+  computeReferralDiscount,
+  FRIEND_FIRST_PCT,
+  MAX_REFERRAL_PCT,
+  REFERRER_FIRST_PCT,
+  REFERRER_ONGOING_PCT,
+  referralLink,
+} from "@/lib/referral";
 import { useDismissedTips } from "@/components/FeatureTip";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -133,6 +151,7 @@ function Settings() {
         </Link>
       </section>
       <PlanSection />
+      <InviteSection />
       <section>
         <h2 className="mb-3 text-lg font-bold">Team</h2>
         <Link to="/app/org" className="surface flex items-center gap-3 px-4 py-3 hover:bg-muted/50">
@@ -196,6 +215,116 @@ function Settings() {
   );
 }
 
+
+type ReferralSummary = {
+  signups: number;
+  paying: number;
+  bonus_pending: number;
+  friend_discount: boolean;
+  card_slug: string | null;
+};
+
+/** Invite friends: their link, the deal, and what it's earning them now. */
+function InviteSection() {
+  const { data: s } = useQuery({
+    queryKey: ["referral-summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_referral_summary");
+      if (error) throw error;
+      return data as unknown as ReferralSummary;
+    },
+  });
+  if (!s) return null;
+  const link = s.card_slug ? referralLink(window.location.origin, s.card_slug) : null;
+  const next = computeReferralDiscount({
+    friend: false,
+    paying: s.paying,
+    pending: s.bonus_pending,
+  }).pct;
+
+  async function copy() {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Could not copy — select the link and copy it instead");
+    }
+  }
+  async function share() {
+    if (!link) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "ContactKickstart",
+          text: `Turn business cards into contacts and follow-ups. Get ${FRIEND_FIRST_PCT}% off your first month of Pro or Premium with my link:`,
+          url: link,
+        });
+        return;
+      } catch {
+        // Cancelled — fall back to copying.
+      }
+    }
+    await copy();
+  }
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-bold">Invite friends</h2>
+      <p className="text-sm text-muted-foreground">
+        Friends who sign up with your link get {FRIEND_FIRST_PCT}% off their first month (or
+        year) of Pro or Premium. When they pay, you get {REFERRER_FIRST_PCT}% off your next
+        payment, then {REFERRER_ONGOING_PCT}% off every payment for as long as they stay
+        subscribed — it stacks, up to {MAX_REFERRAL_PCT}% off with{" "}
+        {MAX_REFERRAL_PCT / REFERRER_ONGOING_PCT} paying friends. You also get 5 bonus AI scans for
+        every friend who signs up.
+      </p>
+      {link ? (
+        <div className="surface space-y-3 p-4">
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              aria-label="Your invite link"
+              value={link}
+              onFocus={(e) => e.currentTarget.select()}
+              className="h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"
+            />
+            <Button size="sm" variant="outline" onClick={() => void copy()}>
+              <Copy className="h-3.5 w-3.5" />
+              Copy
+            </Button>
+            <Button size="sm" onClick={() => void share()}>
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </Button>
+          </div>
+          <dl className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <dt className="text-xs text-muted-foreground">Signed up</dt>
+              <dd className="text-lg font-bold tabular-nums">{s.signups}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Paying</dt>
+              <dd className="text-lg font-bold tabular-nums">{s.paying}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Your next payment</dt>
+              <dd className="text-lg font-bold tabular-nums">{next}% off</dd>
+            </div>
+          </dl>
+          <p className="text-xs text-muted-foreground">
+            Discounts apply to your own Pro or Premium subscription (Teams bills aren't
+            discounted). No subscription yet? They're applied when you start one.
+          </p>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Create your card first — your invite link is based on it.
+        </p>
+      )}
+    </section>
+  );
+}
 
 /** Brings back every "how this works" tip the user turned off. */
 function TipsSection() {
@@ -390,6 +519,12 @@ function PlanSection() {
         </div>
       ) : (
         <div className="space-y-2">
+          {billing.referralPct > 0 && (
+            <p className="flex items-center gap-2 rounded-xl bg-brand-soft px-3 py-2 text-sm font-medium text-foreground">
+              <Gift className="h-4 w-4 shrink-0 text-brand" />
+              Referral discount: {billing.referralPct}% off your first payment, applied at checkout.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             {billing.plan === "free" && (
               <>

@@ -5,7 +5,8 @@ import type Stripe from "stripe";
 // verification uses WebCrypto (constructEventAsync) so it runs on Workers.
 // Configure the endpoint in Stripe as POST <site>/api/stripe-webhook with
 // events: checkout.session.completed, customer.subscription.updated,
-// customer.subscription.deleted.
+// customer.subscription.deleted, invoice.created (referral discounts on
+// renewals).
 //
 // Every database write is checked: a failure answers 500 so Stripe retries,
 // and each event id is recorded first so a retry of something that did land
@@ -139,7 +140,18 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
           .eq("id", userId),
         "checkout update",
       );
+      // Referral discount: a referred friend's first payment starts their
+      // referrer's rewards; record what this checkout's coupon used up.
+      const { markFriendPaid, markBonusesApplied } = await import("@/lib/referral.server");
+      await markFriendPaid(userId, session.metadata?.["ck_ref_friend"] === "1");
+      const bonus = session.metadata?.["ck_ref_bonus"];
+      if (bonus) await markBonusesApplied(bonus.split(",").filter(Boolean));
     }
+    return;
+  }
+
+  if (event.type === "invoice.created") {
+    await applyReferralToRenewal(event.data.object, supabaseAdmin);
     return;
   }
 
@@ -211,4 +223,39 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
     "subscription lapse",
   );
   must(await supabaseAdmin.rpc("restore_entitlement_plan", { _user: profile.id }), "restore plan");
+}
+
+/** A renewal invoice is a draft for about an hour: put the referrer's discount
+ *  on it (20% for each friend's first payment, 10% per paying friend, capped
+ *  at 100%). Teams bills are left alone. */
+async function applyReferralToRenewal(
+  invoice: Stripe.Invoice,
+  supabaseAdmin: Admin,
+): Promise<void> {
+  const subRef = invoice.parent?.subscription_details?.subscription;
+  const subId = typeof subRef === "string" ? subRef : subRef?.id;
+  if (!invoice.id || invoice.status !== "draft" || invoice.billing_reason !== "subscription_cycle")
+    return;
+  if (!subId) return;
+  const { data: profile, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id, team_seats")
+    .eq("stripe_subscription_id", subId)
+    .maybeSingle();
+  if (error) throw new WriteFailed(`profile lookup: ${error.message}`);
+  if (!profile || (profile.team_seats ?? 0) > 0) return;
+
+  const { referralDiscountFor, ensureReferralCoupon, markBonusesApplied } =
+    await import("@/lib/referral.server");
+  const ref = await referralDiscountFor(profile.id, false);
+  if (ref.pct <= 0) return;
+  const { getStripe } = await import("@/lib/stripe.server");
+  const stripe = getStripe();
+  const coupon = await ensureReferralCoupon(stripe, ref.pct);
+  // Keep any discount already on the invoice (a promo code on the subscription).
+  const existing = (invoice.discounts ?? []).map((d) => ({
+    discount: typeof d === "string" ? d : d.id,
+  }));
+  await stripe.invoices.update(invoice.id, { discounts: [...existing, { coupon }] });
+  await markBonusesApplied(ref.bonusIds);
 }
