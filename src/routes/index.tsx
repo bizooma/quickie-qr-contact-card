@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { createCheckout, getBillingState } from "@/lib/billing.functions";
 import {
   ArrowRight,
   BarChart3,
@@ -152,6 +155,76 @@ function Cta({
       >
         {label} <ArrowRight className="h-4 w-4" />
       </Link>
+    </Button>
+  );
+}
+
+const PLAN_RANK = { free: 0, pro: 1, premium: 2 } as const;
+
+/** A pricing card's button. Signed out (or still loading): the usual signup
+ *  CTA. Signed in: "Your current plan", "Included in your plan", or a direct
+ *  upgrade to that tier for the period shown — Pro subscribers moving to
+ *  Premium switch in Settings, where the prorated charge is confirmed. */
+function PlanCta({
+  target,
+  period,
+  fallback,
+}: {
+  target: "free" | "pro" | "premium";
+  period: "monthly" | "annual";
+  fallback: React.ReactNode;
+}) {
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const { data: billing } = useQuery({
+    queryKey: ["billing"],
+    queryFn: () => getBillingState(),
+    enabled: !!user,
+  });
+  if (!user || !billing) return <>{fallback}</>;
+  if (billing.plan === target)
+    return (
+      <Button variant="outline" disabled>
+        <CheckCircle2 className="h-4 w-4" />
+        Your current plan
+      </Button>
+    );
+  if (PLAN_RANK[billing.plan] > PLAN_RANK[target])
+    return (
+      <Button variant="outline" disabled>
+        Included in your plan
+      </Button>
+    );
+  const name = target === "premium" ? "Premium" : "Pro";
+  if (target === "premium" && billing.plan === "pro" && billing.hasSubscription)
+    return (
+      <Button asChild>
+        <Link to="/app/settings" hash="plan">
+          Upgrade to Premium <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    );
+  return (
+    <Button
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        logSiteEvent("cta_click", `pricing-upgrade-${target}`);
+        try {
+          const { url } = await createCheckout({
+            data: {
+              plan: target as "pro" | "premium",
+              interval: period === "annual" ? "year" : "month",
+            },
+          });
+          window.location.href = url;
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Could not start checkout");
+          setBusy(false);
+        }
+      }}
+    >
+      Upgrade to {name} <ArrowRight className="h-4 w-4" />
     </Button>
   );
 }
@@ -625,7 +698,11 @@ function Landing() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Cta label="Start free" from="pricing-free" ab={ab} size="default" />
+                <PlanCta
+                  target="free"
+                  period={period}
+                  fallback={<Cta label="Start free" from="pricing-free" ab={ab} size="default" />}
+                />
               </div>
             </div>
             <div data-reveal="1" className="surface card-lift relative border-2 border-brand p-7">
@@ -673,7 +750,18 @@ function Landing() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Cta label="Start free, upgrade in-app" from="pricing-pro" ab={ab} size="default" />
+                <PlanCta
+                  target="pro"
+                  period={period}
+                  fallback={
+                    <Cta
+                      label="Start free, upgrade in-app"
+                      from="pricing-pro"
+                      ab={ab}
+                      size="default"
+                    />
+                  }
+                />
               </div>
             </div>
             <div data-reveal="2" className="surface card-lift border border-pop-amber/60 p-7">
@@ -715,11 +803,17 @@ function Landing() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Cta
-                  label="Start free, go Premium in-app"
-                  from="pricing-premium"
-                  ab={ab}
-                  size="default"
+                <PlanCta
+                  target="premium"
+                  period={period}
+                  fallback={
+                    <Cta
+                      label="Start free, go Premium in-app"
+                      from="pricing-premium"
+                      ab={ab}
+                      size="default"
+                    />
+                  }
                 />
               </div>
             </div>

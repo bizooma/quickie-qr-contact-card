@@ -27,6 +27,16 @@ export async function uploadContactImage(userId: string, blob: Blob): Promise<st
   return path;
 }
 
+/** Stores the person's own profile photo (cropped in the photo editor). */
+export async function uploadAvatar(userId: string, blob: Blob): Promise<string> {
+  const path = `${userId}/avatars/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (error) throw error;
+  return path;
+}
+
 /** Stores a contact's headshot (cropped from a scanned card) under the owner's folder. */
 export const uploadContactPhoto = uploadContactImage;
 

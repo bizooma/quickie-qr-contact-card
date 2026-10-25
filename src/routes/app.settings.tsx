@@ -79,6 +79,8 @@ import {
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
 import { ProUpsell, usePlan } from "@/components/PremiumGate";
+import { ProfilePhotoPicker } from "@/components/ProfilePhotoPicker";
+import { NextTierCard } from "@/components/NextTierCard";
 
 export const Route = createFileRoute("/app/settings")({ head: appHead('Settings', 'Manage your profile, cards and account.'), component: Settings });
 
@@ -131,6 +133,7 @@ function Settings() {
       <h1 className="text-3xl font-bold">Settings</h1>
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Profile</h2>
+        <ProfilePhotoPicker />
         <div className="space-y-1">
           <Label htmlFor="profile-email">Email</Label>
           <Input id="profile-email" value={user?.email ?? ""} disabled />
@@ -582,60 +585,16 @@ function PlanSection() {
               Referral discount: {billing.referralPct}% off your first payment, applied at checkout.
             </p>
           )}
-          <div className="flex flex-wrap gap-2">
-            {billing.plan === "free" && (
-              <>
-                <Button
-                  disabled={busy || !billing.stripeConfigured}
-                  onClick={() => upgrade("pro", "month")}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Upgrade to Pro — {PRO_PRICE_LABEL}
-                </Button>
-                {billing.annualConfigured && (
-                  <Button
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => upgrade("pro", "year")}
-                    className="border-brand"
-                  >
-                    {PRO_ANNUAL_PRICE_LABEL} — {annualFreeMonths()} months free
-                  </Button>
-                )}
-              </>
-            )}
-            {billing.hasSubscription ? (
-              <Button
-                variant="outline"
-                disabled={busy || !billing.stripeConfigured}
-                onClick={manage}
-              >
-                Manage billing / switch plan
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant={billing.plan === "pro" ? "default" : "outline"}
-                  disabled={busy || !billing.premiumConfigured}
-                  onClick={() => upgrade("premium")}
-                  className={billing.plan === "pro" ? undefined : "border-brand"}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Go Premium — {PREMIUM_PRICE_LABEL}
-                </Button>
-                {billing.premiumAnnualConfigured && (
-                  <Button
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => upgrade("premium", "year")}
-                    className="border-brand"
-                  >
-                    {PREMIUM_ANNUAL_PRICE_LABEL} — {premiumAnnualFreeMonths()} months free
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+          <NextTierCard
+            billing={billing}
+            busy={busy}
+            onCheckout={(plan, interval) => void upgrade(plan, interval)}
+          />
+          {billing.hasSubscription && (
+            <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
+              Manage billing
+            </Button>
+          )}
           {billing.topupPacks.length > 0 && (
             <div id="top-ups" className="flex scroll-mt-20 flex-wrap items-center gap-2">
               <span className="w-full text-xs font-semibold text-muted-foreground">

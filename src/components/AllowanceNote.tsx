@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,11 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
           {limitReachedMessage(data.plan, kind)}
         </p>
-        <UpgradeButtons plan={data.plan} packs={packs} />
+        <UpgradeButtons
+          plan={data.plan}
+          packs={packs}
+          switchInSettings={data.plan === "pro" && data.hasSubscription}
+        />
       </div>
     );
   }
@@ -63,7 +68,11 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
       </p>
       {runningLow && (
         <div className="mt-1.5">
-          <UpgradeButtons plan={data.plan} packs={packs} />
+          <UpgradeButtons
+            plan={data.plan}
+            packs={packs}
+            switchInSettings={data.plan === "pro" && data.hasSubscription}
+          />
         </div>
       )}
     </div>
@@ -71,7 +80,16 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
 }
 
 /** Straight to Stripe Checkout; Settings stays the fallback when billing isn't set up. */
-function UpgradeButtons({ plan, packs }: { plan: PlanId; packs: TopupPack[] }) {
+function UpgradeButtons({
+  plan,
+  packs,
+  switchInSettings,
+}: {
+  plan: PlanId;
+  packs: TopupPack[];
+  /** A Pro subscriber moves to Premium in Settings (prorated, confirmed). */
+  switchInSettings: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const next = plan === "free" ? "pro" : "premium";
   const label =
@@ -91,12 +109,20 @@ function UpgradeButtons({ plan, packs }: { plan: PlanId; packs: TopupPack[] }) {
   if (plan === "premium" && packs.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2">
-      {plan !== "premium" && (
-        <Button size="sm" disabled={busy} onClick={() => void go(next)}>
-          <Sparkles className="h-3.5 w-3.5" />
-          {label}
-        </Button>
-      )}
+      {plan !== "premium" &&
+        (switchInSettings ? (
+          <Button size="sm" asChild>
+            <Link to="/app/settings" hash="plan">
+              <Sparkles className="h-3.5 w-3.5" />
+              {label}
+            </Link>
+          </Button>
+        ) : (
+          <Button size="sm" disabled={busy} onClick={() => void go(next)}>
+            <Sparkles className="h-3.5 w-3.5" />
+            {label}
+          </Button>
+        ))}
       {packs.map((pack) => (
         <Button
           key={pack}

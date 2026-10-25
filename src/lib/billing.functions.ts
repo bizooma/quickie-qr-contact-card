@@ -6,6 +6,7 @@ import { requireActiveAuth } from "@/lib/auth-guard";
 import {
   effectivePlan,
   monthlyLimit,
+  premiumPriceFor,
   USAGE_KINDS,
   type PlanId,
   type UsageKind,
@@ -268,6 +269,55 @@ export const createCheckout = createServerFn({ method: "POST" })
     });
     if (!session.url) throw new Error("Stripe did not return a checkout link. Try again.");
     return { url: session.url };
+  });
+
+/** Moves a Pro subscription to Premium in place, keeping its billing
+ *  interval. Stripe charges the prorated difference now and the change only
+ *  applies once that payment succeeds. The webhook also reads the tier from
+ *  the new price; the profile is updated here too so the app reflects it at
+ *  once. */
+export const upgradeToPremium = createServerFn({ method: "POST" })
+  .middleware([requireActiveAuth])
+  .handler(async ({ context }) => {
+    const { getStripe, isStripeConfigured, stripeEnv } = await import("./stripe.server");
+    if (!isStripeConfigured()) throw new Error("Billing isn't configured yet.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_expires_at, stripe_subscription_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (effectivePlan(profile?.plan, profile?.plan_expires_at) === "premium")
+      throw new Error("You're already on Premium.");
+    const subId = profile?.stripe_subscription_id;
+    if (!subId) throw new Error("There's no subscription to upgrade — choose Premium instead.");
+    const env = stripeEnv();
+    const stripe = getStripe();
+    const sub = await stripe.subscriptions.retrieve(subId);
+    const item = sub.items.data[0];
+    const target = premiumPriceFor(item?.price?.id, {
+      pro: env.priceId,
+      proAnnual: env.annualPriceId,
+      premium: env.premiumPriceId,
+      premiumAnnual: env.premiumAnnualPriceId,
+    });
+    if (!item || !target)
+      throw new Error("This subscription can't be switched here — use Manage billing.");
+    const updated = await stripe.subscriptions.update(sub.id, {
+      items: [{ id: item.id, price: target }],
+      proration_behavior: "always_invoice",
+      payment_behavior: "pending_if_incomplete",
+    });
+    if (updated.pending_update)
+      throw new Error(
+        "Your payment didn't go through, so you're still on Pro — update your card in Manage billing and try again.",
+      );
+    await supabaseAdmin
+      .from("profiles")
+      .update({ plan: "premium", plan_expires_at: null })
+      .eq("id", context.userId)
+      .eq("stripe_subscription_id", sub.id);
+    return { ok: true };
   });
 
 /** Opens the Stripe billing portal so Pro users can manage or cancel. */

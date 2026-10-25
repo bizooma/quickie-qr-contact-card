@@ -1,8 +1,16 @@
 import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Copy, Lightbulb, Share2, Smartphone } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Lightbulb,
+  Share2,
+  Smartphone,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,10 +23,14 @@ import {
   type QrCenterImage,
 } from "@/components/card/QrPanel";
 import { usePlan } from "@/components/PremiumGate";
+import { useAuth } from "@/hooks/use-auth";
+import { PLAN_LIMITS } from "@/lib/plans";
 import { parseQrCenter, qrCenterSource } from "@/lib/qr-logo";
 import {
+  cycleIndex,
   getOpenOnQr,
   setOpenOnQr,
+  swipeStep,
   WALLPAPER_H,
   WALLPAPER_W,
   wallpaperLayout,
@@ -41,7 +53,10 @@ type QrSnapshot = {
 
 const QR_CACHE_KEY = "ck-qr-card";
 
-export const Route = createFileRoute("/app/qr")({ head: appHead('QR code', "Show your card's QR code full screen."), component: QuickQr });
+export const Route = createFileRoute("/app/qr")({
+  head: appHead("QR code", "Show your card's QR code full screen."),
+  component: QuickQr,
+});
 
 function readSnapshot(): QrSnapshot | null {
   try {
@@ -93,9 +108,18 @@ function QuickQr() {
   const [snap, setSnap] = useState<QrSnapshot | null>(() => readSnapshot());
   const [chosen, setChosen] = useState<string | null>(null);
   const { data: cards } = useQuery({ queryKey: ["cards"], queryFn: listCards });
+  const { user } = useAuth();
 
   const { plan } = usePlan();
-  const fresh = cards?.find((c) => c.slug === (chosen ?? snap?.slug)) ?? cards?.[0];
+  // Only the person's own cards: team members can also read teammates' cards.
+  const mine = cards?.filter((c) => c.user_id === user?.id);
+  // Swiping between cards is for plans with more than one card. A free
+  // account (e.g. after a downgrade) shows its first card, the one it edits.
+  const canSwipe = !!plan && PLAN_LIMITS[plan].cards > 1 && (mine?.length ?? 0) > 1;
+  const fresh =
+    plan === "free"
+      ? mine?.[0]
+      : (mine?.find((c) => c.slug === (chosen ?? snap?.slug)) ?? mine?.[0]);
   const source = fresh
     ? qrCenterSource(
         parseQrCenter(fresh.qr_center),
@@ -142,6 +166,23 @@ function QuickQr() {
   );
   const url = view ? publicCardUrl(view.slug) : "";
   const [openOnQr, setOpenOnQrState] = useState(getOpenOnQr);
+  const [slideFrom, setSlideFrom] = useState<"left" | "right" | null>(null);
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const index =
+    mine && view
+      ? Math.max(
+          0,
+          mine.findIndex((c) => c.slug === view.slug),
+        )
+      : 0;
+
+  function step(delta: number) {
+    if (!canSwipe || !mine) return;
+    const next = mine[cycleIndex(index, delta, mine.length)];
+    if (!next) return;
+    setSlideFrom(delta > 0 ? "right" : "left");
+    setChosen(next.slug);
+  }
   const [savingWallpaper, setSavingWallpaper] = useState(false);
 
   async function saveWallpaper() {
@@ -212,40 +253,90 @@ function QuickQr() {
         Cards
       </Link>
 
-      <div className="w-full rounded-3xl bg-white p-6 text-center shadow-float">
-        {svg ? (
-          <div
-            className="mx-auto w-full max-w-[320px] [&_svg]:h-auto [&_svg]:w-full"
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        ) : (
-          <div className="mx-auto aspect-square w-full max-w-[320px] animate-pulse rounded-2xl bg-stone-100" />
-        )}
-        <p className="mt-4 font-display text-xl font-bold text-stone-900">{view.full_name}</p>
-        <p
-          className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: view.accent }}
+      <div
+        className="relative w-full touch-pan-y select-none"
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          touch.current = t ? { x: t.clientX, y: t.clientY } : null;
+        }}
+        onTouchEnd={(e) => {
+          const start = touch.current;
+          const t = e.changedTouches[0];
+          touch.current = null;
+          if (start && t) step(swipeStep(t.clientX - start.x, t.clientY - start.y));
+        }}
+      >
+        <div
+          key={view.slug}
+          className={`w-full rounded-3xl bg-white p-6 text-center shadow-float ${
+            slideFrom === "right"
+              ? "animate-in fade-in slide-in-from-right-8 duration-200"
+              : slideFrom === "left"
+                ? "animate-in fade-in slide-in-from-left-8 duration-200"
+                : ""
+          }`}
         >
-          {view.label}
-        </p>
-        <p className="mt-1 break-all text-xs text-stone-400">{url.replace(/^https?:\/\//, "")}</p>
+          {svg ? (
+            <div
+              className="mx-auto w-full max-w-[320px] [&_svg]:h-auto [&_svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          ) : (
+            <div className="mx-auto aspect-square w-full max-w-[320px] animate-pulse rounded-2xl bg-stone-100" />
+          )}
+          <p className="mt-4 font-display text-xl font-bold text-stone-900">{view.full_name}</p>
+          <p
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: view.accent }}
+          >
+            {view.label}
+          </p>
+          <p className="mt-1 break-all text-xs text-stone-400">{url.replace(/^https?:\/\//, "")}</p>
+        </div>
+        {canSwipe && (
+          <>
+            <button
+              type="button"
+              onClick={() => step(-1)}
+              aria-label="Previous card"
+              className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background p-2 shadow-soft transition-colors hover:bg-muted"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => step(1)}
+              aria-label="Next card"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-background p-2 shadow-soft transition-colors hover:bg-muted"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
       </div>
 
-      {cards && cards.length > 1 && (
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          {cards.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setChosen(c.slug)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                c.slug === view.slug
-                  ? "border-brand bg-brand-soft text-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+      {canSwipe && mine && (
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2" role="tablist" aria-label="Your cards">
+            {mine.map((c, i) => (
+              <button
+                key={c.id}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={c.label}
+                onClick={() => step(i - index)}
+                className={`h-2 rounded-full transition-all ${
+                  i === index
+                    ? "w-6 bg-brand"
+                    : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Swipe for your other cards · {index + 1} of {mine.length}
+          </p>
         </div>
       )}
 
