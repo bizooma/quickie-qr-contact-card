@@ -58,6 +58,7 @@ export type BillingState = {
   teamSeats: number; // seats this user has purchased (0 = not a team owner)
   credits: { scan: number; follow_up: number }; // one-time starter-pack credits
   usage: Record<UsageKind, { used: number; limit: number | null }>; // null limit = unlimited
+  sharebacksUsed: number | null; // free only: share-backs collected toward FREE_SHAREBACK_LIMIT
 };
 
 /** Plan + this month's usage for the settings page. */
@@ -102,6 +103,15 @@ export const getBillingState = createServerFn({ method: "POST" })
         referralPct = 0;
       }
     }
+    let sharebacksUsed: number | null = null;
+    if (plan === "free") {
+      const { count } = await supabaseAdmin
+        .from("contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", context.userId)
+        .eq("source", "shareback");
+      sharebacksUsed = count ?? 0;
+    }
     const usage = Object.fromEntries(
       USAGE_KINDS.map((k, i) => {
         const limit = monthlyLimit(plan, k);
@@ -126,6 +136,7 @@ export const getBillingState = createServerFn({ method: "POST" })
       teamSeats: profile?.team_seats ?? 0,
       credits,
       usage,
+      sharebacksUsed,
     };
   });
 

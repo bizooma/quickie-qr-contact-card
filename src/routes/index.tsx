@@ -22,6 +22,7 @@ import { DEMO_CARD_PATH, LiveCardButton, LiveCardDialog } from "@/components/Liv
 import { useAuth } from "@/hooks/use-auth";
 import {
   annualFreeMonths,
+  FREE_SHAREBACK_LIMIT,
   PLAN_LIMITS,
   PREMIUM_ANNUAL_PRICE_LABEL,
   PREMIUM_ANNUAL_USD,
@@ -38,6 +39,7 @@ import {
   TEAM_SEAT_MONTHLY_USD,
   TEAM_SEAT_PRICE_LABEL,
   teamAnnualFreeMonths,
+  TOPUP_PACKS,
 } from "@/lib/plans";
 import {
   AB_STORAGE_KEY,
@@ -160,7 +162,6 @@ function perMonth(annualUsd: number): string {
 
 function Landing() {
   const { user } = useAuth();
-  const free = PLAN_LIMITS.free;
   const ab = useHeadlineVariant();
   const headline = HEADLINES[ab ?? "a"];
   const [period, setPeriod] = useState<"monthly" | "annual">("monthly");
@@ -385,7 +386,7 @@ function Landing() {
               {
                 i: Bell,
                 t: "Know the moment they share back",
-                d: "Push notifications on your phone, plus webhooks into Make, Zapier or your CRM when a new contact arrives.",
+                d: "On Pro: push notifications on your phone, plus webhooks into Make, Zapier or your CRM when a new contact arrives.",
               },
             ].map(({ i: I, t, d }, idx) => {
               const tones = [
@@ -609,12 +610,11 @@ function Landing() {
               <ul className="mt-5 space-y-2.5 text-sm">
                 {[
                   "1 digital card with QR code & your own link",
-                  "Share-back contact capture, unlimited",
-                  `${free.scan} AI card scans / month (1 card = 1 scan)`,
-                  `${free.follow_up} AI follow-up drafts, ${free.enrich} contact enrichments & ${free.summarize} note summaries / month`,
+                  `Collect up to ${FREE_SHAREBACK_LIMIT} contacts through “Share yours”`,
+                  "Scan QR codes & digital contact cards",
                   "Views, saves & click analytics",
                   "Export contacts to your phone or any CRM (CSV)",
-                  "Push & webhook notifications",
+                  `Try AI card scans with a $${TOPUP_PACKS.small.usd} top-up`,
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
@@ -659,6 +659,8 @@ function Landing() {
                   PRO_AI_BENEFIT,
                   "1 card = 1 scan, so 100 scans reads 100 cards",
                   `${PLAN_LIMITS.pro.enrich} AI contact enrichments a month & note summaries`,
+                  "Unlimited share-backs, with an instant alert for each",
+                  "Webhooks into Zapier, Make or your CRM",
                   "Event mode: tag everyone you meet at an event",
                   "Everything in Free",
                 ].map((t) => (
@@ -798,7 +800,7 @@ function Landing() {
             ],
             [
               "What does the free plan include, forever?",
-              `One card with QR and link, unlimited share-back capture, analytics, notifications, and ${free.scan} AI card scans a month. No credit card to start, no trial clock.`,
+              `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try ContactKickstart before you pay. AI scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
             ],
             [
               "What happens if I cancel a paid plan?",

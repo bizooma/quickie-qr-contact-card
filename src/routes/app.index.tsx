@@ -2,7 +2,7 @@ import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Plus, QrCode } from "lucide-react";
+import { ExternalLink, Lock, Plus, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { QrPanel } from "@/components/card/QrPanel";
 import { ScanMyCard } from "@/components/card/ScanMyCard";
 import { useAuth } from "@/hooks/use-auth";
 import { createCard, createCardFromScan, listCards, type CardRow } from "@/lib/cards-api";
-import { initials } from "@/lib/card-model";
+import { initials, lockedCardIds } from "@/lib/card-model";
 import type { ScannedCardFields } from "@/lib/own-card";
 import { signedUrls } from "@/lib/media";
 import { getBillingState } from "@/lib/billing.functions";
@@ -32,6 +32,11 @@ function CardsPage() {
   const { data: billing } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
   const cardLimit = billing ? PLAN_LIMITS[billing.plan].cards : Infinity;
   const atLimit = !!cards && cards.length >= cardLimit;
+  const locked = useMemo(
+    () =>
+      cards && billing && user ? lockedCardIds(cards, user.id, billing.plan) : new Set<string>(),
+    [cards, billing, user],
+  );
   const [qrCard, setQrCard] = useState<CardRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [label, setLabel] = useState("");
@@ -168,8 +173,14 @@ function CardsPage() {
                       {initials(c.full_name || c.label)}
                     </div>
                   )}
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-brand">
+                  <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand">
                     {c.label}
+                    {locked.has(c.id) && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 normal-case tracking-normal text-muted-foreground">
+                        <Lock className="h-3 w-3" />
+                        Locked · upgrade to edit
+                      </span>
+                    )}
                   </p>
                   <p className="font-display text-lg font-bold">{c.full_name || "Untitled"}</p>
                   <p className="truncate text-sm text-muted-foreground">

@@ -8,6 +8,7 @@ import {
   allowanceLine,
   creditEligible,
   formatResetDate,
+  KIND_NOUNS,
   limitReachedMessage,
   PREMIUM_PRICE_LABEL,
   PRO_PRICE_LABEL,
@@ -29,7 +30,8 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
   if (!data || !u || u.limit === null) return null;
   const credits = creditEligible(kind) ? data.credits[kind] : 0;
   const left = Math.max(0, u.limit - u.used);
-  const runningLow = left > 0 && left <= Math.ceil(u.limit * 0.2);
+  const runningLow =
+    u.limit === 0 ? credits > 0 && credits <= 5 : left > 0 && left <= Math.ceil(u.limit * 0.2);
   const packs = creditEligible(kind) ? data.topupPacks : [];
 
   if (left === 0 && credits === 0) {
@@ -51,9 +53,11 @@ export function AllowanceNote({ kind, className = "" }: { kind: UsageKind; class
       <p
         className={`text-xs ${runningLow ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}
       >
-        {left === 0
-          ? `This month's allowance is used up — using your starter credits (${credits} left) · resets ${formatResetDate()}`
-          : allowanceLine(kind, u.used, u.limit)}
+        {u.limit === 0
+          ? `${credits} AI ${KIND_NOUNS[kind]} left from your credits · never expire`
+          : left === 0
+            ? `This month's allowance is used up — using your starter credits (${credits} left) · resets ${formatResetDate()}`
+            : allowanceLine(kind, u.used, u.limit)}
         {left > 0 && credits > 0 && ` · +${credits} starter credits`}
         {kind === "scan" && ` · ${SCAN_UNIT_NOTE}`}
       </p>

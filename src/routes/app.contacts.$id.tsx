@@ -94,6 +94,17 @@ function ContactDetail() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  // Out-of-allowance messages (plans.ts) get a one-tap way to upgrade.
+  const aiError = (e: unknown, fallback: string) => {
+    const msg = e instanceof Error ? e.message : fallback;
+    const upsell = msg.includes("come with Pro") || msg.includes("Need more right now");
+    toast.error(
+      msg,
+      upsell
+        ? { action: { label: "Upgrade", onClick: () => void navigate({ to: "/app/settings" }) } }
+        : undefined,
+    );
+  };
   const {
     data,
     refetch,
@@ -267,7 +278,7 @@ function ContactDetail() {
     try {
       setFollowUp(await draftFollowUp({ data: { contactId: id } }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not draft a follow-up");
+      aiError(e, "Could not draft a follow-up");
     } finally {
       setDrafting(false);
       qc.invalidateQueries({ queryKey: ["billing"] }); // refresh "N of 100 left"
@@ -302,7 +313,7 @@ function ContactDetail() {
       setSuggestions(buildSuggestions(c!, result));
       setEnrichSummary(result.summary);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not enrich this contact");
+      aiError(e, "Could not enrich this contact");
     } finally {
       setEnriching(false);
     }
@@ -345,7 +356,7 @@ function ContactDetail() {
       toast.success("Summary saved as a note");
       refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not summarize this note");
+      aiError(e, "Could not summarize this note");
     } finally {
       setSummarizingId(null);
     }

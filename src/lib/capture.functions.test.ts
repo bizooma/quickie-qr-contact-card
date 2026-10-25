@@ -84,6 +84,7 @@ describe("sharebackErrorMessage", () => {
     ).toMatch(/lot of submissions/);
     expect(sharebackErrorMessage("card not found")).toBe("This card no longer exists.");
     expect(sharebackErrorMessage("email or phone required")).toMatch(/email or phone/);
+    expect(sharebackErrorMessage("shareback closed")).toMatch(/save their contact instead/);
   });
   it("never leaks unexpected database errors", () => {
     expect(sharebackErrorMessage('relation "contacts" does not exist')).toBe(

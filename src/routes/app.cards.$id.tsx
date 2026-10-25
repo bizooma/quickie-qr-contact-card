@@ -2,7 +2,7 @@ import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cloneElement, isValidElement, useCallback, useEffect, useId, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, Check, ExternalLink, Eye, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Check, ExternalLink, Eye, ImagePlus, Lock, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { PhotoEditor } from "@/components/PhotoEditor";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,9 @@ import { mergeScannedIntoCard } from "@/lib/own-card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { designUploads } from "@/lib/background-store";
-import { getCard, rowToCard, saveLinks } from "@/lib/cards-api";
-import { ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, LINK_ICONS, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
+import { getCard, listCards, rowToCard, saveLinks } from "@/lib/cards-api";
+import { usePlan } from "@/components/PremiumGate";
+import { lockedCardIds, ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, LINK_ICONS, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
 import { removeMedia, signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
 import { renderOgImage } from "@/lib/og-image";
 import { cn } from "@/lib/utils";
@@ -30,9 +31,19 @@ export const Route = createFileRoute("/app/cards/$id")({ head: appHead('Edit car
 
 function EditorPage() {
   const { id } = Route.useParams();
+  const { user } = useAuth();
+  const { plan } = usePlan();
   const { data, isLoading } = useQuery({ queryKey: ["card", id], queryFn: () => getCard(id) });
+  const { data: cards } = useQuery({
+    queryKey: ["cards"],
+    queryFn: listCards,
+    enabled: plan === "free",
+  });
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!data?.card) return <p>Card not found. <Link to="/app" className="underline">Back to cards</Link></p>;
+  if (plan === "free" && user && cards && lockedCardIds(cards, user.id, plan).has(id)) {
+    return <LockedCard slug={data.card.slug} label={data.card.label} />;
+  }
   return (
     <Editor
       key={id}
@@ -40,6 +51,46 @@ function EditorPage() {
       initial={rowToCard(data.card, data.links)}
       qrCenter={data.card.qr_center}
     />
+  );
+}
+
+/** A free account's extra card (see lockedCardIds): still live, not editable. */
+function LockedCard({ slug, label }: { slug: string; label: string }) {
+  return (
+    <div className="mx-auto max-w-lg space-y-4">
+      <Link
+        to="/app"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Cards
+      </Link>
+      <div className="surface space-y-3 p-6">
+        <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-foreground">
+          <Lock className="h-3.5 w-3.5" />
+          Locked on the free plan
+        </span>
+        <h1 className="text-2xl font-bold">{label}</h1>
+        <p className="text-sm text-muted-foreground">
+          This card is still live and its QR code still works. The free plan can edit one card, so
+          editing this one needs Pro (up to 3 cards) or Premium (unlimited).
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link to="/app/settings">
+              <Sparkles className="h-4 w-4" />
+              Upgrade to edit
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={`/c/${slug}`} target="_blank" rel="noreferrer">
+              <ExternalLink className="h-4 w-4" />
+              View live card
+            </a>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

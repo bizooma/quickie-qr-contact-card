@@ -362,3 +362,22 @@ export function companyDomain(opts: {
 export function companyLogoUrl(domain: string, size = 128): string {
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
 }
+
+/** Personal cards a free account can't edit: every one but its oldest
+ *  (mirrors card_is_locked in migration 0032). Locked cards stay live, so
+ *  printed QR codes keep working; team cards are never locked. */
+export function lockedCardIds(
+  cards: { id: string; user_id: string; org_id: string | null; created_at: string }[],
+  userId: string,
+  plan: "free" | "pro" | "premium",
+): Set<string> {
+  if (plan !== "free") return new Set();
+  const own = cards
+    .filter((c) => c.user_id === userId && !c.org_id)
+    .sort((a, b) =>
+      a.created_at === b.created_at
+        ? a.id.localeCompare(b.id)
+        : Date.parse(a.created_at) - Date.parse(b.created_at),
+    );
+  return new Set(own.slice(1).map((c) => c.id));
+}

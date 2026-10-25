@@ -15,21 +15,35 @@ export const KIND_LABELS: Record<UsageKind, string> = {
 };
 
 /** Monthly allowances (reset on the 1st, UTC; no rollover); Infinity = no
- *  cap. Cards is a total, not monthly. Enrichment (web research on Opus, the
+ *  cap. Cards is a total, not monthly. Free is try-before-you-buy and costs
+ *  nothing in AI: its AI comes only from credits people buy (starter pack,
+ *  top-ups) or earn (referral bonus). Enrichment (web research on Opus, the
  *  priciest call) is capped on every plan; Premium's scans and drafts carry a
  *  fair-use ceiling far above normal use, so no account can cost more in AI
  *  than it pays. */
 export const PLAN_LIMITS: Record<PlanId, { cards: number } & Record<UsageKind, number>> = {
-  free: { cards: 1, scan: 5, enrich: 5, follow_up: 15, summarize: 15 },
+  free: { cards: 1, scan: 0, enrich: 0, follow_up: 0, summarize: 0 },
   pro: { cards: 3, scan: 100, enrich: 100, follow_up: 100, summarize: Infinity },
   premium: {
     cards: Infinity,
-    scan: 500,
+    scan: 300,
     enrich: 100,
-    follow_up: 500,
+    follow_up: 300,
     summarize: Infinity,
   },
 };
+
+/** Share-backs a free owner collects in total (mirrors shareback_open in
+ *  migration 0032); after that the card's "Share yours" form hides. */
+export const FREE_SHAREBACK_LIMIT = 5;
+
+/** Free accounts may read their own paper card this many times in total,
+ *  to build their digital card; a blurry photo still costs an AI call. */
+export const FREE_SELF_SCANS = 3;
+
+/** Paid-only features, named once for upsell copy. */
+export const PRO_ONLY_FEATURES =
+  "AI card scanning, follow-up drafts, contact enrichment, instant lead alerts and the Zapier webhook";
 
 export const PLAN_NAMES: Record<PlanId, string> = { free: "Free", pro: "Pro", premium: "Premium" };
 
@@ -180,9 +194,28 @@ export function allowanceLine(
   return `${left} of ${limit} ${KIND_NOUNS[kind]} left this month · resets ${formatResetDate(now)}`;
 }
 
-/** Shown (server-side, never silently) when a capped kind runs out. */
+/** "AI card scans" etc., for "… come with Pro" lines. */
+const AI_FEATURE_NAMES: Record<UsageKind, string> = {
+  scan: "AI card scans",
+  enrich: "AI contact enrichments",
+  follow_up: "AI follow-up drafts",
+  summarize: "AI note summaries",
+};
+
+/** Shown (server-side, never silently) when a capped kind runs out, or when
+ *  the plan has none of it (free). */
 export function limitReachedMessage(plan: PlanId, kind: UsageKind, now = new Date()): string {
   const limit = monthlyLimit(plan, kind);
+  if (limit === 0) {
+    const pro = monthlyLimit("pro", kind);
+    const extra =
+      kind === "scan"
+        ? " Scanning QR codes and digital contact cards stays free."
+        : creditEligible(kind)
+          ? " Or add a top-up pack."
+          : "";
+    return `${AI_FEATURE_NAMES[kind]} come with Pro — ${pro === Infinity ? "" : `${pro} a month, `}${PRO_PRICE_LABEL}.${extra}`;
+  }
   const used = `You've used your ${plan === "free" ? `${limit} free` : limit} ${KIND_NOUNS[kind]} for this month — your allowance resets on ${formatResetDate(now)}.`;
   if (plan === "free") {
     const pro = monthlyLimit("pro", kind);
@@ -197,4 +230,12 @@ export function limitReachedMessage(plan: PlanId, kind: UsageKind, now = new Dat
   return creditEligible(kind)
     ? `${used} Need more right now? Add a top-up pack in Settings.`
     : used;
+}
+
+/** Owner-side line about the free share-back allowance. */
+export function sharebackAllowanceLine(used: number): string {
+  const left = Math.max(0, FREE_SHAREBACK_LIMIT - used);
+  return left > 0
+    ? `${left} of ${FREE_SHAREBACK_LIMIT} free share-backs left — unlimited on Pro.`
+    : `You've collected your ${FREE_SHAREBACK_LIMIT} free share-backs, so the "Share yours" form is hidden on your card. Upgrade to turn it back on.`;
 }
