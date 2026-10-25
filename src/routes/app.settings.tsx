@@ -291,7 +291,7 @@ function InviteSection() {
         year) of Pro or Premium. When they pay, you get {REFERRER_FIRST_PCT}% off your next
         payment, then {REFERRER_ONGOING_PCT}% off every payment for as long as they stay
         subscribed — it stacks, up to {MAX_REFERRAL_PCT}% off with{" "}
-        {MAX_REFERRAL_PCT / REFERRER_ONGOING_PCT} paying friends. You also get 5 bonus AI scans for
+        {MAX_REFERRAL_PCT / REFERRER_ONGOING_PCT} paying friends. You also get 5 bonus card scans for
         every friend who signs up.
       </p>
       {link ? (
@@ -702,9 +702,9 @@ function PlanSection() {
           )}
           <p className="text-xs text-muted-foreground">
             Free is for trying ContactKickstart: one card, {FREE_SHAREBACK_LIMIT} share-backs and
-            QR-code scanning, without AI. Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with{" "}
+            QR-code scanning. Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with{" "}
             {annualFreeMonths()} months free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus{" "}
-            {PLAN_LIMITS.pro.enrich} AI contact enrichments a month, note summaries, unlimited
+            {PLAN_LIMITS.pro.enrich} contact enrichments a month, note summaries, unlimited
             share-backs, instant lead alerts, the Zapier webhook, event mode, and up to 3 cards.
             Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
             {premiumAnnualFreeMonths()} months free): everything in Pro, with{" "}

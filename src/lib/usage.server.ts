@@ -165,7 +165,7 @@ export async function assertSelfScanAllowance(userId: string, perDay: number): P
       .eq("kind", "self_scan");
     if ((total ?? 0) >= FREE_SELF_SCANS) {
       throw new Error(
-        `You've used your ${FREE_SELF_SCANS} free card reads — type your details in instead, or upgrade to Pro for AI scanning.`,
+        `You've used your ${FREE_SELF_SCANS} free card reads — type your details in instead, or upgrade to Pro for card scanning.`,
       );
     }
   }

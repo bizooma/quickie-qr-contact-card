@@ -92,11 +92,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Scan paper business cards",
-        "Open Scan and photograph any paper card. The AI reads the name, title, company, phone, email, address — even the headshot — and files it as a contact.",
+        "Open Scan and photograph any paper card. The scanner reads the name, title, company, phone, email, address — even the headshot — and files it as a contact.",
       ],
       [
         "Notes, tags and follow-ups",
-        "On any contact: add notes (typed or voice), tag them, draft an AI follow-up email, or enrich thin contacts from their company's public info.",
+        "On any contact: add notes (typed or voice), tag them, draft a follow-up email, or enrich thin contacts from their company's public info.",
       ],
       [
         "Event mode (Pro and Premium)",
@@ -150,11 +150,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "What's free, forever",
-        "Free is for trying ContactKickstart: one card with QR and link, 5 share-backs, QR-code scanning, analytics and CSV export. AI features, unlimited share-backs and lead alerts come with Pro. No credit card to start. Every account keeps its digital cards live for life — including after a paid plan ends. On free you can edit one of them; the rest stay live but locked until you upgrade.",
+        "Free is for trying ContactKickstart: one card with QR and link, 5 share-backs, QR-code scanning, analytics and CSV export. Card scanning, follow-up drafts, unlimited share-backs and lead alerts come with Pro. No credit card to start. Every account keeps its digital cards live for life — including after a paid plan ends. On free you can edit one of them; the rest stay live but locked until you upgrade.",
       ],
       [
         "What Pro adds ($8/mo, or $80/yr)",
-        `Up to 3 cards, event mode, ${PLAN_LIMITS.pro.enrich} AI contact enrichments a month, note summaries, and ${PRO_AI_BENEFIT.replace(/\.$/, "")} (on the 1st, UTC; unused scans and drafts don't roll over). Settings shows what's left. Upgrade from Settings; cancel anytime and it runs to the end of the period.`,
+        `Up to 3 cards, event mode, ${PLAN_LIMITS.pro.enrich} contact enrichments a month, note summaries, and ${PRO_AI_BENEFIT.replace(/\.$/, "")} (on the 1st, UTC; unused scans and drafts don't roll over). Settings shows what's left. Upgrade from Settings; cancel anytime and it runs to the end of the period.`,
       ],
       [
         "What Premium adds ($12/mo, or $120/yr)",
@@ -170,15 +170,15 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Founding offers (lifetime & year)",
-        "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically, with its monthly AI allowance. Lifetime deals never expire. Year passes run 12 months from purchase, then the account moves to the free plan by itself — no charge, and nothing in it is lost.",
+        "Bought the Founding Lifetime or Founding Year offer? Create your account with the same email you used at checkout and Pro unlocks automatically, with its monthly allowance. Lifetime deals never expire. Year passes run 12 months from purchase, then the account moves to the free plan by itself — no charge, and nothing in it is lost.",
       ],
       [
         "What counts as a scan",
-        "1 card = 1 scan. Each business card the AI reads uses one scan, so a photo with three cards on it uses three. Scanning your own card to build your digital card never counts.",
+        "1 card = 1 scan. Each business card the scanner reads uses one scan, so a photo with three cards on it uses three. Scanning your own card to build your digital card never counts.",
       ],
       [
         "Starter pack credits",
-        "The starter pack adds 25 AI card scans and 25 follow-up drafts that never expire. They're used only after your plan's monthly allowance runs out, so on Pro they're a backup that waits until you need it.",
+        "The starter pack adds 25 card scans and 25 follow-up drafts that never expire. They're used only after your plan's monthly allowance runs out, so on Pro they're a backup that waits until you need it.",
       ],
     ],
   },

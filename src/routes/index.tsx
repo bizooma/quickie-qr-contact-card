@@ -372,7 +372,7 @@ function Landing() {
             {[
               {
                 i: ScanLine,
-                t: "AI card scanner",
+                t: "Card scanner",
                 d: "Photograph the paper cards you collect. The scanner reads names, titles, phones, emails, addresses — even the headshot — straight into your contacts.",
               },
               {
@@ -382,7 +382,7 @@ function Landing() {
               },
               {
                 i: Sparkles,
-                t: "AI follow-ups & enrichment",
+                t: "Follow-ups & enrichment",
                 d: "Draft the follow-up email from your notes, enrich a thin contact from their company, summarize long voice notes.",
               },
               {
@@ -616,7 +616,7 @@ function Landing() {
                   "Scan QR codes & digital contact cards",
                   "Views, saves & click analytics",
                   "Export contacts to your phone or any CRM (CSV)",
-                  `Try AI card scans with a $${TOPUP_PACKS.small.usd} top-up`,
+                  `Try card scanning with a $${TOPUP_PACKS.small.usd} top-up`,
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
@@ -660,7 +660,7 @@ function Landing() {
                   "Up to 3 digital cards",
                   PRO_AI_BENEFIT,
                   "1 card = 1 scan, so 100 scans reads 100 cards",
-                  `${PLAN_LIMITS.pro.enrich} AI contact enrichments a month & note summaries`,
+                  `${PLAN_LIMITS.pro.enrich} contact enrichments a month & note summaries`,
                   "Unlimited share-backs, with an instant alert for each",
                   "Webhooks into Zapier, Make or your CRM",
                   "Event mode: tag everyone you meet at an event",
@@ -794,7 +794,7 @@ function Landing() {
             ],
             [
               "How does capturing their info work?",
-              "Your card has a “Share yours” button. They type their name and contact details once, you get a push notification, and they land in your ContactKickstart contacts — with notes, tags and AI follow-up drafting ready.",
+              "Your card has a “Share yours” button. They type their name and contact details once, you get a push notification, and they land in your ContactKickstart contacts — with notes, tags and follow-up drafting ready.",
             ],
             [
               "What happens to my data and my contacts?",
@@ -802,7 +802,7 @@ function Landing() {
             ],
             [
               "What does the free plan include, forever?",
-              `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try ContactKickstart before you pay. AI scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
+              `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try ContactKickstart before you pay. Card scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
             ],
             [
               "What happens if I cancel a paid plan?",

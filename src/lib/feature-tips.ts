@@ -110,11 +110,11 @@ export const TIPS = {
         text: "Take or upload photos of business cards — up to 12 photos at once, and a photo can hold several cards.",
       },
       {
-        text: "Tap **Upload Contact**. AI reads names, titles, phones, emails, addresses and photos; QR codes on cards (vCard, LinkedIn) are read too.",
+        text: "Tap **Upload Contact**. The scanner reads names, titles, phones, emails, addresses and photos; QR codes on cards (vCard, LinkedIn) are read too.",
       },
       { text: "Check what was read, untick anything you don't want, then tap **Save**." },
       {
-        text: "**1 card = 1 scan** — a photo with three cards uses three. Pro: 100 a month, resetting on the 1st. On the free plan, AI scans come from starter-pack or top-up credits, which also kick in once a paid month's scans are used. What's left shows under the button.",
+        text: "**1 card = 1 scan** — a photo with three cards uses three. Pro: 100 a month, resetting on the 1st. On the free plan, scans come from starter-pack or top-up credits, which also kick in once a paid month's scans are used. What's left shows under the button.",
       },
     ],
     help: "capturing",
@@ -126,7 +126,7 @@ export const TIPS = {
     steps: [
       { text: "New share-backs show a badge on **Contacts** until you've looked." },
       {
-        text: "Tap a contact for notes (typed or voice), tags, an AI follow-up email draft, and **Enrich with AI**.",
+        text: "Tap a contact for notes (typed or voice), tags, a follow-up email draft, and **Enrich contact**.",
       },
       {
         text: "**Start event mode** before a conference or expo: everyone you meet is tagged with the event (Pro and Premium).",
@@ -203,7 +203,7 @@ export const TIPS = {
     intro: "Your plan, notifications and app preferences.",
     steps: [
       {
-        text: "**Plan & usage** shows this month's AI usage and lets you upgrade or manage billing.",
+        text: "**Plan & usage** shows this month's usage and lets you upgrade or manage billing.",
       },
       {
         text: "**New-lead notifications** ping your phone the moment someone shares their details.",
@@ -224,9 +224,9 @@ export const TIPS = {
         text: "**Remind me to follow up** pings your phone when it's time — Tomorrow, In 3 days, Next week, or any date (Premium).",
       },
       {
-        text: "**Draft follow-up email with AI** writes the email for you; open it in your mail app or copy it.",
+        text: "**Draft follow-up email** writes the email for you; open it in your mail app or copy it.",
       },
-      { text: "**Enrich with AI** fills in a title, company or LinkedIn from public info." },
+      { text: "**Enrich contact** fills in a title, company or LinkedIn from public info." },
       {
         text: "Add **tags** and **notes** (typed or by voice). “Met at” shows the event you met them at.",
       },

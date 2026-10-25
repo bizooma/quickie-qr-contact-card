@@ -33,7 +33,7 @@ export const recordSignupAttribution = createServerFn({ method: "POST" })
         const { sendPushToUser } = await import("./notify.server");
         await sendPushToUser(r.owner, {
           title: "Someone got a card from yours",
-          body: `A visitor to your card created a free account — +${REFERRAL_BONUS_SCANS} AI card scans added for you.`,
+          body: `A visitor to your card created a free account — +${REFERRAL_BONUS_SCANS} card scans added for you.`,
           url: "/app/settings",
         });
       } catch {

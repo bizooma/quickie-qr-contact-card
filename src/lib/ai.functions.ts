@@ -91,7 +91,7 @@ export const scanCards = createServerFn({ method: "POST" })
 
     if (response.stop_reason === "refusal") {
       await settleUsage(reservation, 0);
-      throw new Error("The AI declined to process these images. Try different photos.");
+      throw new Error("We couldn't process these images. Try different photos.");
     }
     if (!response.parsed_output) {
       await settleUsage(reservation, 0);
@@ -165,7 +165,7 @@ export const scanMyCard = createServerFn({ method: "POST" })
     void logAiCall(context.userId, "self_scan", FAST_MODEL, response.usage);
 
     if (response.stop_reason === "refusal") {
-      throw new Error("The AI declined to read this photo. Try a different shot of your card.");
+      throw new Error("We couldn't read this photo. Try a different shot of your card.");
     }
     if (!response.parsed_output) {
       throw new Error("Could not read your card. Try a clearer, closer photo in good light.");
@@ -319,7 +319,7 @@ export const enrichContact = createServerFn({ method: "POST" })
 
       if (response.stop_reason === "refusal") {
         await settleUsage(reservation, 0);
-        throw new Error("The AI declined to research this contact.");
+        throw new Error("We couldn't look up this contact.");
       }
       if (response.stop_reason === "pause_turn") {
         messages.push({ role: "assistant", content: response.content });
@@ -370,7 +370,7 @@ export const summarizeNote = createServerFn({ method: "POST" })
 
     if (response.stop_reason === "refusal") {
       await settleUsage(reservation, 0);
-      throw new Error("The AI declined to summarize this note.");
+      throw new Error("We couldn't summarize this note.");
     }
     if (!response.parsed_output) {
       await settleUsage(reservation, 0);

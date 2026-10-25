@@ -136,16 +136,16 @@ describe("limitReachedMessage", () => {
   });
   it("tells free accounts each AI feature comes with Pro", () => {
     expect(limitReachedMessage("free", "scan", oct)).toBe(
-      "AI card scans come with Pro — 100 a month, $8/mo. Scanning QR codes and digital contact cards stays free.",
+      "Card scans come with Pro — 100 a month, $8/mo. Scanning QR codes and digital contact cards stays free.",
     );
     expect(limitReachedMessage("free", "follow_up", oct)).toBe(
-      "AI follow-up drafts come with Pro — 100 a month, $8/mo. Or add a top-up pack.",
+      "Follow-up drafts come with Pro — 100 a month, $8/mo. Or add a top-up pack.",
     );
     expect(limitReachedMessage("free", "enrich", oct)).toBe(
-      "AI contact enrichments come with Pro — 100 a month, $8/mo.",
+      "Contact enrichments come with Pro — 100 a month, $8/mo.",
     );
     expect(limitReachedMessage("free", "summarize", oct)).toBe(
-      "AI note summaries come with Pro — $8/mo.",
+      "Note summaries come with Pro — $8/mo.",
     );
   });
 });
@@ -179,7 +179,7 @@ describe("1 card = 1 scan", () => {
 describe("Pro copy", () => {
   it("states the monthly allowance, never 'unlimited'", () => {
     expect(PRO_AI_BENEFIT).toBe(
-      "100 AI card scans + 100 follow-up drafts every month — resets monthly.",
+      "100 card scans + 100 follow-up drafts every month — resets monthly.",
     );
     expect(PRO_AI_BENEFIT.toLowerCase()).not.toContain("unlimited");
   });

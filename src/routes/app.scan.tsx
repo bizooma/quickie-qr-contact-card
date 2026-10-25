@@ -102,7 +102,7 @@ function ScanPage() {
       if (aiError && !contacts.length) throw aiError;
       if (aiError) {
         // Say why (e.g. the monthly allowance is used up), never fail silently.
-        toast.warning("AI reading failed — showing only what the QR codes contained", {
+        toast.warning("Couldn't read the card photos — showing only what the QR codes contained", {
           description: aiError instanceof Error ? aiError.message : undefined,
         });
       }
@@ -221,13 +221,13 @@ function ScanPage() {
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-1 text-2xl font-bold">Scan business cards</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Snap or upload photos of paper cards — AI turns them into contacts you can follow up with.
+        Snap or upload photos of paper cards — they become contacts you can follow up with.
       </p>
       {unlocked && !results && !savedBatch && (
         <div className="mb-6 rounded-xl border border-brand/40 bg-brand-soft/40 px-4 py-3 text-sm">
           <p className="font-semibold">
-            Your {billing.credits.scan} AI card scans and {billing.credits.follow_up} follow-up
-            drafts are unlocked.
+            Your {billing.credits.scan} card scans and {billing.credits.follow_up} follow-up drafts
+            are unlocked.
           </p>
           <p className="mt-1 text-muted-foreground">
             Photograph your first stack below — a few cards per photo is fine. Want your own digital
