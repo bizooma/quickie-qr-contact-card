@@ -1,6 +1,13 @@
 import { Globe, Mail, MapPin, Phone } from "lucide-react";
 import type { ReactNode } from "react";
-import { contrastText, fontCss, initials, normalizeUrl, type CardData } from "@/lib/card-model";
+import {
+  cardLogoBox,
+  contrastText,
+  fontCss,
+  initials,
+  normalizeUrl,
+  type CardData,
+} from "@/lib/card-model";
 import { LinkIcon } from "./LinkIcon";
 
 // Card colors are user-chosen data, so they are applied as inline styles
@@ -9,12 +16,15 @@ export function CardView({
   card,
   headshotUrl,
   logoUrl,
+  bannerUrl,
   actions,
   onLinkClick,
 }: {
   card: CardData;
   headshotUrl?: string | null | undefined;
   logoUrl?: string | null | undefined;
+  /** Premium banner photo (Banner layout); null shows the accent color. */
+  bannerUrl?: string | null | undefined;
   actions?: ReactNode;
   onLinkClick?: ((label: string) => void) | undefined;
 }) {
@@ -114,6 +124,19 @@ export function CardView({
   );
 
   const logoAlt = card.company ? `${card.company} logo` : "Company logo";
+  // An uploaded logo is as tall as the profile photo (or larger); the
+  // placeholder badge stays small.
+  const companyLogo = (photo: number, maxWidth = "100%") => {
+    const box = cardLogoBox(photo, card.logo_size);
+    return (
+      <img
+        src={logo}
+        alt={logoAlt}
+        className="object-contain"
+        style={{ height: box.height, maxWidth: `min(${box.maxWidth}px, ${maxWidth})` }}
+      />
+    );
+  };
 
   return (
     <div
@@ -121,12 +144,20 @@ export function CardView({
       style={{ background: bg, color: fg, fontFamily: fontCss(card.font) }}
     >
       {t === "banner" && (
-        <div className="relative h-36" style={{ background: accent }}>
-          <img
-            src={logo}
-            alt={logoAlt}
-            className="absolute right-4 top-4 h-9 max-w-[96px] rounded-md object-contain"
-          />
+        <div
+          className={`relative overflow-hidden ${bannerUrl ? "h-44" : "h-36"}`}
+          style={{ background: accent }}
+        >
+          {bannerUrl && (
+            <img src={bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          )}
+          {!logoUrl && (
+            <img
+              src={logo}
+              alt={logoAlt}
+              className="absolute right-4 top-4 h-9 max-w-[96px] rounded-md object-contain"
+            />
+          )}
         </div>
       )}
       <div className="mx-auto max-w-md px-6 pb-10">
@@ -134,12 +165,17 @@ export function CardView({
           <div className="relative z-10 -mt-14 flex flex-col items-center gap-4">
             {avatar(112, true)}
             {header}
+            {logoUrl && companyLogo(112)}
           </div>
         ) : t === "minimal" ? (
           <div className="flex flex-col gap-5 pt-10">
             <div className="flex items-center justify-between">
               {avatar(72)}
-              <img src={logo} alt={logoAlt} className="h-9 max-w-[110px] object-contain" />
+              {logoUrl ? (
+                companyLogo(72, "60%")
+              ) : (
+                <img src={logo} alt={logoAlt} className="h-9 max-w-[110px] object-contain" />
+              )}
             </div>
             <div className="h-1 w-10 rounded-full" style={{ background: accent }} />
             {header}
@@ -148,7 +184,11 @@ export function CardView({
           <div className="flex flex-col items-center gap-4 pt-10">
             {avatar(112)}
             {header}
-            <img src={logo} alt={logoAlt} className="h-8 max-w-[120px] object-contain" />
+            {logoUrl ? (
+              companyLogo(112)
+            ) : (
+              <img src={logo} alt={logoAlt} className="h-8 max-w-[120px] object-contain" />
+            )}
           </div>
         )}
 

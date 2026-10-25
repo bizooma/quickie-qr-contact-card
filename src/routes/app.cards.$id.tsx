@@ -21,9 +21,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { designUploads } from "@/lib/background-store";
 import { getCard, listCards, rowToCard, saveLinks } from "@/lib/cards-api";
-import { usePlan } from "@/components/PremiumGate";
-import { lockedCardIds, ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, LINK_ICONS, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
-import { removeMedia, signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
+import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
+import { lockedCardIds, LOGO_SIZES, ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, LINK_ICONS, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
+import { removeMedia, shrinkImage, signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
 import { renderOgImage } from "@/lib/og-image";
 import { cn } from "@/lib/utils";
 
@@ -116,7 +116,8 @@ function Editor({
   const first = useRef(true);
   const lastLinks = useRef(JSON.stringify(initial.links));
 
-  useEffect(() => { signedUrls([card.headshot_path, card.logo_path]).then((u) => setUrls((p) => ({ ...p, ...u }))); }, [card.headshot_path, card.logo_path]);
+  useEffect(() => { signedUrls([card.headshot_path, card.logo_path, card.banner_path]).then((u) => setUrls((p) => ({ ...p, ...u }))); }, [card.headshot_path, card.logo_path, card.banner_path]);
+  const { isPremium } = usePlan();
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -247,6 +248,18 @@ function Editor({
     try { set(kind, await uploadCardImage(user.id, file)); } catch (err) { toast.error(err instanceof Error ? err.message : "Upload failed"); }
   }
 
+  // Premium: the banner photo shows on the Banner layout, so picking one
+  // switches the card to it.
+  async function uploadBanner(file?: File) {
+    if (!file || !user) return;
+    try {
+      const path = await uploadCardImage(user.id, await shrinkImage(file));
+      setCard((c) => ({ ...c, banner_path: path, template: "banner" }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
+  }
+
   async function deleteCard() {
     const bgFiles = user ? await designUploads(user.id, cardId) : [];
     const { error } = await supabase.from("cards").delete().eq("id", cardId);
@@ -258,7 +271,7 @@ function Editor({
 
   const preview = (
     <div className="phone-frame mx-auto"><div className="h-full overflow-y-auto rounded-[38px]">
-      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null}
+      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null}
         actions={<div className="h-12 rounded-full text-center text-sm font-semibold leading-[3rem]" style={{ background: card.accent_color, color: "#fff" }}>Save contact</div>} />
     </div></div>
   );
@@ -617,6 +630,75 @@ function Editor({
                   </button>
                 ))}
               </div>
+            </div>
+            <div>
+              <Label className="mb-3 block">Company logo size</Label>
+              <div
+                className="inline-flex rounded-xl border p-1"
+                role="radiogroup"
+                aria-label="Company logo size"
+              >
+                {LOGO_SIZES.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={card.logo_size === o.id}
+                    onClick={() => set("logo_size", o.id)}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                      card.logo_size === o.id
+                        ? "bg-brand text-white"
+                        : "text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {o.name}
+                  </button>
+                ))}
+              </div>
+              {!card.logo_path && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Add your logo on the Details tab to see it on your card.
+                </p>
+              )}
+            </div>
+            <div>
+              <Label className="mb-3 block">Banner photo</Label>
+              {isPremium ? (
+                <div className="space-y-2">
+                  <label className="flex aspect-[3/1] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed bg-muted">
+                    {card.banner_path && urls[card.banner_path] ? (
+                      <img
+                        src={urls[card.banner_path]}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <ImagePlus className="h-4 w-4" />
+                        Choose a photo for the top of your card
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      aria-label="Choose banner photo"
+                      onChange={(e) => void uploadBanner(e.target.files?.[0])}
+                    />
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Shows across the top of the Banner layout. Wide photos work best.
+                  </p>
+                  {card.banner_path && (
+                    <Button size="sm" variant="ghost" onClick={() => set("banner_path", null)}>
+                      Remove banner photo
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <PremiumUpsell feature="A custom banner photo" />
+              )}
             </div>
             <ColorRow
               label="Accent color"

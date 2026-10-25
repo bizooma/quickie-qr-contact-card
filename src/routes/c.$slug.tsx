@@ -35,6 +35,7 @@ async function loadCard(slug: string) {
     card,
     headshotUrl: card.headshot_path ? (urls[card.headshot_path] ?? null) : null,
     logoUrl: card.logo_path ? (urls[card.logo_path] ?? null) : null,
+    bannerUrl: card.banner_path ? (urls[card.banner_path] ?? null) : null,
     ogUrl: card.og_path ? (urls[card.og_path] ?? null) : null,
   };
 }
@@ -101,7 +102,7 @@ async function toBase64(url: string): Promise<{ b64: string; type: string } | nu
 }
 
 function PublicCard() {
-  const { card, headshotUrl, logoUrl } = Route.useLoaderData();
+  const { card, headshotUrl, logoUrl, bannerUrl } = Route.useLoaderData();
   const { slug } = Route.useParams();
   const [open, setOpen] = useState(false);
   const accentText = contrastText(card.accent_color);
@@ -183,6 +184,7 @@ function PublicCard() {
         card={card}
         headshotUrl={headshotUrl}
         logoUrl={logoUrl}
+        bannerUrl={bannerUrl}
         onLinkClick={(label) => {
           supabase
             .rpc("log_card_event", { _slug: slug, _event: "click", _meta: label })

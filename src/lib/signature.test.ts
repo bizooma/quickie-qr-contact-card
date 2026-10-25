@@ -15,6 +15,8 @@ const card: CardData = {
   bio: null,
   headshot_path: "kale/photo.jpg",
   logo_path: null,
+  logo_size: "standard",
+  banner_path: null,
   accent_color: "#E8553D",
   background_color: "#FFFFFF",
   font: "sans",

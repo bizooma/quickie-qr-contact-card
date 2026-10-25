@@ -100,6 +100,8 @@ describe("mergeScannedIntoCard", () => {
     bio: "Keep me",
     headshot_path: "u/old-face.jpg",
     logo_path: null,
+    logo_size: "standard",
+    banner_path: null,
     accent_color: "#E8553D",
     background_color: "#FFFFFF",
     font: "sans",

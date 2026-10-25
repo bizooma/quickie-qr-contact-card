@@ -106,6 +106,8 @@ const DEMO: CardData = {
   bio: null,
   headshot_path: null,
   logo_path: null,
+  logo_size: "standard",
+  banner_path: null,
   accent_color: "#E8553D",
   background_color: "#FFFFFF",
   font: "display",
