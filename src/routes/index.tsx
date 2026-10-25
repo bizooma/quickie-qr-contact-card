@@ -51,6 +51,7 @@ import {
 import { logSiteEvent } from "@/lib/site-events";
 import { useRevealOnScroll } from "@/hooks/use-reveal";
 import type { CardData } from "@/lib/card-model";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -196,6 +197,7 @@ function Landing() {
           <Button asChild size="sm" variant="ghost">
             <Link to={user ? "/app" : "/auth"}>{user ? "Open app" : "Sign in"}</Link>
           </Button>
+          {user && <ProfileMenu />}
           {!user && (
             <Button asChild size="sm" className="hidden sm:inline-flex">
               <Link to="/auth" onClick={() => logSiteEvent("cta_click", variantMeta("nav", ab))}>

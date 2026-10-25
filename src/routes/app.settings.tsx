@@ -1,5 +1,5 @@
 import { appHead } from "@/lib/seo";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -400,6 +400,13 @@ function PlanSection() {
   } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
   const [seats, setSeats] = useState(TEAM_MIN_SEATS);
 
+  // The avatar menu links here as #plan and #top-ups; both render only once
+  // billing has loaded, so scroll after that.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (billing && hash) document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+  }, [billing, hash]);
+
   // Back from Stripe Checkout: thank the user and refetch until the webhook
   // has flipped the plan (it usually lands within a few seconds).
   useEffect(() => {
@@ -462,7 +469,7 @@ function PlanSection() {
   if (!billing) return null;
   const paid = billing.plan !== "free";
   return (
-    <section className="space-y-3">
+    <section id="plan" className="scroll-mt-20 space-y-3">
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-bold">Plan & usage</h2>
         <span
@@ -545,7 +552,7 @@ function PlanSection() {
           manages billing.
         </p>
       ) : billing.plan === "premium" ? (
-        <div className="flex flex-wrap gap-2">
+        <div id="top-ups" className="flex scroll-mt-20 flex-wrap gap-2">
           {billing.hasSubscription && (
             <Button variant="outline" disabled={busy || !billing.stripeConfigured} onClick={manage}>
               Manage billing
@@ -630,7 +637,10 @@ function PlanSection() {
             )}
           </div>
           {billing.topupPacks.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div id="top-ups" className="flex scroll-mt-20 flex-wrap items-center gap-2">
+              <span className="w-full text-xs font-semibold text-muted-foreground">
+                Top-ups · credits never expire
+              </span>
               {billing.topupPacks.map((pack) => (
                 <Button
                   key={pack}

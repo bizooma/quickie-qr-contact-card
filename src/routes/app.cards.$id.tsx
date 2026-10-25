@@ -666,7 +666,7 @@ function Editor({
         </Tabs>
 
         <div className="hidden lg:block">
-          <div className="sticky top-10">{preview}</div>
+          <div className="sticky top-20">{preview}</div>
         </div>
       </div>
 
