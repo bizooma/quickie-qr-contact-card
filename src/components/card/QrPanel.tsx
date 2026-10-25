@@ -58,7 +58,7 @@ const CENTER_PX = 256;
  *  signed URL) keeps it inside downloaded SVG/PNG files and the offline QR
  *  snapshot; photos are center-cropped square since the QR clips them to a
  *  circle anyway. */
-async function toCenterDataUrl(signedUrl: string, photo: boolean): Promise<string> {
+export async function toCenterDataUrl(signedUrl: string, photo: boolean): Promise<string> {
   const blob = await (await fetch(signedUrl)).blob();
   const objectUrl = URL.createObjectURL(blob);
   try {
