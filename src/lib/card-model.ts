@@ -18,6 +18,10 @@ export type CardData = {
   bio: string | null;
   headshot_path: string | null;
   logo_path: string | null;
+  /** "standard": as tall as the profile photo; "large": bigger still. */
+  logo_size: string;
+  /** Premium: a photo behind the Banner layout's header (private path). */
+  banner_path: string | null;
   accent_color: string;
   background_color: string;
   font: string;
@@ -380,4 +384,17 @@ export function lockedCardIds(
         : Date.parse(a.created_at) - Date.parse(b.created_at),
     );
   return new Set(own.slice(1).map((c) => c.id));
+}
+
+export const LOGO_SIZES = [
+  { id: "standard", name: "Same as photo" },
+  { id: "large", name: "Larger" },
+] as const;
+
+/** An uploaded logo's box next to a profile photo `photo` px across: as tall
+ *  as the photo ("standard") or 1.4× ("large"), and at most twice as wide as
+ *  it is tall so wide wordmarks stay in proportion. */
+export function cardLogoBox(photo: number, size: string): { height: number; maxWidth: number } {
+  const height = Math.round(photo * (size === "large" ? 1.4 : 1));
+  return { height, maxWidth: height * 2 };
 }

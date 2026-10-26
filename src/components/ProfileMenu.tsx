@@ -17,11 +17,13 @@ import { listCards } from "@/lib/cards-api";
 import { initials } from "@/lib/card-model";
 import { signedUrls } from "@/lib/media";
 import { PLAN_NAMES } from "@/lib/plans";
+import { avatarSource } from "@/lib/profile-avatar";
 import { usePlan } from "@/components/PremiumGate";
 import { cn } from "@/lib/utils";
 
-/** The signed-in person's name and photo. The photo is the headshot on their
- *  oldest card (private bucket, so a signed URL); otherwise their initials. */
+/** The signed-in person's name and photo: the photo they chose in Settings
+ *  (see profile-avatar.ts), else the photo on their oldest card, else their
+ *  initials. Card and uploaded photos are private, so they're signed. */
 export function useProfileIdentity() {
   const { user } = useAuth();
   // Same key and shape as Settings, so both share one cache entry.
@@ -33,7 +35,11 @@ export function useProfileIdentity() {
   });
   const { data: cards } = useQuery({ queryKey: ["cards"], queryFn: listCards, enabled: !!user });
   const own = cards?.filter((c) => c.user_id === user?.id) ?? [];
-  const path = own.find((c) => c.headshot_path)?.headshot_path ?? null;
+  const source = avatarSource(
+    profile?.avatar_url,
+    own.map((c) => c.headshot_path),
+  );
+  const path = source.kind === "path" ? source.path : null;
   const { data: urls } = useQuery({
     queryKey: ["profile-avatar", path],
     enabled: !!path,
@@ -44,7 +50,7 @@ export function useProfileIdentity() {
   return {
     name,
     email: user?.email ?? "",
-    photoUrl: path ? (urls?.[path] ?? null) : null,
+    photoUrl: source.kind === "url" ? source.url : path ? (urls?.[path] ?? null) : null,
     initials: initials(name || "?"),
   };
 }

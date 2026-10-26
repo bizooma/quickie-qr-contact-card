@@ -140,11 +140,17 @@ export const signPublicCardMedia = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: card } = await supabaseAdmin
       .from("cards")
-      .select("headshot_path, logo_path, og_path")
+      .select("user_id, headshot_path, logo_path, og_path, banner_path")
       .eq("slug", data.slug.toLowerCase())
       .maybeSingle();
     if (!card) return {};
-    const paths = [card.headshot_path, card.logo_path, card.og_path].filter(
+    // The banner photo is Premium; after a downgrade it stays private.
+    let banner: string | null = null;
+    if (card.banner_path) {
+      const { getPlan } = await import("./usage.server");
+      if ((await getPlan(card.user_id)) === "premium") banner = card.banner_path;
+    }
+    const paths = [card.headshot_path, card.logo_path, card.og_path, banner].filter(
       (p): p is string => !!p && !p.split("/").includes("contact-photos"),
     );
     if (!paths.length) return {};

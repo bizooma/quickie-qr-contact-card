@@ -27,6 +27,35 @@ export async function uploadContactImage(userId: string, blob: Blob): Promise<st
   return path;
 }
 
+/** Downscales a large photo (e.g. a phone camera banner) to at most
+ *  `maxWidth` px wide as a JPEG, so it fits the upload limit and loads fast. */
+export async function shrinkImage(file: File, maxWidth = 1600): Promise<File> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    const scale = Math.min(1, maxWidth / bitmap.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+    return blob ? new File([blob], "banner.jpg", { type: "image/jpeg" }) : file;
+  } finally {
+    bitmap.close();
+  }
+}
+
+/** Stores the person's own profile photo (cropped in the photo editor). */
+export async function uploadAvatar(userId: string, blob: Blob): Promise<string> {
+  const path = `${userId}/avatars/${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (error) throw error;
+  return path;
+}
+
 /** Stores a contact's headshot (cropped from a scanned card) under the owner's folder. */
 export const uploadContactPhoto = uploadContactImage;
 

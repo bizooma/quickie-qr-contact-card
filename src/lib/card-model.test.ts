@@ -11,6 +11,7 @@ import {
   SLUG_RE,
   type CardData,
   lockedCardIds,
+  cardLogoBox,
 } from "./card-model";
 
 const card: CardData = {
@@ -26,6 +27,8 @@ const card: CardData = {
   bio: null,
   headshot_path: null,
   logo_path: null,
+  logo_size: "standard",
+  banner_path: null,
   accent_color: "#E8553D",
   background_color: "#FFFFFF",
   font: "sans",
@@ -179,5 +182,13 @@ describe("lockedCardIds", () => {
   it("locks nothing on paid plans", () => {
     expect(lockedCardIds(cards, u, "pro").size).toBe(0);
     expect(lockedCardIds(cards, u, "premium").size).toBe(0);
+  });
+});
+
+describe("cardLogoBox", () => {
+  it("matches the photo, or grows on large", () => {
+    expect(cardLogoBox(112, "standard")).toEqual({ height: 112, maxWidth: 224 });
+    expect(cardLogoBox(112, "large")).toEqual({ height: 157, maxWidth: 314 });
+    expect(cardLogoBox(72, "anything-else")).toEqual({ height: 72, maxWidth: 144 });
   });
 });

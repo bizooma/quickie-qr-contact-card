@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { shouldOpenOnQr, WALLPAPER_H, WALLPAPER_W, wallpaperLayout } from "./quick-qr";
+import {
+  cycleIndex,
+  shouldOpenOnQr,
+  swipeStep,
+  WALLPAPER_H,
+  WALLPAPER_W,
+  wallpaperLayout,
+} from "./quick-qr";
 
 describe("shouldOpenOnQr", () => {
   const base = { enabled: true, standalone: true, pathname: "/app", firstLoad: true };
@@ -23,5 +30,20 @@ describe("wallpaperLayout", () => {
     expect(panel.y).toBeGreaterThan(WALLPAPER_H * 0.3);
     expect(caption.y + caption.size).toBeLessThan(WALLPAPER_H * 0.88);
     expect(qr.size).toBeGreaterThan(WALLPAPER_W / 2);
+  });
+});
+
+describe("card swiping", () => {
+  it("reads a horizontal swipe and ignores taps and scrolls", () => {
+    expect(swipeStep(-80, 5)).toBe(1);
+    expect(swipeStep(80, 10)).toBe(-1);
+    expect(swipeStep(-20, 0)).toBe(0);
+    expect(swipeStep(-60, 90)).toBe(0);
+  });
+  it("wraps around the ends", () => {
+    expect(cycleIndex(2, 1, 3)).toBe(0);
+    expect(cycleIndex(0, -1, 3)).toBe(2);
+    expect(cycleIndex(1, 1, 3)).toBe(2);
+    expect(cycleIndex(0, 1, 0)).toBe(0);
   });
 });

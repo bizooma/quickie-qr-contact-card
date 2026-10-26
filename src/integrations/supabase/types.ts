@@ -249,6 +249,7 @@ export type Database = {
         Row: {
           accent_color: string
           background_color: string
+          banner_path: string | null
           bio: string | null
           company: string | null
           created_at: string
@@ -261,6 +262,7 @@ export type Database = {
           label: string
           location: string | null
           logo_path: string | null
+          logo_size: string
           og_path: string | null
           org_id: string | null
           phones: Json
@@ -274,6 +276,7 @@ export type Database = {
         Insert: {
           accent_color?: string
           background_color?: string
+          banner_path?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -286,6 +289,7 @@ export type Database = {
           label?: string
           location?: string | null
           logo_path?: string | null
+          logo_size?: string
           og_path?: string | null
           org_id?: string | null
           phones?: Json
@@ -299,6 +303,7 @@ export type Database = {
         Update: {
           accent_color?: string
           background_color?: string
+          banner_path?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -311,6 +316,7 @@ export type Database = {
           label?: string
           location?: string | null
           logo_path?: string | null
+          logo_size?: string
           og_path?: string | null
           org_id?: string | null
           phones?: Json

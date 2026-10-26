@@ -61,3 +61,16 @@ export function wallpaperLayout(w = WALLPAPER_W, h = WALLPAPER_H) {
     caption: { x: w / 2, y: y + panel + Math.round(h * 0.03), size: Math.round(w * 0.05) },
   };
 }
+
+/** A horizontal swipe on the QR: +1 = next card (finger moved left), -1 =
+ *  previous, 0 = too short or mostly vertical (a scroll, not a swipe). */
+export function swipeStep(dx: number, dy: number, threshold = 40): -1 | 0 | 1 {
+  if (Math.abs(dx) < threshold || Math.abs(dx) <= Math.abs(dy)) return 0;
+  return dx < 0 ? 1 : -1;
+}
+
+/** Index after moving `step` through `length` cards, wrapping at both ends. */
+export function cycleIndex(index: number, step: number, length: number): number {
+  if (length <= 0) return 0;
+  return (((index + step) % length) + length) % length;
+}

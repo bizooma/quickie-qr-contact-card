@@ -32,6 +32,7 @@ import {
   remaining,
   FREE_SHAREBACK_LIMIT,
   sharebackAllowanceLine,
+  premiumPriceFor,
 } from "./plans";
 
 describe("normalizePlan", () => {
@@ -224,5 +225,18 @@ describe("rate limit and top-up", () => {
     expect(limitReachedMessage("pro", "enrich", oct)).toBe(
       "You've used your 100 enrichments for this month — your allowance resets on Nov 1.",
     );
+  });
+});
+
+describe("premiumPriceFor", () => {
+  const prices = { pro: "p_m", proAnnual: "p_y", premium: "pr_m", premiumAnnual: "pr_y" };
+  it("keeps the billing interval when moving Pro to Premium", () => {
+    expect(premiumPriceFor("p_m", prices)).toBe("pr_m");
+    expect(premiumPriceFor("p_y", prices)).toBe("pr_y");
+  });
+  it("refuses unknown prices and unset Premium prices", () => {
+    expect(premiumPriceFor("team", prices)).toBeNull();
+    expect(premiumPriceFor(null, prices)).toBeNull();
+    expect(premiumPriceFor("p_y", { ...prices, premiumAnnual: "" })).toBeNull();
   });
 });

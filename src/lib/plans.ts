@@ -239,3 +239,16 @@ export function sharebackAllowanceLine(used: number): string {
     ? `${left} of ${FREE_SHAREBACK_LIMIT} free share-backs left — unlimited on Pro.`
     : `You've collected your ${FREE_SHAREBACK_LIMIT} free share-backs, so the "Share yours" form is hidden on your card. Upgrade to turn it back on.`;
 }
+
+/** The Premium price a Pro subscription moves to, keeping its billing
+ *  interval (monthly → monthly, annual → annual). Null for anything that
+ *  isn't a known Pro price — that change goes through Manage billing. */
+export function premiumPriceFor(
+  currentPriceId: string | null | undefined,
+  prices: { pro: string; proAnnual: string; premium: string; premiumAnnual: string },
+): string | null {
+  if (!currentPriceId) return null;
+  if (currentPriceId === prices.pro && prices.premium) return prices.premium;
+  if (currentPriceId === prices.proAnnual && prices.premiumAnnual) return prices.premiumAnnual;
+  return null;
+}
