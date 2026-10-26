@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cycleIndex,
+  homeScreenAction,
   shouldOpenOnQr,
   swipeStep,
   WALLPAPER_H,
@@ -45,5 +46,41 @@ describe("card swiping", () => {
     expect(cycleIndex(0, -1, 3)).toBe(2);
     expect(cycleIndex(1, 1, 3)).toBe(2);
     expect(cycleIndex(0, 1, 0)).toBe(0);
+  });
+});
+
+describe("homeScreenAction", () => {
+  it("triggers the browser's install where it's offered", () => {
+    expect(homeScreenAction({ platform: "android", standalone: false, canPrompt: true })).toEqual({
+      kind: "install",
+      label: "Add to home screen",
+    });
+    expect(homeScreenAction({ platform: "desktop", standalone: false, canPrompt: true })).toEqual({
+      kind: "install",
+      label: "Install app",
+    });
+  });
+
+  it("shows the steps where the browser can't install for us", () => {
+    expect(homeScreenAction({ platform: "ios", standalone: false, canPrompt: false })?.kind).toBe(
+      "tip",
+    );
+    expect(
+      homeScreenAction({ platform: "android", standalone: false, canPrompt: false })?.kind,
+    ).toBe("tip");
+    expect(
+      homeScreenAction({ platform: "desktop", standalone: false, canPrompt: false }),
+    ).toBeNull();
+  });
+
+  it("offers only Android's My QR shortcut once installed", () => {
+    expect(homeScreenAction({ platform: "android", standalone: true, canPrompt: false })).toEqual({
+      kind: "tip",
+      label: "Add a My QR icon",
+    });
+    expect(homeScreenAction({ platform: "ios", standalone: true, canPrompt: false })).toBeNull();
+    expect(
+      homeScreenAction({ platform: "desktop", standalone: true, canPrompt: false }),
+    ).toBeNull();
   });
 });

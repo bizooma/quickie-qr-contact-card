@@ -71,7 +71,7 @@ export const TIPS = {
         only: ["ios"],
       },
       {
-        text: "**Install the app:** in Chrome, tap the **⋮** menu, then **Install app** (or **Add to Home screen**).",
+        text: "**Install the app:** tap **Add to home screen** below. If it isn't offered, open contactkickstart.com in Chrome, tap the **⋮** menu, then **Install app** (or **Add to Home screen**).",
         only: ["android"],
       },
       {
@@ -79,7 +79,7 @@ export const TIPS = {
         only: ["ios", "android"],
       },
       {
-        text: "**Or add a My QR icon:** touch and hold the ContactKickstart icon, then drag **My QR code** onto your home screen.",
+        text: "**Or add a My QR icon:** go to your phone's home screen and touch and hold the **ContactKickstart app icon** there (holding the logo inside the app won't do it). Tap **My QR code** to open your code, or drag **My QR code** onto your home screen to keep it as its own icon.",
         only: ["android"],
       },
       {
@@ -91,7 +91,7 @@ export const TIPS = {
         only: ["android"],
       },
       {
-        text: "**Install the app:** click the install icon at the right of the address bar (Chrome or Edge). It then opens in its own window from your dock or Start menu.",
+        text: "**Install the app:** click **Install app** below, or the install icon at the right of the address bar (Chrome or Edge). It then opens in its own window from your dock or Start menu.",
         only: ["desktop"],
       },
       {

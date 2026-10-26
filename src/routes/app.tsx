@@ -212,7 +212,16 @@ function AppLayout() {
     to === "/app/contacts" && newLeads > 0 ? (newLeads > 99 ? "99+" : String(newLeads)) : null;
 
   return (
-    <div className="min-h-screen md:pl-64">
+    <div
+      // Holding the logo or a photo on a phone opened the browser's "save
+      // image" menu, which feels broken inside an installed app.
+      className="min-h-screen md:pl-64 [&_img]:[-webkit-touch-callout:none]"
+      onContextMenu={(e) => {
+        if (e.target instanceof HTMLImageElement && matchMedia("(pointer: coarse)").matches) {
+          e.preventDefault();
+        }
+      }}
+    >
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
         <Link to="/app" className="mb-8 px-2">
           <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-10 w-auto" />
