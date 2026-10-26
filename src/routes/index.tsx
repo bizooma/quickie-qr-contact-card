@@ -93,6 +93,12 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
+// Rotate ad network tag (our seat). It must be in the server-rendered HTML,
+// and it fills the element it sits in, so it goes in as raw HTML: React then
+// leaves the banner it draws alone when the page hydrates.
+const ROTATE_TAG =
+  '<script src="https://rotate.ad/banner.js" data-rotate-seat="NoSd4uXuTMc_fe_0vZZXiUgwpYxl93Hx" defer></script>';
+
 const DEMO: CardData = {
   slug: "demo",
   label: "Work",
@@ -949,6 +955,19 @@ function Landing() {
           <p className="mt-3 text-xs text-white/80">
             Free plan forever · No credit card · Ready in 2 minutes
           </p>
+        </div>
+      </section>
+      {/* 12 · Sponsored: one Rotate network banner. Stays hidden until the
+          script has drawn it, so a blocked or empty slot leaves no gap. */}
+      <section
+        aria-label="Sponsored"
+        className="hidden border-t bg-muted/30 has-[[data-rotate-banner]]:block"
+      >
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 py-6">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Sponsored
+          </p>
+          <div className="w-full max-w-[728px]" dangerouslySetInnerHTML={{ __html: ROTATE_TAG }} />
         </div>
       </section>
       <footer className="border-t">
