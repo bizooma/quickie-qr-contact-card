@@ -330,7 +330,7 @@ function Landing() {
         <div className="relative flex justify-center">
           <div className="phone-frame phone-float rotate-2">
             <div className="h-full overflow-hidden rounded-[38px]">
-              <CardView card={DEMO} headshotUrl="/demo/maya.webp" logoUrl="/demo/logo.webp" />
+              <CardView card={DEMO} headshotUrl="/demo/maya.webp" bannerUrl="/demo/banner.webp" />
             </div>
           </div>
           {/* The conversation, kickstarted. Decorative — screen readers skip it. */}
