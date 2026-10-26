@@ -187,11 +187,18 @@ export function CardView({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 pt-10">
-            {avatar(112)}
-            {header}
             {logoUrl ? (
-              companyLogo(112)
+              // Photo and logo share one row so the contact buttons stay
+              // near the top instead of under a stack of images.
+              <div className="flex w-full items-center justify-center gap-5">
+                {avatar(96)}
+                {companyLogo(96, "55%")}
+              </div>
             ) : (
+              avatar(112)
+            )}
+            {header}
+            {!logoUrl && (
               <img src={logo} alt={logoAlt} className="h-8 max-w-[120px] object-contain" />
             )}
           </div>
