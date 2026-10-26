@@ -97,7 +97,7 @@ export const Route = createFileRoute("/")({
 // and it fills the element it sits in, so it goes in as raw HTML: React then
 // leaves the banner it draws alone when the page hydrates.
 const ROTATE_TAG =
-  '<script src="https://rotate.ad/banner.js" data-rotate-seat="NoSd4uXuTMc_fe_0vZZXiUgwpYxl93Hx" defer></script>';
+  '<script src="https://rotate.ad/banner.js" data-rotate-seat="sEG7dQFM-3Dd-IdfWrwcLeyGVk2GAb7N" defer></script>';
 
 const DEMO: CardData = {
   slug: "demo",
