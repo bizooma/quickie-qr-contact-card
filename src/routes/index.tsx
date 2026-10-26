@@ -94,10 +94,14 @@ export const Route = createFileRoute("/")({
 });
 
 // Rotate ad network tag (our seat). It must be in the server-rendered HTML,
-// and it fills the element it sits in, so it goes in as raw HTML: React then
-// leaves the banner it draws alone when the page hydrates.
-const ROTATE_TAG =
-  '<script src="https://rotate.ad/banner.js" data-rotate-seat="sEG7dQFM-3Dd-IdfWrwcLeyGVk2GAb7N" defer></script>';
+// and it fills the element it sits in, so it goes in as raw HTML. The object
+// must keep one identity: React rewrites innerHTML whenever it gets a new
+// dangerouslySetInnerHTML object, which wiped the tag or the drawn banner on
+// every re-render of this page.
+const ROTATE_TAG = {
+  __html:
+    '<script src="https://rotate.ad/banner.js" data-rotate-seat="sEG7dQFM-3Dd-IdfWrwcLeyGVk2GAb7N" defer></script>',
+};
 
 const DEMO: CardData = {
   slug: "demo",
@@ -967,7 +971,7 @@ function Landing() {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Sponsored
           </p>
-          <div className="w-full max-w-[728px]" dangerouslySetInnerHTML={{ __html: ROTATE_TAG }} />
+          <div className="w-full max-w-[728px]" dangerouslySetInnerHTML={ROTATE_TAG} />
         </div>
       </section>
       <footer className="border-t">
