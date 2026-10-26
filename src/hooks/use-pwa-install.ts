@@ -33,6 +33,13 @@ export function isStandalone(): boolean {
   );
 }
 
+/** Props for a link to one of our own pages, like a live card: a new tab in
+ *  the browser, but the same window in the installed app, where a new tab
+ *  opens a browser overlay (Android's custom tab, with its own ⋮ menu). */
+export function liveLinkProps(): { target?: "_blank"; rel?: string } {
+  return isStandalone() ? {} : { target: "_blank", rel: "noreferrer" };
+}
+
 export function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;

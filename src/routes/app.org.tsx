@@ -32,6 +32,7 @@ import { createCard } from "@/lib/cards-api";
 import { createCheckout, getBillingState } from "@/lib/billing.functions";
 import { TEAM_MIN_SEATS, TEAM_SEAT_PRICE_LABEL } from "@/lib/plans";
 import { initials } from "@/lib/card-model";
+import { liveLinkProps } from "@/hooks/use-pwa-install";
 
 export const Route = createFileRoute("/app/org")({ head: appHead('Team', 'Manage your team and members.'), component: OrgPage });
 
@@ -490,8 +491,7 @@ function TeamCardsSection({
               <a
                 className="text-xs text-muted-foreground underline-offset-4 hover:underline"
                 href={`/c/${c.slug}`}
-                target="_blank"
-                rel="noreferrer"
+                {...liveLinkProps()}
               >
                 /c/{c.slug}
               </a>

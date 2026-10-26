@@ -59,6 +59,9 @@ const QR_CACHE_KEY = "ck-qr-card";
 
 export const Route = createFileRoute("/app/qr")({
   head: appHead("QR code", "Show your card's QR code full screen."),
+  // ?card=<slug> opens on that card (the owner's "Show my QR code" on a live card).
+  validateSearch: (s: Record<string, unknown>) =>
+    typeof s["card"] === "string" ? { card: s["card"] } : {},
   component: QuickQr,
 });
 
@@ -110,7 +113,8 @@ async function wallpaperBlob(svg: string, accent: string, bg: string): Promise<B
 
 function QuickQr() {
   const [snap, setSnap] = useState<QrSnapshot | null>(() => readSnapshot());
-  const [chosen, setChosen] = useState<string | null>(null);
+  const { card: wanted } = Route.useSearch();
+  const [chosen, setChosen] = useState<string | null>(wanted ?? null);
   const { data: cards } = useQuery({ queryKey: ["cards"], queryFn: listCards });
   const { user } = useAuth();
 

@@ -26,6 +26,7 @@ import { lockedCardIds, LOGO_SIZES, ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, g
 import { removeMedia, shrinkImage, signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
 import { renderOgImage } from "@/lib/og-image";
 import { cn } from "@/lib/utils";
+import { liveLinkProps } from "@/hooks/use-pwa-install";
 
 export const Route = createFileRoute("/app/cards/$id")({ head: appHead('Edit card', 'Edit your digital business card and see changes live.'), component: EditorPage });
 
@@ -83,7 +84,7 @@ function LockedCard({ slug, label }: { slug: string; label: string }) {
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <a href={`/c/${slug}`} target="_blank" rel="noreferrer">
+            <a href={`/c/${slug}`} {...liveLinkProps()}>
               <ExternalLink className="h-4 w-4" />
               View live card
             </a>
@@ -287,12 +288,7 @@ function Editor({
           </Link>
           <h1 className="min-w-0 flex-1 truncate text-center text-2xl font-bold">{card.label}</h1>
           <Button size="sm" variant="ghost" asChild className="shrink-0">
-            <a
-              href={`/c/${card.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Open live card"
-            >
+            <a href={`/c/${card.slug}`} {...liveLinkProps()} aria-label="Open live card">
               <ExternalLink className="h-4 w-4" />
             </a>
           </Button>
