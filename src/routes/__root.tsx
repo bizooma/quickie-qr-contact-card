@@ -86,6 +86,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#E8553D" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "google-site-verification", content: "Utl-fgmmUf9iKS2x8yd-LSJcZ1Z97XpSNmaBpmHKIBU" },
+      {
+        name: "rotate-verification",
+        content: "ae9ad619c669342d4e74729536cc7054b1223defc21ae128aaa20c823dd6933a",
+      },
       { title: "ContactKickstart — Digital business cards" },
       { name: "description", content: "Share your digital business card and capture contacts." },
     ],
