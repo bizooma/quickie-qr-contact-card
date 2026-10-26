@@ -140,18 +140,23 @@ export function CardView({
 
   return (
     <div
-      className="min-h-full w-full"
+      className="@container min-h-full w-full"
       style={{ background: bg, color: fg, fontFamily: fontCss(card.font) }}
     >
       {t === "banner" && (
         <div
-          className={`relative overflow-hidden ${bannerUrl ? "h-44" : "h-36"}`}
+          // A banner photo keeps to the card's width on wide screens (container
+          // query, so the editor's phone preview stays full-bleed) instead of
+          // stretching across the window and cropping the photo.
+          className={`relative overflow-hidden ${
+            bannerUrl ? "mx-auto h-44 max-w-md @lg:mt-6 @lg:rounded-3xl" : "h-36"
+          }`}
           style={{ background: accent }}
         >
           {bannerUrl && (
             <img src={bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
           )}
-          {!logoUrl && (
+          {!logoUrl && !bannerUrl && (
             <img
               src={logo}
               alt={logoAlt}
