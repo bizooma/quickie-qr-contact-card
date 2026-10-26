@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, Send, Share2 } from "lucide-react";
+import { Download, Pencil, QrCode, Send, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
@@ -101,13 +101,48 @@ async function toBase64(url: string): Promise<{ b64: string; type: string } | nu
   } catch { return null; }
 }
 
+/** The card's id when its signed-in owner opens it, so they get their QR code
+ *  and editor instead of "Save contact" and "Share yours". RLS scopes the
+ *  read; the user_id filter leaves out teammates' cards. */
+async function ownCardId(slug: string): Promise<string | null> {
+  try {
+    const { data: auth } = await supabase.auth.getSession();
+    const uid = auth.session?.user.id;
+    if (!uid) return null;
+    const { data } = await supabase
+      .from("cards")
+      .select("id")
+      .eq("slug", slug)
+      .eq("user_id", uid)
+      .maybeSingle();
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function PublicCard() {
   const { card, headshotUrl, logoUrl, bannerUrl } = Route.useLoaderData();
   const { slug } = Route.useParams();
   const [open, setOpen] = useState(false);
+  const [ownId, setOwnId] = useState<string | null>(null);
   const accentText = contrastText(card.accent_color);
+  const fg = contrastText(card.background_color);
 
   useEffect(() => {
+    let live = true;
+    void ownCardId(card.slug).then((id) => {
+      if (!live) return;
+      // The owner checking their own card isn't a view.
+      if (id) setOwnId(id);
+      else logView();
+    });
+    return () => {
+      live = false;
+    };
+  }, [slug]);
+
+  function logView() {
     const key = `ss-view-${slug}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
@@ -146,7 +181,7 @@ function PublicCard() {
         ...(visitor ? { _visitor: visitor } : {}),
       })
       .then(undefined, () => {});
-  }, [slug]);
+  }
 
   async function saveContact() {
     const photo = headshotUrl ? await toBase64(headshotUrl) : null;
@@ -191,31 +226,59 @@ function PublicCard() {
             .then(undefined, () => {});
         }}
         actions={
-          <div
-            className={`grid gap-2 ${card.shareback_open === false ? "grid-cols-1" : "grid-cols-2"}`}
-          >
-            <button
-              onClick={saveContact}
-              className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{ background: card.accent_color, color: accentText }}
+          ownId ? (
+            <div className="space-y-2">
+              <p className="text-center text-xs opacity-60" style={{ color: fg }}>
+                This is your card, as people see it.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to="/app/qr"
+                  search={{ card: card.slug }}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
+                  style={{ background: card.accent_color, color: accentText }}
+                >
+                  <QrCode className="h-4 w-4" />
+                  Show my QR code
+                </Link>
+                <Link
+                  to="/app/cards/$id"
+                  params={{ id: ownId }}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
+                  style={{ borderColor: card.accent_color, color: fg }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit card
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`grid gap-2 ${card.shareback_open === false ? "grid-cols-1" : "grid-cols-2"}`}
             >
-              <Download className="h-4 w-4" />
-              Save contact
-            </button>
-            {card.shareback_open !== false && (
               <button
-                onClick={() => setOpen(true)}
-                className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
-                style={{
-                  borderColor: card.accent_color,
-                  color: contrastText(card.background_color),
-                }}
+                onClick={saveContact}
+                className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{ background: card.accent_color, color: accentText }}
               >
-                <Send className="h-4 w-4" />
-                Share yours
+                <Download className="h-4 w-4" />
+                Save contact
               </button>
-            )}
-          </div>
+              {card.shareback_open !== false && (
+                <button
+                  onClick={() => setOpen(true)}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
+                  style={{
+                    borderColor: card.accent_color,
+                    color: contrastText(card.background_color),
+                  }}
+                >
+                  <Send className="h-4 w-4" />
+                  Share yours
+                </button>
+              )}
+            </div>
+          )
         }
       />
       <div className="pb-4 text-center">

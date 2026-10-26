@@ -16,6 +16,7 @@ import type { ScannedCardFields } from "@/lib/own-card";
 import { signedUrls } from "@/lib/media";
 import { getBillingState } from "@/lib/billing.functions";
 import { PLAN_LIMITS, PLAN_NAMES } from "@/lib/plans";
+import { liveLinkProps } from "@/hooks/use-pwa-install";
 
 export const Route = createFileRoute("/app/")({ head: appHead('My cards', 'All your digital business cards in one place.'), component: CardsPage });
 
@@ -199,8 +200,7 @@ function CardsPage() {
                 <a
                   className="flex flex-1 items-center justify-center gap-2 border-l py-3 text-sm font-medium hover:bg-muted"
                   href={`/c/${c.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
+                  {...liveLinkProps()}
                 >
                   <ExternalLink className="h-4 w-4" />
                   View
