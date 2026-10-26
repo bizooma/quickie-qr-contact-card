@@ -45,6 +45,24 @@ export function shouldOpenOnQr(opts: {
   return opts.enabled && opts.standalone && opts.firstLoad && /^\/app\/?$/.test(opts.pathname);
 }
 
+export type HomeScreenAction = { kind: "install" | "tip"; label: string };
+
+/** The QR screen's home-screen button. A web app can't place an icon itself:
+ *  where the browser offers install we trigger it; otherwise the button opens
+ *  the steps. Once installed, Android can still pin the "My QR code" shortcut
+ *  from the app icon; iPhone and computers have nothing more to add. */
+export function homeScreenAction(opts: {
+  platform: "ios" | "android" | "desktop";
+  standalone: boolean;
+  canPrompt: boolean;
+}): HomeScreenAction | null {
+  const { platform, standalone, canPrompt } = opts;
+  if (standalone) return platform === "android" ? { kind: "tip", label: "Add a My QR icon" } : null;
+  const label = platform === "desktop" ? "Install app" : "Add to home screen";
+  if (canPrompt) return { kind: "install", label };
+  return platform === "desktop" ? null : { kind: "tip", label };
+}
+
 // Lock-screen wallpaper: portrait, iPhone-sized (works on Android too). The
 // code sits below the clock and above the flashlight/camera buttons.
 export const WALLPAPER_W = 1170;

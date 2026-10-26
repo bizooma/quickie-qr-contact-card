@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Share2,
   Smartphone,
+  SquarePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,11 +25,14 @@ import {
 } from "@/components/card/QrPanel";
 import { usePlan } from "@/components/PremiumGate";
 import { useAuth } from "@/hooks/use-auth";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { detectPlatform } from "@/lib/feature-tips";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { parseQrCenter, qrCenterSource } from "@/lib/qr-logo";
 import {
   cycleIndex,
   getOpenOnQr,
+  homeScreenAction,
   setOpenOnQr,
   swipeStep,
   WALLPAPER_H,
@@ -184,6 +188,24 @@ function QuickQr() {
     setChosen(next.slug);
   }
   const [savingWallpaper, setSavingWallpaper] = useState(false);
+  const { canPrompt, promptInstall, standalone } = usePwaInstall();
+  const [platform] = useState(() => detectPlatform(navigator.userAgent, navigator.maxTouchPoints));
+  const homeScreen = homeScreenAction({ platform, standalone, canPrompt });
+
+  async function addToHomeScreen() {
+    if (homeScreen?.kind !== "install") return openTip("qr");
+    const outcome = await promptInstall();
+    if (outcome === "unavailable") return openTip("qr");
+    if (outcome !== "accepted") return;
+    if (platform === "desktop") {
+      toast.success("Installed. Open it from your dock or Start menu");
+      return;
+    }
+    // They installed from the QR screen, so the new icon should open on the code.
+    setOpenOnQr(true);
+    setOpenOnQrState(true);
+    toast.success("Added. Tap the ContactKickstart icon on your home screen to show this code");
+  }
 
   async function saveWallpaper() {
     if (!svg || !view) return;
@@ -370,6 +392,12 @@ function QuickQr() {
             }}
           />
         </label>
+        {homeScreen && (
+          <Button variant="outline" className="w-full" onClick={() => void addToHomeScreen()}>
+            <SquarePlus className="h-4 w-4" />
+            {homeScreen.label}
+          </Button>
+        )}
         <Button
           variant="outline"
           className="w-full"
