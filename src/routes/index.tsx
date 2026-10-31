@@ -100,7 +100,7 @@ export const Route = createFileRoute("/")({
 // every re-render of this page.
 const ROTATE_TAG = {
   __html:
-    '<script src="https://rotate.ad/banner.js" data-rotate-seat="sEG7dQFM-3Dd-IdfWrwcLeyGVk2GAb7N" defer></script>',
+    '<script src="https://rotate.ad/banner.js" data-rotate-seat="2cSWQogcj6nbHsbmaMpaWFImiK66ZShy" defer></script>',
 };
 
 const DEMO: CardData = {
