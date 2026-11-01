@@ -79,7 +79,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
+  // The My QR page links its own manifest, so it installs as a separate
+  // "My QR" home-screen icon rather than a second copy of the app.
+  head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
@@ -97,8 +99,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico?v=2", type: "image/x-icon" },
       { rel: "icon", href: "/brand/icon-192.png", type: "image/png", sizes: "192x192" },
-      { rel: "apple-touch-icon", href: "/brand/apple-touch-icon.png" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
+      {
+        rel: "apple-touch-icon",
+        href: matches.some((m) => (m.routeId as string) === "/my-qr")
+          ? "/brand/my-qr-180.png"
+          : "/brand/apple-touch-icon.png",
+      },
+      {
+        rel: "manifest",
+        href: matches.some((m) => (m.routeId as string) === "/my-qr")
+          ? "/my-qr.webmanifest"
+          : "/manifest.webmanifest",
+      },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

@@ -3,7 +3,7 @@
 // files → stale-while-revalidate; page navigations → network-first with the
 // cached /app shell as the offline fallback. Data (Supabase) is cross-origin
 // and never intercepted, so nothing stale is ever shown as live data.
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL = `ck-shell-${VERSION}`;
 const ASSETS = `ck-assets-${VERSION}`;
 const STATIC = `ck-static-${VERSION}`;
@@ -17,6 +17,10 @@ const PRECACHE = [
   "/brand/logo-badge.webp",
   "/brand/icon-192.png",
   "/brand/icon-512.png",
+  // The My QR app opens with no signal too.
+  "/my-qr",
+  "/my-qr.webmanifest",
+  "/brand/my-qr-192.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -75,6 +79,10 @@ async function navigation(request) {
     if (url.pathname.startsWith("/app")) {
       const shell = await caches.match("/app");
       if (shell) return shell;
+    }
+    if (url.pathname.startsWith("/my-qr")) {
+      const page = await caches.match("/my-qr");
+      if (page) return page;
     }
     return new Response(
       "<!doctype html><title>Offline</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><body style=\"font-family:system-ui;display:grid;place-items:center;min-height:100vh;margin:0;background:#FAF8F5;color:#111827\"><div style=\"text-align:center\"><h1 style=\"font-size:1.25rem\">You're offline</h1><p style=\"color:#6b7280\">ContactKickstart needs a connection for this page.</p></div></body>",
