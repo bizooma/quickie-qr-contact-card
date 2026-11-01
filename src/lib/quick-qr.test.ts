@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   cycleIndex,
   homeScreenAction,
+  myQrIconHref,
+  myQrSnapshot,
   shouldOpenOnQr,
   swipeStep,
   WALLPAPER_H,
@@ -31,6 +33,15 @@ describe("wallpaperLayout", () => {
     expect(panel.y).toBeGreaterThan(WALLPAPER_H * 0.3);
     expect(caption.y + caption.size).toBeLessThan(WALLPAPER_H * 0.88);
     expect(qr.size).toBeGreaterThan(WALLPAPER_W / 2);
+  });
+
+  it("puts the home-screen code higher and smaller, still on screen", () => {
+    const lock = wallpaperLayout();
+    const home = wallpaperLayout(WALLPAPER_W, WALLPAPER_H, "home");
+    expect(home.panel.size).toBeLessThan(lock.panel.size);
+    expect(home.panel.y).toBeLessThan(lock.panel.y);
+    expect(home.panel.y).toBeGreaterThan(WALLPAPER_H * 0.12);
+    expect(home.caption.y + home.caption.size).toBeLessThan(WALLPAPER_H * 0.6);
   });
 });
 
@@ -73,14 +84,50 @@ describe("homeScreenAction", () => {
     ).toBeNull();
   });
 
-  it("offers only Android's My QR shortcut once installed", () => {
-    expect(homeScreenAction({ platform: "android", standalone: true, canPrompt: false })).toEqual({
-      kind: "tip",
-      label: "Add a My QR icon",
-    });
+  it("offers nothing more once the app is installed", () => {
+    expect(
+      homeScreenAction({ platform: "android", standalone: true, canPrompt: false }),
+    ).toBeNull();
     expect(homeScreenAction({ platform: "ios", standalone: true, canPrompt: false })).toBeNull();
     expect(
       homeScreenAction({ platform: "desktop", standalone: true, canPrompt: false }),
     ).toBeNull();
+  });
+});
+
+describe("myQrIconHref", () => {
+  const base = { slug: "tamzyn", host: "contactkickstart.com" };
+  it("opens the My QR page for the card in the Android browser", () => {
+    expect(myQrIconHref({ ...base, platform: "android", standalone: false })).toBe(
+      "/my-qr?card=tamzyn",
+    );
+  });
+  it("leaves the installed app for Chrome, which can install My QR", () => {
+    expect(myQrIconHref({ ...base, platform: "android", standalone: true })).toBe(
+      "intent://contactkickstart.com/my-qr?card=tamzyn#Intent;scheme=https;package=com.android.chrome;end",
+    );
+  });
+  it("is Android only", () => {
+    expect(myQrIconHref({ ...base, platform: "ios", standalone: false })).toBeNull();
+    expect(myQrIconHref({ ...base, platform: "desktop", standalone: true })).toBeNull();
+  });
+});
+
+describe("myQrSnapshot", () => {
+  const snap = (slug: string, accent = "#E8553D") => ({
+    slug,
+    label: "Work",
+    full_name: "Tamzyn Williams",
+    accent,
+    bg: "#FFFFFF",
+  });
+  it("shows the card it was installed for, freshest copy first", () => {
+    expect(myQrSnapshot("tamzyn", snap("tamzyn", "#000"), snap("tamzyn"))).toEqual(snap("tamzyn"));
+    expect(myQrSnapshot(undefined, snap("tamzyn"), snap("other"))).toEqual(snap("tamzyn"));
+  });
+  it("falls back to the main app's last code, then a plain code for the card", () => {
+    expect(myQrSnapshot(undefined, null, snap("other"))).toEqual(snap("other"));
+    expect(myQrSnapshot("new-card", null, snap("other"))?.slug).toBe("new-card");
+    expect(myQrSnapshot(undefined, null, null)).toBeNull();
   });
 });

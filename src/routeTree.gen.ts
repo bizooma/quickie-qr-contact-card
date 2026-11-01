@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as HelpRouteImport } from './routes/help'
+import { Route as MyQrRouteImport } from './routes/my-qr'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -60,6 +61,11 @@ const AuthRoute = AuthRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyQrRoute = MyQrRouteImport.update({
+  id: '/my-qr',
+  path: '/my-qr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/help': typeof HelpRoute
+  '/my-qr': typeof MyQrRoute
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/help': typeof HelpRoute
+  '/my-qr': typeof MyQrRoute
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/help': typeof HelpRoute
+  '/my-qr': typeof MyQrRoute
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/help'
+    | '/my-qr'
     | '/privacy'
     | '/security'
     | '/terms'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/help'
+    | '/my-qr'
     | '/privacy'
     | '/security'
     | '/terms'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/help'
+    | '/my-qr'
     | '/privacy'
     | '/security'
     | '/terms'
@@ -414,6 +426,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   HelpRoute: typeof HelpRoute
+  MyQrRoute: typeof MyQrRoute
   PrivacyRoute: typeof PrivacyRoute
   SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-qr': {
+      id: '/my-qr'
+      path: '/my-qr'
+      fullPath: '/my-qr'
+      preLoaderRoute: typeof MyQrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -702,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   HelpRoute: HelpRoute,
+  MyQrRoute: MyQrRoute,
   PrivacyRoute: PrivacyRoute,
   SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,

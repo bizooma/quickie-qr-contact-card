@@ -7,7 +7,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  LayoutGrid,
   Lightbulb,
+  QrCode,
   Share2,
   Smartphone,
   SquarePlus,
@@ -33,6 +35,11 @@ import {
   cycleIndex,
   getOpenOnQr,
   homeScreenAction,
+  myQrIconHref,
+  QR_CACHE_KEY,
+  readSnapshot,
+  type QrSnapshot,
+  type WallpaperKind,
   setOpenOnQr,
   swipeStep,
   WALLPAPER_H,
@@ -45,18 +52,6 @@ import {
 // trip, and — because the QR is generated on-device and the service worker
 // serves the shell — keeps working with no signal at all.
 
-type QrSnapshot = {
-  slug: string;
-  label: string;
-  full_name: string;
-  accent: string;
-  bg: string;
-  // Inline (data URL) so the photo/logo center still shows with no signal.
-  center?: QrCenterImage | null;
-};
-
-const QR_CACHE_KEY = "ck-qr-card";
-
 export const Route = createFileRoute("/app/qr")({
   head: appHead("QR code", "Show your card's QR code full screen."),
   // ?card=<slug> opens on that card (the owner's "Show my QR code" on a live card).
@@ -65,18 +60,14 @@ export const Route = createFileRoute("/app/qr")({
   component: QuickQr,
 });
 
-function readSnapshot(): QrSnapshot | null {
-  try {
-    const raw = localStorage.getItem(QR_CACHE_KEY);
-    return raw ? (JSON.parse(raw) as QrSnapshot) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** A portrait lock-screen image of the code: the card's colors, a framed QR
- *  and "Scan to save my contact". No name or photo — just the code. */
-async function wallpaperBlob(svg: string, accent: string, bg: string): Promise<Blob> {
+/** A portrait wallpaper of the code for the lock or home screen: the card's
+ *  colors, a framed QR and "Scan to save my contact". No name or photo. */
+async function wallpaperBlob(
+  svg: string,
+  accent: string,
+  bg: string,
+  kind: WallpaperKind,
+): Promise<Blob> {
   const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
   try {
     const img = new Image();
@@ -90,7 +81,7 @@ async function wallpaperBlob(svg: string, accent: string, bg: string): Promise<B
     c.height = WALLPAPER_H;
     const ctx = c.getContext("2d");
     if (!ctx) throw new Error("Canvas unavailable");
-    const { panel, qr, caption } = wallpaperLayout();
+    const { panel, qr, caption } = wallpaperLayout(WALLPAPER_W, WALLPAPER_H, kind);
     ctx.fillStyle = accent;
     ctx.fillRect(0, 0, WALLPAPER_W, WALLPAPER_H);
     ctx.fillStyle = bg;
@@ -191,10 +182,13 @@ function QuickQr() {
     setSlideFrom(delta > 0 ? "right" : "left");
     setChosen(next.slug);
   }
-  const [savingWallpaper, setSavingWallpaper] = useState(false);
+  const [savingWallpaper, setSavingWallpaper] = useState<WallpaperKind | null>(null);
   const { canPrompt, promptInstall, standalone } = usePwaInstall();
   const [platform] = useState(() => detectPlatform(navigator.userAgent, navigator.maxTouchPoints));
   const homeScreen = homeScreenAction({ platform, standalone, canPrompt });
+  const myQrHref = view
+    ? myQrIconHref({ platform, standalone, slug: view.slug, host: window.location.host })
+    : null;
 
   async function addToHomeScreen() {
     if (homeScreen?.kind !== "install") return openTip("qr");
@@ -211,12 +205,14 @@ function QuickQr() {
     toast.success("Added. Tap the ContactKickstart icon on your home screen to show this code");
   }
 
-  async function saveWallpaper() {
+  async function saveWallpaper(kind: WallpaperKind) {
     if (!svg || !view) return;
-    setSavingWallpaper(true);
+    setSavingWallpaper(kind);
     try {
-      const blob = await wallpaperBlob(svg, view.accent, view.bg);
-      const file = new File([blob], `${view.slug}-qr-wallpaper.png`, { type: "image/png" });
+      const blob = await wallpaperBlob(svg, view.accent, view.bg, kind);
+      const file = new File([blob], `${view.slug}-qr-${kind}-wallpaper.png`, {
+        type: "image/png",
+      });
       // Phones: the share sheet has "Save Image" (Photos). Elsewhere: download.
       if (navigator.canShare?.({ files: [file] })) {
         try {
@@ -234,7 +230,7 @@ function QuickQr() {
     } catch {
       toast.error("Could not make the wallpaper");
     } finally {
-      setSavingWallpaper(false);
+      setSavingWallpaper(null);
     }
   }
 
@@ -402,14 +398,31 @@ function QuickQr() {
             {homeScreen.label}
           </Button>
         )}
+        {myQrHref && (
+          <Button asChild variant="outline" className="w-full">
+            <a href={myQrHref}>
+              <QrCode className="h-4 w-4" />
+              Add a My QR icon
+            </a>
+          </Button>
+        )}
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => void saveWallpaper()}
-          disabled={!svg || savingWallpaper}
+          onClick={() => void saveWallpaper("lock")}
+          disabled={!svg || !!savingWallpaper}
         >
           <Smartphone className="h-4 w-4" />
-          Save as wallpaper
+          Lock-screen wallpaper
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => void saveWallpaper("home")}
+          disabled={!svg || !!savingWallpaper}
+        >
+          <LayoutGrid className="h-4 w-4" />
+          Home-screen wallpaper
         </Button>
         <button
           type="button"

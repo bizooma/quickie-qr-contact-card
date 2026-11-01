@@ -46,7 +46,7 @@ describe("stepsFor", () => {
     const desktop = stepsFor(TIPS.qr, "desktop").map((s) => s.text);
     expect(ios.some((t) => t.includes("Add to Home Screen"))).toBe(true);
     expect(ios.some((t) => t.includes("drag **My QR code**"))).toBe(false);
-    expect(android.some((t) => t.includes("drag **My QR code**"))).toBe(true);
+    expect(android.some((t) => t.includes("**Add a My QR icon**"))).toBe(true);
     expect(desktop.some((t) => t.includes("Open the app on my QR code"))).toBe(false);
     // The shared "works offline" step shows everywhere.
     for (const list of [ios, android, desktop]) {

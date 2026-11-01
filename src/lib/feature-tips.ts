@@ -79,15 +79,15 @@ export const TIPS = {
         only: ["ios", "android"],
       },
       {
-        text: "**Or add a My QR icon:** go to your phone's home screen and touch and hold the **ContactKickstart app icon** there (holding the logo inside the app won't do it). Tap **My QR code** to open your code, or drag **My QR code** onto your home screen to keep it as its own icon.",
+        text: "**Or add a My QR icon:** tap **Add a My QR icon** below. Chrome opens your code; tap **Install My QR** and a separate My QR icon lands on your home screen that opens straight to it, even with no signal.",
         only: ["android"],
       },
       {
-        text: "**Put it on your lock screen:** tap **Save as wallpaper**, save the image to Photos, then open it and tap **Share → Use as Wallpaper**. Your code shows as soon as you lift your phone.",
+        text: "**Put it on your lock screen:** tap **Lock-screen wallpaper**, save the image to Photos, then open it and tap **Share → Use as Wallpaper**. Your code shows as soon as you lift your phone. **Home-screen wallpaper** puts it higher up, behind your apps; keep that spot free of icons.",
         only: ["ios"],
       },
       {
-        text: "**Put it on your lock screen:** tap **Save as wallpaper**, then open the image in Photos or Gallery and choose **Set as wallpaper → Lock screen**.",
+        text: "**Put it on your lock screen or home screen:** tap **Lock-screen wallpaper** or **Home-screen wallpaper**, then open the image in Photos or Gallery and choose **Set as wallpaper**. On the home screen, keep the spot behind the code free of icons.",
         only: ["android"],
       },
       {
@@ -95,7 +95,7 @@ export const TIPS = {
         only: ["desktop"],
       },
       {
-        text: "**Keep a copy:** **Save as wallpaper** downloads a phone-sized image of your code, handy for slides or to send to your phone.",
+        text: "**Keep a copy:** **Lock-screen wallpaper** downloads a phone-sized image of your code, handy for slides or to send to your phone.",
         only: ["desktop"],
       },
       { text: "This screen works with no signal, so it's ready at events with bad Wi-Fi." },
