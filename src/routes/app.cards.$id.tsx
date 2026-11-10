@@ -136,6 +136,19 @@ function Editor({
     },
   });
 
+  // Teams can remove our branding; the server decides (get_public_card), so
+  // the preview and the share image ask it rather than guess from the plan.
+  const { data: unbranded } = useQuery({
+    queryKey: ["card-unbranded", initial.slug],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_public_card", { _slug: initial.slug });
+      return (data as { hide_branding?: boolean } | null)?.hide_branding === true;
+    },
+  });
+  // A ref, so the answer arriving doesn't look like an edit and trigger a save.
+  const unbrandedRef = useRef(false);
+  unbrandedRef.current = unbranded === true;
+
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -151,7 +164,7 @@ function Editor({
           const headshotUrl = c.headshot_path
             ? ((await signedUrls([c.headshot_path]))[c.headshot_path] ?? null)
             : null;
-          const blob = await renderOgImage(c, headshotUrl);
+          const blob = await renderOgImage(c, headshotUrl, { unbranded: unbrandedRef.current });
           if (!blob) return;
           const path = await uploadOgImage(user.id, cardId, blob);
           await supabase.from("cards").update({ og_path: path }).eq("id", cardId);
@@ -291,7 +304,7 @@ function Editor({
 
   const preview = (
     <div className="phone-frame mx-auto"><div className="h-full overflow-y-auto rounded-[38px]">
-      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true}
+      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true} unbranded={unbranded === true}
         actions={<div className="h-12 rounded-full text-center text-sm font-semibold leading-[3rem]" style={{ background: card.accent_color, color: "#fff" }}>Save contact</div>} />
     </div></div>
   );

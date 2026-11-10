@@ -670,7 +670,7 @@ function PlanSection() {
             {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, email
             signatures, follow-up reminders, and advanced analytics. Teams ({TEAM_SEAT_PRICE_LABEL}
             /mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with everything in Premium for
-            every member. Plans auto-renew; cancelling stops the renewal and your plan runs to the
+            every member, and the only plan that can remove ContactKickstart branding from cards. Plans auto-renew; cancelling stops the renewal and your plan runs to the
             end of the period you've paid for. Every account keeps one live digital card (link + QR)
             free for life.
           </p>

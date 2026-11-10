@@ -23,10 +23,12 @@ const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
 // shareback_open is false once a free owner has collected their share-backs (0032).
 // verified is decided by get_public_card from the owner's profile (0034).
 // exchange arrives without the owner's form when they are on the free plan (0035).
+// hide_branding is true for a seated member of a team that turned branding off (0036).
 type PublicCardData = CardData & {
   og_path?: string | null;
   shareback_open?: boolean;
   verified?: boolean;
+  hide_branding?: boolean;
 };
 
 async function loadCard(slug: string) {
@@ -56,8 +58,12 @@ export const Route = createFileRoute("/c/$slug")({
   staleTime: 0,
   head: ({ loaderData }) => {
     const c = loaderData?.card;
-    const title = c ? `${c.full_name}${c.company ? ` · ${c.company}` : ""}` : "Digital business card";
-    const desc = c ? [c.job_title, c.company].filter(Boolean).join(" at ") || "Save my contact details" : "Digital business card";
+    const title = c
+      ? `${c.full_name}${c.company ? ` · ${c.company}` : ""}`
+      : "Digital business card";
+    const desc = c
+      ? [c.job_title, c.company].filter(Boolean).join(" at ") || "Save my contact details"
+      : "Digital business card";
     const image = loaderData?.ogUrl ?? DEFAULT_OG_IMAGE;
     const meta = [
       { title },
@@ -72,26 +78,30 @@ export const Route = createFileRoute("/c/$slug")({
       { name: "twitter:image", content: image },
     ];
     const scripts = c
-      ? [{
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "ProfilePage",
-            mainEntity: {
-              "@type": "Person",
-              name: c.full_name,
-              ...(c.job_title ? { jobTitle: c.job_title } : {}),
-              ...(c.company ? { worksFor: { "@type": "Organization", name: c.company } } : {}),
-            },
-          }).replace(/</g, "\\u003c"),
-        }]
+      ? [
+          {
+            type: "application/ld+json",
+            children: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ProfilePage",
+              mainEntity: {
+                "@type": "Person",
+                name: c.full_name,
+                ...(c.job_title ? { jobTitle: c.job_title } : {}),
+                ...(c.company ? { worksFor: { "@type": "Organization", name: c.company } } : {}),
+              },
+            }).replace(/</g, "\\u003c"),
+          },
+        ]
       : [];
     return { meta, scripts };
   },
   notFoundComponent: () => (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
       <h1 className="text-2xl font-bold">This card doesn't exist</h1>
-      <Link to="/" className="text-sm text-brand underline">Create your own card</Link>
+      <Link to="/" className="text-sm text-brand underline">
+        Create your own card
+      </Link>
     </div>
   ),
   component: PublicCard,
@@ -109,12 +119,15 @@ async function toBase64(url: string): Promise<{ b64: string; type: string } | nu
       r.readAsDataURL(blob);
     });
     return { b64, type };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 const firstValue = (list: unknown): string =>
-  (Array.isArray(list) ? (list as LabeledValue[]) : []).find((v) => v?.value?.trim())?.value.trim() ??
-  "";
+  (Array.isArray(list) ? (list as LabeledValue[]) : [])
+    .find((v) => v?.value?.trim())
+    ?.value.trim() ?? "";
 
 /** Who is looking, when they are signed in. `ownId` is the card's id when its
  *  owner opens it, so they get their QR code and editor instead of "Save
@@ -162,6 +175,7 @@ function PublicCard() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const sentMine = sent && !!mine;
+  const unbranded = card.hide_branding === true;
   const exchange = useMemo(() => parseExchange(card.exchange), [card.exchange]);
   const form = useMemo(() => formFor(exchange), [exchange]);
   const first = card.full_name.trim().split(/\s+/)[0] || "them";
@@ -315,6 +329,7 @@ function PublicCard() {
         logoUrl={logoUrl}
         bannerUrl={bannerUrl}
         verified={card.verified === true}
+        unbranded={unbranded}
         onLinkClick={(label) => {
           supabase
             .rpc("log_card_event", { _slug: slug, _event: "click", _meta: label })
@@ -384,27 +399,37 @@ function PublicCard() {
           Share this card
         </button>
       </div>
-      <footer className="pb-10 text-center">
-        {/* Referral link: the landing page remembers the card, and a signup from
+      {/* A team that removed our branding gets no invite under its cards. */}
+      {unbranded ? (
+        <div className="pb-10" />
+      ) : (
+        <footer className="pb-10 text-center">
+          {/* Referral link: the landing page remembers the card, and a signup from
             it earns the owner bonus scans (record_signup_attribution). */}
-        <a
-          href={`/?ref=card&c=${encodeURIComponent(slug)}`}
-          className="text-xs opacity-60 hover:opacity-100"
-          style={{ color: fg }}
-          onClick={() => {
-            supabase
-              .rpc("log_card_event", { _slug: slug, _event: "click", _meta: "Create your own card" })
-              .then(undefined, () => {});
-          }}
-        >
-          Create your own card · ContactKickstart
-        </a>
-      </footer>
+          <a
+            href={`/?ref=card&c=${encodeURIComponent(slug)}`}
+            className="text-xs opacity-60 hover:opacity-100"
+            style={{ color: fg }}
+            onClick={() => {
+              supabase
+                .rpc("log_card_event", {
+                  _slug: slug,
+                  _event: "click",
+                  _meta: "Create your own card",
+                })
+                .then(undefined, () => {});
+            }}
+          >
+            Create your own card · ContactKickstart
+          </a>
+        </footer>
+      )}
       <ShareBack
         slug={slug}
         ownerName={card.full_name}
         form={form}
         prefill={mine}
+        branded={!unbranded}
         open={open}
         onOpenChange={setOpen}
         onSent={mine ? markSent : undefined}

@@ -25,6 +25,7 @@ export function ShareBack({
   ownerName,
   form,
   prefill,
+  branded = true,
   open,
   onOpenChange,
   onSent,
@@ -33,6 +34,8 @@ export function ShareBack({
   ownerName: string;
   form: ExchangeForm;
   prefill?: ShareBackPrefill | null | undefined;
+  /** False on a team's unbranded cards: no ContactKickstart name or invite. */
+  branded?: boolean | undefined;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSent?: (() => void) | undefined;
@@ -111,7 +114,7 @@ export function ShareBack({
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">Thanks. {first} now has your details.</p>
               {/* The viral loop: the person who just shared is the next card owner. */}
-              {!prefill && (
+              {!prefill && branded && (
                 <>
                   <Button asChild className="h-11 w-full">
                     <a href={`/?ref=shareback&c=${encodeURIComponent(slug)}`}>
@@ -217,8 +220,8 @@ export function ShareBack({
                 {busy ? "Sending…" : "Send my details"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Only {first} receives these details, to follow up with you. Delivered by
-                ContactKickstart.{" "}
+                Only {first} receives these details, to follow up with you.{" "}
+                {branded && "Delivered by ContactKickstart. "}
                 <a href="/privacy" className="underline">
                   Privacy
                 </a>

@@ -200,8 +200,8 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
       <Users className="mx-auto h-10 w-10 text-brand" />
       <h1 className="text-2xl font-bold">Create your team</h1>
       <p className="text-sm text-muted-foreground">
-        Invite teammates with a link, provision branded cards for them, and see team analytics in
-        one place. Creating a team requires the Teams plan ($10 per user/month, 3-seat minimum) —
+        Invite teammates with a link, provision branded cards for them, remove ContactKickstart
+        branding so cards show your brand only, and see team analytics in one place. Creating a team requires the Teams plan ($10 per user/month, 3-seat minimum) —
         and every member you invite gets full Premium features on their seat.
       </p>
       <div className="space-y-2 text-left">
@@ -431,6 +431,7 @@ type OrgRow = {
   background_color: string | null;
   lock_brand: boolean;
   share_contacts: boolean;
+  hide_branding: boolean;
 };
 type CardRowLite = {
   id: string;
@@ -665,6 +666,21 @@ function BrandSection({ org, onChanged }: { org: OrgRow; onChanged: () => void }
           checked={org.share_contacts}
           onCheckedChange={(v) => save({ share_contacts: v })}
           aria-label="Shared contacts"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium">Remove ContactKickstart branding</p>
+          <p className="text-xs text-muted-foreground">
+            Every member's card shows your brand only: no ContactKickstart badge, no "Create your
+            own card" link, and no ContactKickstart name on the share-back form or link preview.
+            Link previews update the next time each card is saved.
+          </p>
+        </div>
+        <Switch
+          checked={org.hide_branding}
+          onCheckedChange={(v) => save({ hide_branding: v })}
+          aria-label="Remove ContactKickstart branding"
         />
       </div>
     </section>

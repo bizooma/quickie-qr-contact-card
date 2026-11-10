@@ -139,6 +139,10 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         "Admins provision cards for members, and Brand lock keeps your colors and logo on every team card — nobody drifts off-brand.",
       ],
       [
+        "Remove ContactKickstart branding",
+        "Only on Teams. On the Team page, under Brand & sharing, an owner or admin can turn on Remove ContactKickstart branding. Every member's card then shows your brand only: no ContactKickstart badge on cards without a logo, no \"Create your own card\" link under the card, and no ContactKickstart name on the share-back form or link preview. Link previews update the next time each card is saved. If the Teams plan ends, the branding comes back by itself.",
+      ],
+      [
         "Shared contacts & analytics",
         "Flip on contact sharing to give the team one pipeline, and watch views, saves and share-backs across all team cards in one view.",
       ],
@@ -162,7 +166,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "What Teams adds ($10/user/mo, or $100/user/yr)",
-        "A shared workspace billed per seat (3-seat minimum, owner included): every member gets full Premium features, plus brand lock, shared contacts and team-wide analytics. Add or remove seats anytime from Manage billing.",
+        "A shared workspace billed per seat (3-seat minimum, owner included): every member gets full Premium features, plus brand lock, the option to remove ContactKickstart branding from every card, shared contacts and team-wide analytics. Add or remove seats anytime from Manage billing.",
       ],
       [
         "Auto-renewal & cancelling",

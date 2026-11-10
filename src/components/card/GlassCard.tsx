@@ -67,6 +67,7 @@ export function GlassCard({
   headshotUrl,
   logoUrl,
   verified,
+  unbranded,
   actions,
   onLinkClick,
 }: {
@@ -75,6 +76,8 @@ export function GlassCard({
   logoUrl?: string | null | undefined;
   /** Decided by the server (get_public_card); never by the card owner. */
   verified?: boolean | undefined;
+  /** Teams: no ContactKickstart badge on a card without a logo. */
+  unbranded?: boolean | undefined;
   actions?: ReactNode;
   onLinkClick?: ((label: string) => void) | undefined;
 }) {
@@ -90,7 +93,7 @@ export function GlassCard({
   // wide tile with its label and address.
   const social = links.filter((l) => linkKind(l.icon) === "social");
   const portfolio = links.filter((l) => linkKind(l.icon) !== "social");
-  const logo = logoUrl || "/brand/logo-badge.webp";
+  const logo = logoUrl || (unbranded ? undefined : "/brand/logo-badge.webp");
   const logoHeight = logoUrl ? (card.logo_size === "large" ? 56 : 40) : 28;
 
   return (
@@ -155,12 +158,14 @@ export function GlassCard({
             </p>
           )}
           {card.bio && <p className="ck-bio">{card.bio}</p>}
-          <img
-            className="ck-logo"
-            src={logo}
-            alt={card.company ? `${card.company} logo` : "Company logo"}
-            style={{ height: logoHeight }}
-          />
+          {logo && (
+            <img
+              className="ck-logo"
+              src={logo}
+              alt={card.company ? `${card.company} logo` : "Company logo"}
+              style={{ height: logoHeight }}
+            />
+          )}
         </header>
 
         {actions && <div className="ck-glass ck-actions">{actions}</div>}

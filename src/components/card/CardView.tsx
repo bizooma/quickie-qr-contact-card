@@ -19,6 +19,7 @@ export function CardView({
   logoUrl,
   bannerUrl,
   verified,
+  unbranded,
   actions,
   onLinkClick,
 }: {
@@ -29,6 +30,9 @@ export function CardView({
   bannerUrl?: string | null | undefined;
   /** Liquid Glass only: shows the verified badge. Set by the server, never the owner. */
   verified?: boolean | undefined;
+  /** Teams: leaves out the ContactKickstart badge a card without a logo
+   *  would otherwise carry. Set by the server, never the owner. */
+  unbranded?: boolean | undefined;
   actions?: ReactNode;
   onLinkClick?: ((label: string) => void) | undefined;
 }) {
@@ -39,6 +43,7 @@ export function CardView({
         headshotUrl={headshotUrl}
         logoUrl={logoUrl}
         verified={verified}
+        unbranded={unbranded}
         actions={actions}
         onLinkClick={onLinkClick}
       />
@@ -52,8 +57,9 @@ export function CardView({
   const tile = fg === "#FFFFFF" ? "rgba(255,255,255,0.08)" : "rgba(17,17,17,0.04)";
   const t = card.template;
   // Cards without an uploaded logo carry the ContactKickstart badge until
-  // the owner replaces it in the editor.
-  const logo = logoUrl || "/brand/logo-badge.webp";
+  // the owner replaces it in the editor. A team that removed our branding
+  // gets no badge at all.
+  const logo = logoUrl || (unbranded ? undefined : "/brand/logo-badge.webp");
 
   const avatar = (size: number, ring = false) => (
     <div
@@ -172,7 +178,7 @@ export function CardView({
           {bannerUrl && (
             <img src={bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
           )}
-          {!logoUrl && !bannerUrl && (
+          {!logoUrl && !bannerUrl && logo && (
             <img
               src={logo}
               alt={logoAlt}
@@ -192,11 +198,11 @@ export function CardView({
           <div className="flex flex-col gap-5 pt-10">
             <div className="flex items-center justify-between">
               {avatar(72)}
-              {logoUrl ? (
-                companyLogo(72, "60%")
-              ) : (
-                <img src={logo} alt={logoAlt} className="h-9 max-w-[110px] object-contain" />
-              )}
+              {logoUrl
+                ? companyLogo(72, "60%")
+                : logo && (
+                    <img src={logo} alt={logoAlt} className="h-9 max-w-[110px] object-contain" />
+                  )}
             </div>
             <div className="h-1 w-10 rounded-full" style={{ background: accent }} />
             {header}
@@ -214,7 +220,7 @@ export function CardView({
               avatar(112)
             )}
             {header}
-            {!logoUrl && (
+            {!logoUrl && logo && (
               <img src={logo} alt={logoAlt} className="h-8 max-w-[120px] object-contain" />
             )}
           </div>
