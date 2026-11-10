@@ -40,8 +40,7 @@ vi.mock("@anthropic-ai/sdk/helpers/zod", () => ({ zodOutputFormat: () => ({}) })
 import { draftFollowUp, enrichContact, scanCards, summarizeNote } from "./ai.functions";
 
 type Handler = (args: { data: unknown; context: unknown }) => Promise<unknown>;
-const call = (fn: unknown, data: unknown, context: unknown) =>
-  (fn as Handler)({ data, context });
+const call = (fn: unknown, data: unknown, context: unknown) => (fn as Handler)({ data, context });
 
 const ID = "00000000-0000-4000-8000-000000000001";
 
@@ -134,7 +133,10 @@ describe("AI actions give back reserved usage when they fail", () => {
     await call(
       summarizeNote,
       { noteId: ID },
-      { userId: "u1", supabase: supabaseReturning(() => ({ data: { body: "note" }, error: null })) },
+      {
+        userId: "u1",
+        supabase: supabaseReturning(() => ({ data: { body: "note" }, error: null })),
+      },
     );
     expect(settleCalls()).toEqual([{ _reservation: "res-1", _actual: 1 }]);
   });
