@@ -8,6 +8,7 @@ import {
   normalizeUrl,
   type CardData,
 } from "@/lib/card-model";
+import { displayUrl } from "@/lib/link-catalog";
 import { GlassCard } from "./GlassCard";
 import { LinkIcon } from "./LinkIcon";
 
@@ -104,7 +105,7 @@ export function CardView({
       ? [
           {
             icon: <Globe className="h-4 w-4" />,
-            text: card.website.replace(/^https?:\/\//, ""),
+            text: displayUrl(card.website),
             href: normalizeUrl(card.website),
             kind: "website",
           },

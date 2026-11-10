@@ -3,7 +3,7 @@
 
 import type { CardTheme } from "./card-theme";
 import type { CardExchange, VCardPart } from "./exchange";
-import { guessPlatform, LINK_PLATFORMS } from "./link-catalog";
+import { guessPlatform, LINK_PLATFORMS, tidyWebAddress } from "./link-catalog";
 
 export type LabeledValue = { label: string; value: string };
 
@@ -81,11 +81,14 @@ export function guessIcon(url: string): string {
   return guessPlatform(url);
 }
 
+/** An address ready to open: tidied (see tidyWebAddress), with "https://"
+ *  added when it was typed without one. */
 export function normalizeUrl(url: string): string {
   const t = url.trim();
   if (!t) return t;
-  if (/^(https?:|mailto:|tel:)/i.test(t)) return t;
-  return `https://${t}`;
+  if (/^(mailto:|tel:|sms:)/i.test(t)) return t;
+  const tidy = tidyWebAddress(t);
+  return /^https?:/.test(tidy) ? tidy : `https://${tidy}`;
 }
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{2,48}$/;

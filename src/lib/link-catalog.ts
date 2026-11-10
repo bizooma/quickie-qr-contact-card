@@ -252,11 +252,36 @@ export function linkLabel(icon: string): string {
   return linkPlatform(icon).label;
 }
 
+/** Tidies a web address as people actually type it. A phone keyboard adds a
+ *  space after a full stop and capitalises the next word ("Cal Farley. Org"),
+ *  and a sentence-ending dot gets left on the end. A host can hold neither,
+ *  and a browser shows the space as "%20" and opens nothing. The host loses
+ *  its spaces and trailing dots; a space later in the address becomes "%20".
+ *  Email, phone and text links come back untouched. */
+export function tidyWebAddress(url: string): string {
+  const t = url.trim();
+  if (!t || /^(mailto|tel|sms):/i.test(t)) return t;
+  const m = /^(https?:\/\/)?([^/?#]*)([\s\S]*)$/i.exec(t);
+  if (!m) return t;
+  const scheme = (m[1] ?? "").toLowerCase();
+  const host = (m[2] ?? "").replace(/\s+/g, "").replace(/\.+$/, "");
+  const rest = (m[3] ?? "").trim().replace(/\s/g, "%20");
+  return scheme + host + rest;
+}
+
+/** A web address for showing on a card: tidied, without "https://" or a
+ *  bare trailing slash, in the capitals its owner typed. */
+export function displayUrl(url: string): string {
+  return tidyWebAddress(url)
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
+}
+
 /** The host of a pasted address, lower-cased and without "www.". Accepts an
  *  address typed without "https://". Empty for anything that is not a web
  *  address. */
 function hostOf(url: string): string {
-  const t = url.trim().toLowerCase();
+  const t = tidyWebAddress(url).toLowerCase();
   if (!t || /^(mailto|tel|sms):/.test(t)) return "";
   try {
     return new URL(/^https?:\/\//.test(t) ? t : `https://${t}`).hostname.replace(/^www\./, "");

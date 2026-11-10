@@ -2,7 +2,7 @@ import { ChevronDown, Globe, Mail, MapPin, Phone } from "lucide-react";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { initials, normalizeUrl, type CardData } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
-import { linkHost, linkKind } from "@/lib/link-catalog";
+import { displayUrl, linkHost, linkKind } from "@/lib/link-catalog";
 import { ICON_LABELS, LinkIcon } from "./LinkIcon";
 
 type Row = { kind: string; verb: string; icon: ReactNode; text: string; sub: string; href: string };
@@ -35,7 +35,7 @@ function contactRows(card: CardData): Row[] {
             kind: "website",
             verb: "Open",
             icon: <Globe aria-hidden />,
-            text: card.website.replace(/^https?:\/\//, ""),
+            text: displayUrl(card.website),
             sub: "Website",
             href: normalizeUrl(card.website),
           },
