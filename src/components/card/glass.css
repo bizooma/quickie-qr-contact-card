@@ -31,26 +31,27 @@
   width: 78%;
   max-width: 520px;
   aspect-ratio: 1;
-  filter: blur(48px) saturate(125%);
+  /* The soft edge comes from the blob's own radial gradient, not a CSS
+     blur: a blurred layer under the frosted panels flickered on phones.
+     The scale stands in for the spread the blur used to add. */
+  scale: 1.35;
   pointer-events: none;
-  /* Phones get one gentle settle on load, then a still backdrop: a moving
-     backdrop makes every frosted panel re-blur on each frame. */
-  animation: ck-settle 7s ease-out 1 both;
 }
 .ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; }
 .ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; }
 .ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; }
 .ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; }
-@keyframes ck-settle {
-  from { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
-  to { transform: none; }
-}
 @keyframes ck-drift {
   from { transform: none; }
   to { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
 }
+/* Only desktops drift the backdrop; phones keep it still, since a moving
+   backdrop makes every frosted panel re-blur on each frame. */
 @media (hover: hover) and (pointer: fine) {
-  .ck-blob { animation: ck-drift 22s ease-in-out infinite alternate; }
+  .ck-blob {
+    animation: ck-drift 22s ease-in-out infinite alternate;
+    will-change: transform;
+  }
   .ck-blob-2 { animation-duration: 27s; }
   .ck-blob-3 { animation-duration: 31s; }
   .ck-blob-4 { animation-duration: 25s; }

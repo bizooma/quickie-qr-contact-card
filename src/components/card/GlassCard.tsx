@@ -84,6 +84,8 @@ export function GlassCard({
   const { theme, vars } = resolveTheme(card);
   const [open, setOpen] = useState(false);
   const detailsId = useId();
+  // SVG gradient ids are page-global; useId keeps two cards on one page apart.
+  const meshId = `ck-mesh${useId().replace(/:/g, "")}`;
 
   const rows = contactRows(card);
   // One quick button per kind (the first phone, the first email, …).
@@ -99,15 +101,29 @@ export function GlassCard({
   return (
     <div className="ck-glass-card" style={vars as CSSProperties}>
       <div className="ck-mesh" aria-hidden>
+        {/* Each blob's soft edge is drawn into the shape with a radial
+            gradient. A CSS blur here made the frosted panels above re-blur
+            a blurred layer while it moved or scrolled, which flickered on
+            phones. */}
         {[1, 2, 3, 4].map((n) => (
           <svg key={n} className={`ck-blob ck-blob-${n}`} viewBox="0 0 200 200" focusable="false">
+            <defs>
+              <radialGradient id={`${meshId}-${n}`}>
+                <stop offset="0" style={{ stopColor: `var(--ck-mesh-${n})` }} />
+                <stop
+                  offset="0.45"
+                  style={{ stopColor: `var(--ck-mesh-${n})`, stopOpacity: 0.85 }}
+                />
+                <stop offset="1" style={{ stopColor: `var(--ck-mesh-${n})`, stopOpacity: 0 }} />
+              </radialGradient>
+            </defs>
             <ellipse
               cx="100"
               cy="100"
               rx={n % 2 ? 96 : 84}
               ry={n % 2 ? 80 : 96}
               transform={`rotate(${n * 37} 100 100)`}
-              fill={`var(--ck-mesh-${n})`}
+              fill={`url(#${meshId}-${n})`}
             />
           </svg>
         ))}
