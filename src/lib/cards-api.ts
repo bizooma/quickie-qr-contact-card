@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { slugify, type CardData, type CardLink, type LabeledValue } from "./card-model";
+import { parseTheme } from "./card-theme";
 import type { ScannedCardFields } from "./own-card";
 
 export type CardRow = Tables<"cards">;
@@ -10,7 +11,7 @@ export function rowToCard(row: CardRow, links: CardLink[]): CardData {
     slug: row.slug, label: row.label, full_name: row.full_name, job_title: row.job_title, company: row.company,
     phones: (row.phones as LabeledValue[]) ?? [], emails: (row.emails as LabeledValue[]) ?? [],
     website: row.website, location: row.location, bio: row.bio, headshot_path: row.headshot_path, logo_path: row.logo_path, logo_size: row.logo_size, banner_path: row.banner_path,
-    accent_color: row.accent_color, background_color: row.background_color, font: row.font, template: row.template, links,
+    accent_color: row.accent_color, background_color: row.background_color, font: row.font, template: row.template, theme: row.theme ? parseTheme(row.theme) : null, links,
   };
 }
 

@@ -269,6 +269,7 @@ export type Database = {
           qr_center: string | null
           slug: string
           template: string
+          theme: Json | null
           updated_at: string
           user_id: string
           website: string | null
@@ -296,6 +297,7 @@ export type Database = {
           qr_center?: string | null
           slug: string
           template?: string
+          theme?: Json | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -323,6 +325,7 @@ export type Database = {
           qr_center?: string | null
           slug?: string
           template?: string
+          theme?: Json | null
           updated_at?: string
           user_id?: string
           website?: string | null
@@ -708,6 +711,7 @@ export type Database = {
           team_seats: number
           updated_at: string
           webhook_url: string | null
+          verified_at: string | null
           winback_sent_at: string | null
           signup_attribution: Json | null
         }
@@ -732,6 +736,7 @@ export type Database = {
           team_seats?: number
           updated_at?: string
           webhook_url?: string | null
+          verified_at?: string | null
           winback_sent_at?: string | null
           signup_attribution?: Json | null
         }
@@ -756,6 +761,7 @@ export type Database = {
           team_seats?: number
           updated_at?: string
           webhook_url?: string | null
+          verified_at?: string | null
           winback_sent_at?: string | null
           signup_attribution?: Json | null
         }

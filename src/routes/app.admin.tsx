@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { Fragment, useRef, useState } from "react";
-import { Ban, ChevronDown, ChevronUp, KeyRound, Trash2, Undo2 } from "lucide-react";
+import { BadgeCheck, Ban, ChevronDown, ChevronUp, KeyRound, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -43,6 +43,7 @@ import {
   setUserPlan,
   setFeatureRequestStatus,
   setUserSuspended,
+  setUserVerified,
   type AdminUserRow,
   type CompTerm,
   type DayPoint,
@@ -97,7 +98,10 @@ function Spark({ points, label }: { points: DayPoint[]; label: string }) {
   );
 }
 
-export const Route = createFileRoute("/app/admin")({ head: appHead('Admin', 'Administration tools.'), component: AdminPage });
+export const Route = createFileRoute("/app/admin")({
+  head: appHead("Admin", "Administration tools."),
+  component: AdminPage,
+});
 
 // The page is gated twice: this client check hides it, and every server
 // function re-verifies profiles.is_admin with the service role (destructive
@@ -185,6 +189,17 @@ function AdminPage() {
       u.suspended ? "Account restored" : "Account suspended",
       "Could not update",
     );
+  // Flips the verified badge shown on the person's Liquid Glass cards.
+  const toggleVerified = async (u: AdminUserRow) => {
+    try {
+      const r = await setUserVerified({ data: { userId: u.id } });
+      toast.success(
+        r.verified ? `${u.email} is now verified` : `Verified badge removed from ${u.email}`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update");
+    }
+  };
   const resetPw = (u: AdminUserRow) =>
     run(
       () => resetUserPassword({ data: { userId: u.id } }),
@@ -394,6 +409,15 @@ function AdminPage() {
                     )}
                     {isOwner && (
                       <td className="whitespace-nowrap px-4 py-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Turn the verified badge on or off"
+                          onClick={() => toggleVerified(u)}
+                        >
+                          <BadgeCheck className="h-3.5 w-3.5" />
+                        </Button>
                         {u.is_admin ? (
                           <span className="text-xs text-muted-foreground">Admin</span>
                         ) : (

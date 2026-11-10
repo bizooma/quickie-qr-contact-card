@@ -8,6 +8,7 @@ import {
   normalizeUrl,
   type CardData,
 } from "@/lib/card-model";
+import { GlassCard } from "./GlassCard";
 import { LinkIcon } from "./LinkIcon";
 
 // Card colors are user-chosen data, so they are applied as inline styles
@@ -17,6 +18,7 @@ export function CardView({
   headshotUrl,
   logoUrl,
   bannerUrl,
+  verified,
   actions,
   onLinkClick,
 }: {
@@ -25,9 +27,23 @@ export function CardView({
   logoUrl?: string | null | undefined;
   /** Premium banner photo (Banner layout); null shows the accent color. */
   bannerUrl?: string | null | undefined;
+  /** Liquid Glass only: shows the verified badge. Set by the server, never the owner. */
+  verified?: boolean | undefined;
   actions?: ReactNode;
   onLinkClick?: ((label: string) => void) | undefined;
 }) {
+  if (card.template === "glass") {
+    return (
+      <GlassCard
+        card={card}
+        headshotUrl={headshotUrl}
+        logoUrl={logoUrl}
+        verified={verified}
+        actions={actions}
+        onLinkClick={onLinkClick}
+      />
+    );
+  }
   const bg = card.background_color;
   const fg = contrastText(bg);
   const accent = card.accent_color;

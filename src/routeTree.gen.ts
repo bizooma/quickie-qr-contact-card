@@ -41,6 +41,7 @@ import { Route as AppContactsIdRouteImport } from './routes/app.contacts.$id'
 import { Route as AppJoinTokenRouteImport } from './routes/app.join.$token'
 import { Route as AppToolsIndexRouteImport } from './routes/app.tools.index'
 import { Route as AppToolsBackgroundRouteImport } from './routes/app.tools.background'
+import { Route as AppToolsPrepRouteImport } from './routes/app.tools.prep'
 import { Route as AppToolsSignatureRouteImport } from './routes/app.tools.signature'
 
 const IndexRoute = IndexRouteImport.update({
@@ -203,6 +204,11 @@ const AppToolsBackgroundRoute = AppToolsBackgroundRouteImport.update({
   path: '/tools/background',
   getParentRoute: () => AppRoute,
 } as any)
+const AppToolsPrepRoute = AppToolsPrepRouteImport.update({
+  id: '/tools/prep',
+  path: '/tools/prep',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppToolsSignatureRoute = AppToolsSignatureRouteImport.update({
   id: '/tools/signature',
   path: '/tools/signature',
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/app/contacts/$id': typeof AppContactsIdRoute
   '/app/join/$token': typeof AppJoinTokenRoute
   '/app/tools/background': typeof AppToolsBackgroundRoute
+  '/app/tools/prep': typeof AppToolsPrepRoute
   '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts/': typeof AppContactsIndexRoute
   '/app/tools/': typeof AppToolsIndexRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/app/contacts/$id': typeof AppContactsIdRoute
   '/app/join/$token': typeof AppJoinTokenRoute
   '/app/tools/background': typeof AppToolsBackgroundRoute
+  '/app/tools/prep': typeof AppToolsPrepRoute
   '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts': typeof AppContactsIndexRoute
   '/app/tools': typeof AppToolsIndexRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/app/contacts/$id': typeof AppContactsIdRoute
   '/app/join/$token': typeof AppJoinTokenRoute
   '/app/tools/background': typeof AppToolsBackgroundRoute
+  '/app/tools/prep': typeof AppToolsPrepRoute
   '/app/tools/signature': typeof AppToolsSignatureRoute
   '/app/contacts/': typeof AppContactsIndexRoute
   '/app/tools/': typeof AppToolsIndexRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/app/contacts/$id'
     | '/app/join/$token'
     | '/app/tools/background'
+    | '/app/tools/prep'
     | '/app/tools/signature'
     | '/app/contacts/'
     | '/app/tools/'
@@ -381,6 +391,7 @@ export interface FileRouteTypes {
     | '/app/contacts/$id'
     | '/app/join/$token'
     | '/app/tools/background'
+    | '/app/tools/prep'
     | '/app/tools/signature'
     | '/app/contacts'
     | '/app/tools'
@@ -416,6 +427,7 @@ export interface FileRouteTypes {
     | '/app/contacts/$id'
     | '/app/join/$token'
     | '/app/tools/background'
+    | '/app/tools/prep'
     | '/app/tools/signature'
     | '/app/contacts/'
     | '/app/tools/'
@@ -667,6 +679,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppToolsBackgroundRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/tools/prep': {
+      id: '/app/tools/prep'
+      path: '/tools/prep'
+      fullPath: '/app/tools/prep'
+      preLoaderRoute: typeof AppToolsPrepRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/tools/signature': {
       id: '/app/tools/signature'
       path: '/tools/signature'
@@ -691,6 +710,7 @@ interface AppRouteChildren {
   AppContactsIdRoute: typeof AppContactsIdRoute
   AppJoinTokenRoute: typeof AppJoinTokenRoute
   AppToolsBackgroundRoute: typeof AppToolsBackgroundRoute
+  AppToolsPrepRoute: typeof AppToolsPrepRoute
   AppToolsSignatureRoute: typeof AppToolsSignatureRoute
   AppContactsIndexRoute: typeof AppContactsIndexRoute
   AppToolsIndexRoute: typeof AppToolsIndexRoute
@@ -710,6 +730,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContactsIdRoute: AppContactsIdRoute,
   AppJoinTokenRoute: AppJoinTokenRoute,
   AppToolsBackgroundRoute: AppToolsBackgroundRoute,
+  AppToolsPrepRoute: AppToolsPrepRoute,
   AppToolsSignatureRoute: AppToolsSignatureRoute,
   AppContactsIndexRoute: AppContactsIndexRoute,
   AppToolsIndexRoute: AppToolsIndexRoute,
