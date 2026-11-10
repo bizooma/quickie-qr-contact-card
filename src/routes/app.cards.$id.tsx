@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { BrandPanel } from "@/components/card/BrandPanel";
 import { CardView } from "@/components/card/CardView";
@@ -23,9 +23,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { designUploads } from "@/lib/background-store";
 import { getCard, listCards, rowToCard, saveLinks } from "@/lib/cards-api";
 import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
-import { lockedCardIds, LOGO_SIZES, ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, LINK_ICONS, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
+import { lockedCardIds, LOGO_SIZES, ACCENT_PRESETS, BACKGROUND_PRESETS, FONTS, guessIcon, SLUG_RE, TEMPLATES, type CardData, type LabeledValue } from "@/lib/card-model";
 import { removeMedia, shrinkImage, signedUrls, uploadCardImage, uploadOgImage } from "@/lib/media";
 import { renderOgImage } from "@/lib/og-image";
+import { LINK_GROUPS, LINK_PLATFORMS } from "@/lib/link-catalog";
 import { cn } from "@/lib/utils";
 import { liveLinkProps } from "@/hooks/use-pwa-install";
 
@@ -524,13 +525,18 @@ function Editor({
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {LINK_ICONS.map((ic) => (
-                        <SelectItem key={ic} value={ic}>
-                          <span className="flex items-center gap-2">
-                            <LinkIcon icon={ic} className="h-4 w-4" />
-                            {ICON_LABELS[ic]}
-                          </span>
-                        </SelectItem>
+                      {LINK_GROUPS.map((group) => (
+                        <SelectGroup key={group}>
+                          <SelectLabel>{group}</SelectLabel>
+                          {LINK_PLATFORMS.filter((pl) => pl.group === group).map((pl) => (
+                            <SelectItem key={pl.id} value={pl.id}>
+                              <span className="flex items-center gap-2">
+                                <LinkIcon icon={pl.id} className="h-4 w-4" />
+                                {pl.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>

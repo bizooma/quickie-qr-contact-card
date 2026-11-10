@@ -255,6 +255,8 @@ export type ResolvedTheme = {
   mesh: Mesh;
   /** The tint actually shown; differs from theme.tint when the guard stepped in. */
   tint: GlassTint;
+  /** The shown glass, for surfaces drawn without CSS (the share image). */
+  glass: { rgb: string; alpha: number; fg: string; muted: string };
   vars: CssVars;
 };
 
@@ -289,5 +291,12 @@ export function resolveTheme(card: {
     "--ck-font-heading": fontCss(card.font),
     "--ck-font-body": fontCss(theme.bodyFont ?? "sans"),
   };
-  return { theme, accent, mesh, tint, vars };
+  return {
+    theme,
+    accent,
+    mesh,
+    tint,
+    glass: { ...glass, alpha: glassAlpha(tint, theme.strength) },
+    vars,
+  };
 }

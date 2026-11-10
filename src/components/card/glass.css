@@ -261,4 +261,13 @@
 .ck-tile span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ck-wide { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 12px 14px; font-size: 14px; }
 .ck-wide svg { flex: none; width: 17px; height: 17px; }
-.ck-wide span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-wide-text { min-width: 0; flex: 1; }
+.ck-wide-text b,
+.ck-wide-text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ck-wide-text b { font-weight: 600; }
+.ck-wide-text small { color: var(--ck-muted); font-size: 12px; font-weight: 500; }

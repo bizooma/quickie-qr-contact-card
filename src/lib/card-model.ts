@@ -2,6 +2,7 @@
 // No browser or network dependencies so these stay unit-testable.
 
 import type { CardTheme } from "./card-theme";
+import { guessPlatform, LINK_PLATFORMS } from "./link-catalog";
 
 export type LabeledValue = { label: string; value: string };
 
@@ -65,20 +66,8 @@ export const BACKGROUND_PRESETS = [
   "#1C1917",
 ];
 
-export const LINK_ICONS = [
-  "link",
-  "linkedin",
-  "x",
-  "instagram",
-  "youtube",
-  "tiktok",
-  "facebook",
-  "github",
-  "calendar",
-  "payment",
-  "website",
-  "message",
-] as const;
+/** Every platform a link can be, in picker order (see link-catalog.ts). */
+export const LINK_ICONS: readonly string[] = LINK_PLATFORMS.map((p) => p.id);
 
 export function fontCss(font: string): string {
   return FONTS.find((f) => f.id === font)?.css ?? FONTS[0].css;
@@ -86,25 +75,7 @@ export function fontCss(font: string): string {
 
 /** Guess an icon from a URL so pasting a link "just works". */
 export function guessIcon(url: string): string {
-  const u = url.toLowerCase();
-  if (u.includes("linkedin.com")) return "linkedin";
-  if (u.includes("twitter.com") || u.includes("x.com/")) return "x";
-  if (u.includes("instagram.com")) return "instagram";
-  if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
-  if (u.includes("tiktok.com")) return "tiktok";
-  if (u.includes("facebook.com")) return "facebook";
-  if (u.includes("github.com")) return "github";
-  if (u.includes("calendly.com") || u.includes("cal.com") || u.includes("savvycal"))
-    return "calendar";
-  if (
-    u.includes("paypal") ||
-    u.includes("venmo") ||
-    u.includes("cash.app") ||
-    u.includes("stripe.com") ||
-    u.includes("buy.stripe")
-  )
-    return "payment";
-  return "link";
+  return guessPlatform(url);
 }
 
 export function normalizeUrl(url: string): string {

@@ -121,10 +121,19 @@ const DEMO: CardData = {
   accent_color: "#E8553D",
   background_color: "#FFFFFF",
   font: "display",
-  template: "banner",
+  template: "glass",
+  theme: {
+    mesh: "sunset",
+    tint: "smoke",
+    strength: "regular",
+    avatar: "circle",
+    status: "Open to intros",
+  },
   links: [
-    { label: "LinkedIn", url: "x", icon: "linkedin" },
-    { label: "Book a call", url: "x", icon: "calendar" },
+    { label: "", url: "linkedin.com/in/tamzyn", icon: "linkedin" },
+    { label: "", url: "instagram.com/tamzyn", icon: "instagram" },
+    { label: "", url: "youtube.com/@tamzyn", icon: "youtube" },
+    { label: "Book a call", url: "cal.com/tamzyn", icon: "calendar" },
   ],
 };
 

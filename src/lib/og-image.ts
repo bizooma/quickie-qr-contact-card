@@ -3,6 +3,7 @@
 // shared links unfurl with a real preview. Layout math stays pure for tests.
 
 import { contrastText, initials, type CardData } from "./card-model";
+import { resolveTheme, type ResolvedTheme } from "./card-theme";
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
@@ -48,6 +49,51 @@ async function loadImage(url: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function roundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/** The Liquid Glass backdrop: the card's mesh as four soft blobs, with one
+ *  frosted panel over it for the text to sit on. A canvas cannot blur what is
+ *  behind a shape, so the panel is a little more solid than on the card. */
+function drawGlassBackdrop(ctx: CanvasRenderingContext2D, glass: ResolvedTheme) {
+  ctx.fillStyle = glass.mesh.base;
+  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT);
+  const blobs: [number, number, number][] = [
+    [140, 90, 430],
+    [1080, 150, 470],
+    [250, 620, 430],
+    [980, 640, 390],
+  ];
+  blobs.forEach(([x, y, r], i) => {
+    const color = glass.mesh.blobs[i] ?? glass.mesh.base;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, color);
+    g.addColorStop(1, `${color}00`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT);
+  });
+  roundedRect(ctx, 44, 60, OG_WIDTH - 88, OG_HEIGHT - 120, 44);
+  ctx.fillStyle = `rgba(${glass.glass.rgb}, ${Math.min(0.92, glass.glass.alpha + 0.14)})`;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.stroke();
+}
+
 /** Draws the OG card. Returns null when the browser can't produce a PNG. */
 export async function renderOgImage(
   card: CardData,
@@ -60,8 +106,15 @@ export async function renderOgImage(
   if (!ctx) return null;
 
   const L = ogLayout();
-  const fg = contrastText(card.background_color);
-  const muted = fg === "#FFFFFF" ? "rgba(255,255,255,0.7)" : "rgba(17,17,17,0.62)";
+  // Liquid Glass cards share with their own look; the other layouts keep the
+  // background colour and accent band.
+  const glass = card.template === "glass" ? resolveTheme(card) : null;
+  const fg = glass ? glass.glass.fg : contrastText(card.background_color);
+  const muted = glass
+    ? glass.glass.muted
+    : fg === "#FFFFFF"
+      ? "rgba(255,255,255,0.7)"
+      : "rgba(17,17,17,0.62)";
   const display = '"Bricolage Grotesque", system-ui, sans-serif';
   const sans = '"Manrope", system-ui, sans-serif';
   try {
@@ -73,10 +126,19 @@ export async function renderOgImage(
     // Fall back to whatever is loaded; layout is unchanged.
   }
 
-  ctx.fillStyle = card.background_color;
-  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT);
-  ctx.fillStyle = card.accent_color;
-  ctx.fillRect(L.band.x, L.band.y, L.band.w, L.band.h);
+  if (glass) {
+    drawGlassBackdrop(ctx, glass);
+    // A light ring, as on the card, so the photo lifts off the glass.
+    ctx.beginPath();
+    ctx.arc(L.avatar.cx, L.avatar.cy, L.avatar.r + 7, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.fill();
+  } else {
+    ctx.fillStyle = card.background_color;
+    ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT);
+    ctx.fillStyle = card.accent_color;
+    ctx.fillRect(L.band.x, L.band.y, L.band.w, L.band.h);
+  }
 
   // Avatar: headshot when it loads cleanly, initials disc otherwise.
   const img = headshotUrl ? await loadImage(headshotUrl) : null;
@@ -141,7 +203,8 @@ export async function renderOgImage(
 
   ctx.fillStyle = muted;
   ctx.font = `600 ${L.footer.size}px ${sans}`;
-  ctx.fillText("Save my contact — ContactKickstart", L.footer.x, L.footer.y);
+  // On glass the footer moves up to sit inside the panel.
+  ctx.fillText("Save my contact · ContactKickstart", L.footer.x, L.footer.y - (glass ? 36 : 0));
 
   try {
     return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
