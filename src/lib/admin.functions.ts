@@ -232,6 +232,30 @@ export const setUserSuspended = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Grants or removes the verified badge shown on a person's Liquid Glass
+ *  cards. Owners cannot set it themselves: `verified_at` has no column grant
+ *  for signed-in users, and get_public_card reads it server-side. */
+export const setUserVerified = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(TargetSchema)
+  .handler(async ({ data, context }) => {
+    const admin = await assertPlatformAdmin(context.userId);
+    assertOwner(context.claims);
+    const { data: row, error: readError } = await admin
+      .from("profiles")
+      .select("verified_at")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (readError || !row) throw adminFailure("complete that action", readError ?? {});
+    const verified = !row.verified_at;
+    const { error } = await admin
+      .from("profiles")
+      .update({ verified_at: verified ? new Date().toISOString() : null })
+      .eq("id", data.userId);
+    if (error) throw adminFailure("complete that action", error);
+    return { ok: true, verified };
+  });
+
 /** Permanently deletes a user: auth account, rows, and stored media. */
 export const deleteUserAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

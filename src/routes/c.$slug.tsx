@@ -10,13 +10,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { buildVCard, contrastText, type CardData } from "@/lib/card-model";
+import { resolveTheme } from "@/lib/card-theme";
 import { signPublicCardMedia, submitShareback } from "@/lib/capture.functions";
 
 // Absolute URL so crawlers accept it from any serving domain.
 const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
 
 // shareback_open is false once a free owner has collected their share-backs (0032).
-type PublicCardData = CardData & { og_path?: string | null; shareback_open?: boolean };
+// verified is decided by get_public_card from the owner's profile (0034).
+type PublicCardData = CardData & {
+  og_path?: string | null;
+  shareback_open?: boolean;
+  verified?: boolean;
+};
 
 async function loadCard(slug: string) {
   const { data, error } = await supabase.rpc("get_public_card", { _slug: slug });
@@ -127,7 +133,13 @@ function PublicCard() {
   const [open, setOpen] = useState(false);
   const [ownId, setOwnId] = useState<string | null>(null);
   const accentText = contrastText(card.accent_color);
-  const fg = contrastText(card.background_color);
+  // Liquid Glass paints its own backdrop: the page takes the mesh's base
+  // colour, and text inside the card sits on glass, so it uses the glass text
+  // colour the layout exposes.
+  const glass = card.template === "glass" ? resolveTheme(card) : null;
+  const pageBg = glass ? glass.mesh.base : card.background_color;
+  const fg = contrastText(pageBg);
+  const inCardFg = glass ? "var(--ck-fg)" : fg;
 
   useEffect(() => {
     let live = true;
@@ -214,12 +226,13 @@ function PublicCard() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: card.background_color }}>
+    <div className="min-h-screen" style={{ background: pageBg }}>
       <CardView
         card={card}
         headshotUrl={headshotUrl}
         logoUrl={logoUrl}
         bannerUrl={bannerUrl}
+        verified={card.verified === true}
         onLinkClick={(label) => {
           supabase
             .rpc("log_card_event", { _slug: slug, _event: "click", _meta: label })
@@ -228,7 +241,7 @@ function PublicCard() {
         actions={
           ownId ? (
             <div className="space-y-2">
-              <p className="text-center text-xs opacity-60" style={{ color: fg }}>
+              <p className="text-center text-xs opacity-60" style={{ color: inCardFg }}>
                 This is your card, as people see it.
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -245,7 +258,7 @@ function PublicCard() {
                   to="/app/cards/$id"
                   params={{ id: ownId }}
                   className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
-                  style={{ borderColor: card.accent_color, color: fg }}
+                  style={{ borderColor: card.accent_color, color: inCardFg }}
                 >
                   <Pencil className="h-4 w-4" />
                   Edit card
@@ -268,10 +281,7 @@ function PublicCard() {
                 <button
                   onClick={() => setOpen(true)}
                   className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
-                  style={{
-                    borderColor: card.accent_color,
-                    color: contrastText(card.background_color),
-                  }}
+                  style={{ borderColor: card.accent_color, color: inCardFg }}
                 >
                   <Send className="h-4 w-4" />
                   Share yours
@@ -285,7 +295,7 @@ function PublicCard() {
         <button
           onClick={shareCard}
           className="inline-flex items-center gap-1.5 text-xs font-medium opacity-60 hover:opacity-100"
-          style={{ color: contrastText(card.background_color) }}
+          style={{ color: fg }}
         >
           <Share2 className="h-3.5 w-3.5" />
           Share this card
@@ -297,7 +307,7 @@ function PublicCard() {
         <a
           href={`/?ref=card&c=${encodeURIComponent(slug)}`}
           className="text-xs opacity-60 hover:opacity-100"
-          style={{ color: contrastText(card.background_color) }}
+          style={{ color: fg }}
           onClick={() => {
             supabase
               .rpc("log_card_event", { _slug: slug, _event: "click", _meta: "Create your own card" })

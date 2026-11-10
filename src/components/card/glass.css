@@ -1,0 +1,264 @@
+/* Liquid Glass card layout. Every colour, blur and shape reads a --ck-*
+   custom property set by resolveTheme() (src/lib/card-theme.ts), so a theme
+   is only ever a set of validated values on the card's root element. */
+
+.ck-glass-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  min-height: 100%;
+  background: var(--ck-mesh-base);
+  color: var(--ck-fg);
+  font-family: var(--ck-font-body);
+}
+
+/* ---- Mesh backdrop: four blurred blobs ----
+   Held in a centred column so they stay behind the card on wide screens
+   instead of drifting out to the edges of the window. */
+.ck-mesh {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 0;
+  width: min(100%, 760px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.ck-blob {
+  position: absolute;
+  width: 78%;
+  max-width: 520px;
+  aspect-ratio: 1;
+  filter: blur(48px) saturate(125%);
+  pointer-events: none;
+  /* Phones get one gentle settle on load, then a still backdrop: a moving
+     backdrop makes every frosted panel re-blur on each frame. */
+  animation: ck-settle 7s ease-out 1 both;
+}
+.ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; }
+.ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; }
+.ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; }
+.ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; }
+@keyframes ck-settle {
+  from { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
+  to { transform: none; }
+}
+@keyframes ck-drift {
+  from { transform: none; }
+  to { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .ck-blob { animation: ck-drift 22s ease-in-out infinite alternate; }
+  .ck-blob-2 { animation-duration: 27s; }
+  .ck-blob-3 { animation-duration: 31s; }
+  .ck-blob-4 { animation-duration: 25s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck-blob { animation: none; }
+}
+
+.ck-glass-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+/* ---- Frosted panel ---- */
+.ck-glass {
+  background: rgba(var(--ck-glass-rgb), var(--ck-glass-alpha));
+  -webkit-backdrop-filter: blur(var(--ck-blur)) saturate(160%);
+  backdrop-filter: blur(var(--ck-blur)) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 22px;
+  box-shadow:
+    0 10px 30px -12px rgba(8, 10, 20, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ck-glass { background: rgba(var(--ck-glass-rgb), calc(var(--ck-glass-alpha) + 0.5)); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .ck-glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(var(--ck-glass-rgb), calc(var(--ck-glass-alpha) + 0.5));
+  }
+}
+
+/* ---- Profile header ---- */
+.ck-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 26px 20px 20px;
+  text-align: center;
+}
+.ck-avatar-wrap { position: relative; margin-bottom: 10px; }
+.ck-avatar-ring {
+  padding: 4px;
+  border-radius: var(--ck-avatar-radius);
+  clip-path: var(--ck-avatar-clip);
+  background: rgba(255, 255, 255, 0.35);
+}
+.ck-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 104px;
+  height: 104px;
+  border-radius: var(--ck-avatar-radius);
+  clip-path: var(--ck-avatar-clip);
+  background: linear-gradient(140deg, var(--ck-accent), var(--ck-mesh-2));
+  color: var(--ck-on-accent);
+  font-family: var(--ck-font-heading);
+  font-size: 34px;
+  font-weight: 700;
+}
+.ck-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ck-status {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 210px;
+  padding: 3px 10px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(12, 16, 28, 0.82);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.ck-status span { overflow: hidden; text-overflow: ellipsis; }
+.ck-status i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
+.ck-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-family: var(--ck-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.ck-verified {
+  display: inline-flex;
+  flex: none;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--ck-accent);
+}
+.ck-verified svg { width: 20px; height: 20px; }
+.ck-role { color: var(--ck-muted); font-size: 14px; }
+.ck-role b { color: var(--ck-fg); font-weight: 700; }
+.ck-bio { max-width: 34ch; margin-top: 4px; color: var(--ck-muted); font-size: 14px; line-height: 1.55; }
+.ck-logo { margin-top: 10px; object-fit: contain; max-width: 70%; }
+
+.ck-actions { padding: 12px; }
+
+/* ---- Contact actions ---- */
+.ck-contact { padding: 12px; }
+.ck-quick { display: flex; gap: 8px; }
+.ck-quick-btn,
+.ck-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  color: var(--ck-fg);
+  cursor: pointer;
+}
+.ck-quick-btn { flex: 1 1 0; min-width: 0; background: rgba(var(--ck-glass-rgb), 0.22); }
+.ck-quick-btn svg { width: 18px; height: 18px; }
+.ck-toggle {
+  gap: 4px;
+  padding: 0 12px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+.ck-toggle svg { width: 15px; height: 15px; transition: transform 0.2s; }
+.ck-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.ck-quick-btn:hover, .ck-toggle:hover, .ck-row:hover, .ck-tile:hover, .ck-wide:hover { opacity: 0.82; }
+.ck-quick-btn:focus-visible, .ck-toggle:focus-visible, .ck-row:focus-visible,
+.ck-tile:focus-visible, .ck-wide:focus-visible {
+  outline: 2px solid var(--ck-fg);
+  outline-offset: 2px;
+}
+.ck-details { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.ck-details[hidden] { display: none; }
+.ck-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: rgba(var(--ck-glass-rgb), 0.16);
+}
+.ck-row-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ck-accent);
+  color: var(--ck-on-accent);
+}
+.ck-row-icon svg { width: 15px; height: 15px; }
+.ck-row-text { min-width: 0; flex: 1; }
+.ck-row-text b {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ck-row-text small { display: block; color: var(--ck-muted); font-size: 12px; }
+
+/* ---- Links: compact social tiles, wide portfolio tiles ---- */
+.ck-links { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.ck-social { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.ck-portfolio { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.ck-tile,
+.ck-wide {
+  border-radius: 14px;
+  background: rgba(var(--ck-glass-rgb), 0.18);
+  color: var(--ck-fg);
+  font-weight: 600;
+}
+.ck-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 6px 9px;
+  font-size: 11px;
+}
+.ck-tile svg { width: 20px; height: 20px; }
+.ck-tile span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-wide { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 12px 14px; font-size: 14px; }
+.ck-wide svg { flex: none; width: 17px; height: 17px; }
+.ck-wide span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

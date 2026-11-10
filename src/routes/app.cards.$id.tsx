@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { BrandPanel } from "@/components/card/BrandPanel";
 import { CardView } from "@/components/card/CardView";
 import { ICON_LABELS, LinkIcon } from "@/components/card/LinkIcon";
 import { QrPanel } from "@/components/card/QrPanel";
@@ -119,6 +120,19 @@ function Editor({
 
   useEffect(() => { signedUrls([card.headshot_path, card.logo_path, card.banner_path]).then((u) => setUrls((p) => ({ ...p, ...u }))); }, [card.headshot_path, card.logo_path, card.banner_path]);
   const { isPremium } = usePlan();
+  // The verified badge is granted by an admin; the owner can only see it.
+  const { data: verified } = useQuery({
+    queryKey: ["verified", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("verified_at")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return !!data?.verified_at;
+    },
+  });
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -155,8 +169,11 @@ function Editor({
         timer.current = null;
       }
       try {
-        const { links, slug: _s, ...fields } = c;
-        const { error } = await supabase.from("cards").update(fields).eq("id", cardId);
+        const { links, slug: _s, theme, ...fields } = c;
+        const { error } = await supabase
+          .from("cards")
+          .update({ ...fields, theme: theme ?? null })
+          .eq("id", cardId);
         if (error) throw error;
         const lj = JSON.stringify(links);
         if (lj !== lastLinks.current) {
@@ -272,7 +289,7 @@ function Editor({
 
   const preview = (
     <div className="phone-frame mx-auto"><div className="h-full overflow-y-auto rounded-[38px]">
-      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null}
+      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true}
         actions={<div className="h-12 rounded-full text-center text-sm font-semibold leading-[3rem]" style={{ background: card.accent_color, color: "#fff" }}>Save contact</div>} />
     </div></div>
   );
@@ -609,7 +626,7 @@ function Editor({
           <TabsContent value="style" className="space-y-8">
             <div>
               <Label className="mb-3 block">Layout</Label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {TEMPLATES.map((t) => (
                   <button
                     key={t.id}
@@ -627,6 +644,9 @@ function Editor({
                 ))}
               </div>
             </div>
+            {card.template === "glass" && (
+              <BrandPanel card={card} isPremium={isPremium} onChange={(t) => set("theme", t)} />
+            )}
             <div>
               <Label className="mb-3 block">Company logo size</Label>
               <div
@@ -702,12 +722,15 @@ function Editor({
               presets={ACCENT_PRESETS}
               onChange={(v) => set("accent_color", v)}
             />
-            <ColorRow
-              label="Background"
-              value={card.background_color}
-              presets={BACKGROUND_PRESETS}
-              onChange={(v) => set("background_color", v)}
-            />
+            {/* Liquid Glass paints its own background from the theme. */}
+            {card.template !== "glass" && (
+              <ColorRow
+                label="Background"
+                value={card.background_color}
+                presets={BACKGROUND_PRESETS}
+                onChange={(v) => set("background_color", v)}
+              />
+            )}
             <div>
               <Label className="mb-3 block">Font</Label>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -1,6 +1,8 @@
 // Pure card/contact helpers shared by the editor, public page, and exports.
 // No browser or network dependencies so these stay unit-testable.
 
+import type { CardTheme } from "./card-theme";
+
 export type LabeledValue = { label: string; value: string };
 
 export type CardLink = { id?: string | undefined; label: string; url: string; icon: string };
@@ -26,6 +28,8 @@ export type CardData = {
   background_color: string;
   font: string;
   template: string;
+  /** Liquid Glass settings; null or absent means the defaults. */
+  theme?: CardTheme | null | undefined;
   links: CardLink[];
 };
 
@@ -33,6 +37,7 @@ export const TEMPLATES = [
   { id: "classic", name: "Classic", hint: "Centered photo, stacked details" },
   { id: "banner", name: "Banner", hint: "Color header with overlapping photo" },
   { id: "minimal", name: "Minimal", hint: "Left-aligned, editorial" },
+  { id: "glass", name: "Liquid Glass", hint: "Frosted panels over color" },
 ] as const;
 
 export const FONTS = [
