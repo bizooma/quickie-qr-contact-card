@@ -48,8 +48,8 @@ const ID = "00000000-0000-4000-8000-000000000001";
 function supabaseReturning(result: () => unknown) {
   const q: Record<string, unknown> = {};
   for (const m of ["select", "eq", "order", "limit"]) q[m] = () => q;
-  q.maybeSingle = async () => result();
-  q.then = (resolve: (v: unknown) => void) => resolve({ data: [], error: null });
+  q["maybeSingle"] = async () => result();
+  q["then"] = (resolve: (v: unknown) => void) => resolve({ data: [], error: null });
   return { from: () => q };
 }
 
