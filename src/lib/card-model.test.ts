@@ -48,6 +48,26 @@ describe("vCard", () => {
     expect(v).toContain("PHOTO;ENCODING=b;TYPE=JPEG:AAAA");
   });
 
+  it("leaves out the parts the owner hid, but never the name or card link", () => {
+    const full = { ...card, bio: "Hello there" };
+    const opts = { photoBase64: "AAAA", cardUrl: "https://contactkickstart.com/c/kale" };
+    const v = buildVCard(full, {
+      ...opts,
+      hide: ["phones", "emails", "company", "website", "location", "bio", "links", "photo"],
+    });
+    expect(v).toContain("FN:Kale Dabling");
+    expect(v).toContain("URL;TYPE=Card:https://contactkickstart.com/c/kale");
+    for (const gone of ["ORG:", "TITLE:", "TEL;", "EMAIL;", "URL:", "LinkedIn", "ADR;", "NOTE:", "PHOTO;"])
+      expect(v).not.toContain(gone);
+
+    const some = buildVCard(full, { ...opts, hide: ["phones", "bio"] });
+    expect(some).not.toContain("TEL;");
+    expect(some).not.toContain("NOTE:");
+    expect(some).toContain("EMAIL;TYPE=INTERNET,WORK:kale@acme.com");
+    expect(some).toContain("ORG:Acme\\, Inc.");
+    expect(some).toContain("PHOTO;ENCODING=b");
+  });
+
   it("builds a contact vCard with escaped fields and met-at note", () => {
     const v = buildContactVCard({
       full_name: "Maria Chen",

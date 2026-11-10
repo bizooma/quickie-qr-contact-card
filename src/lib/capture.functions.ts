@@ -1,6 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  ANSWER_MAX,
+  QUESTIONS_MAX,
+  composeNote,
+  parseExchange,
+  submissionProblem,
+} from "./exchange";
+import type { PlanId } from "./plans";
 
 // Server functions around capturing contacts: the public share-back submit
 // (which also notifies the card owner) and post-capture fan-out for the
@@ -14,6 +22,8 @@ const SharebackInputSchema = z.object({
   phone: z.string().max(40),
   company: z.string().max(120),
   note: z.string().max(1000),
+  /** Answers to the owner's own questions, in the order the card lists them. */
+  answers: z.array(z.string().max(ANSWER_MAX)).max(QUESTIONS_MAX).optional(),
 });
 
 /** Public (unauthenticated): saves a share-back, then pings the card owner. */
@@ -40,6 +50,36 @@ export const submitShareback = createServerFn({ method: "POST" })
     const { getRequestHeaders } = await import("@tanstack/react-start/server");
     const { sharebackVisitorIp } = await import("./shareback-ip");
     const visitorIp = sharebackVisitorIp(getRequestHeaders());
+
+    // The owner's own form (a paid feature) is applied here, from the stored
+    // card: the browser only ever sends raw answers, never the rules. Answers
+    // are folded into the note, so the RPC and its limits stay as they were.
+    const { data: card } = await supabaseAdmin
+      .from("cards")
+      .select("user_id, label, full_name, exchange")
+      .eq("slug", data.slug.toLowerCase())
+      .maybeSingle();
+    let plan: PlanId | null = null;
+    let company = data.company;
+    let note = data.note;
+    const form = card ? parseExchange(card.exchange)?.form : undefined;
+    if (card && form) {
+      const { getPlan } = await import("./usage.server");
+      plan = await getPlan(card.user_id);
+      if (plan !== "free") {
+        const answers = data.answers ?? [];
+        const first = card.full_name.trim().split(/\s+/)[0] || "they";
+        const problem = submissionProblem(
+          form,
+          { name: data.name, email: data.email, phone: data.phone, answers },
+          first,
+        );
+        if (problem) throw new Error(problem);
+        if (!form.company) company = "";
+        note = composeNote(form, data.note, answers);
+      }
+    }
+
     // The SECURITY DEFINER RPC revalidates lengths and requires email-or-phone.
     // Per-request only: never mutate the shared admin client's headers. An empty
     // value explicitly means no visitor IP, not the server's outgoing address.
@@ -49,8 +89,8 @@ export const submitShareback = createServerFn({ method: "POST" })
         _name: data.name,
         _email: data.email,
         _phone: data.phone,
-        _company: data.company,
-        _note: data.note,
+        _company: company,
+        _note: note,
       })
       .setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
     if (error) throw new Error(sharebackErrorMessage(error.message));
@@ -58,13 +98,11 @@ export const submitShareback = createServerFn({ method: "POST" })
     // Notify the owner: web push now, webhook if configured. Both best-effort,
     // and both paid-only (instant lead alerts are a Pro feature).
     try {
-      const { data: card } = await supabaseAdmin
-        .from("cards")
-        .select("user_id, label")
-        .eq("slug", data.slug.toLowerCase())
-        .maybeSingle();
-      const { getPlan } = await import("./usage.server");
-      if (card && (await getPlan(card.user_id)) !== "free") {
+      if (card && !plan) {
+        const { getPlan } = await import("./usage.server");
+        plan = await getPlan(card.user_id);
+      }
+      if (card && plan !== "free") {
         const { sendPushToUser, postContactWebhook } = await import("./notify.server");
         await Promise.all([
           sendPushToUser(card.user_id),
@@ -73,9 +111,9 @@ export const submitShareback = createServerFn({ method: "POST" })
               full_name: data.name.trim(),
               email: data.email.trim() || null,
               phone: data.phone.trim() || null,
-              company: data.company.trim() || null,
+              company: company.trim() || null,
               address: null,
-              note: data.note.trim() || null,
+              note: note.trim() || null,
               source: "shareback",
               card_label: card.label,
               created_at: new Date().toISOString(),

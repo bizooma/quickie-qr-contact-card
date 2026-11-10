@@ -1,23 +1,28 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Download, Pencil, QrCode, Send, Share2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Download, Pencil, QrCode, Send, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { buildVCard, contrastText, type CardData } from "@/lib/card-model";
+import { ShareBack } from "@/components/card/ShareBack";
+import { buildVCard, contrastText, type CardData, type LabeledValue } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
 import { signPublicCardMedia, submitShareback } from "@/lib/capture.functions";
+import {
+  formFor,
+  parseExchange,
+  prefillSubmission,
+  submissionProblem,
+  vcardHidden,
+  type ShareBackPrefill,
+} from "@/lib/exchange";
 
 // Absolute URL so crawlers accept it from any serving domain.
 const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
 
 // shareback_open is false once a free owner has collected their share-backs (0032).
 // verified is decided by get_public_card from the owner's profile (0034).
+// exchange arrives without the owner's form when they are on the free plan (0035).
 type PublicCardData = CardData & {
   og_path?: string | null;
   shareback_open?: boolean;
@@ -107,23 +112,44 @@ async function toBase64(url: string): Promise<{ b64: string; type: string } | nu
   } catch { return null; }
 }
 
-/** The card's id when its signed-in owner opens it, so they get their QR code
- *  and editor instead of "Save contact" and "Share yours". RLS scopes the
- *  read; the user_id filter leaves out teammates' cards. */
-async function ownCardId(slug: string): Promise<string | null> {
+const firstValue = (list: unknown): string =>
+  (Array.isArray(list) ? (list as LabeledValue[]) : []).find((v) => v?.value?.trim())?.value.trim() ??
+  "";
+
+/** Who is looking, when they are signed in. `ownId` is the card's id when its
+ *  owner opens it, so they get their QR code and editor instead of "Save
+ *  contact" and "Share yours". `mine` is another member's own first card, so
+ *  they can send their details back with one tap. RLS scopes the read; the
+ *  user_id filter leaves out teammates' cards. */
+async function whoIsLooking(
+  slug: string,
+): Promise<{ ownId: string | null; mine: ShareBackPrefill | null }> {
+  const nobody = { ownId: null, mine: null };
   try {
     const { data: auth } = await supabase.auth.getSession();
     const uid = auth.session?.user.id;
-    if (!uid) return null;
+    if (!uid) return nobody;
     const { data } = await supabase
       .from("cards")
-      .select("id")
-      .eq("slug", slug)
+      .select("id, slug, full_name, company, phones, emails")
       .eq("user_id", uid)
-      .maybeSingle();
-    return data?.id ?? null;
+      .order("created_at");
+    const own = data?.find((c) => c.slug === slug);
+    if (own) return { ownId: own.id, mine: null };
+    const card = data?.find((c) => c.full_name.trim());
+    if (!card) return nobody;
+    return {
+      ownId: null,
+      mine: {
+        name: card.full_name.trim(),
+        email: firstValue(card.emails),
+        phone: firstValue(card.phones),
+        company: card.company?.trim() ?? "",
+        cardUrl: `${window.location.origin}/c/${card.slug}`,
+      },
+    };
   } catch {
-    return null;
+    return nobody;
   }
 }
 
@@ -132,6 +158,13 @@ function PublicCard() {
   const { slug } = Route.useParams();
   const [open, setOpen] = useState(false);
   const [ownId, setOwnId] = useState<string | null>(null);
+  const [mine, setMine] = useState<ShareBackPrefill | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const sentMine = sent && !!mine;
+  const exchange = useMemo(() => parseExchange(card.exchange), [card.exchange]);
+  const form = useMemo(() => formFor(exchange), [exchange]);
+  const first = card.full_name.trim().split(/\s+/)[0] || "them";
   const accentText = contrastText(card.accent_color);
   // Liquid Glass paints its own backdrop: the page takes the mesh's base
   // colour, and text inside the card sits on glass, so it uses the glass text
@@ -143,10 +176,19 @@ function PublicCard() {
 
   useEffect(() => {
     let live = true;
-    void ownCardId(card.slug).then((id) => {
+    // A reload shouldn't invite a member to send the same card twice. (Only
+    // members: the plain form stays open, since one phone or tablet is often
+    // passed around for several people to fill in.)
+    try {
+      if (sessionStorage.getItem(`ck-sent-${slug}`)) setSent(true);
+    } catch {
+      // Storage can be blocked; the button just stays available.
+    }
+    void whoIsLooking(card.slug).then((who) => {
       if (!live) return;
+      setMine(who.mine);
       // The owner checking their own card isn't a view.
-      if (id) setOwnId(id);
+      if (who.ownId) setOwnId(who.ownId);
       else logView();
     });
     return () => {
@@ -196,14 +238,54 @@ function PublicCard() {
   }
 
   async function saveContact() {
-    const photo = headshotUrl ? await toBase64(headshotUrl) : null;
-    const vcf = buildVCard(card, { photoBase64: photo?.b64, photoType: photo?.type, cardUrl: window.location.href });
+    // The owner chooses what the saved contact holds (editor, Share tab).
+    const hide = vcardHidden(exchange);
+    const photo = headshotUrl && !hide.includes("photo") ? await toBase64(headshotUrl) : null;
+    const vcf = buildVCard(card, {
+      photoBase64: photo?.b64,
+      photoType: photo?.type,
+      cardUrl: window.location.href,
+      hide,
+    });
     const blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${(card.full_name || "contact").replace(/[^a-z0-9]+/gi, "-")}.vcf`;
     a.click();
     supabase.rpc("log_card_event", { _slug: slug, _event: "save" }).then(undefined, () => {});
+  }
+
+  function markSent() {
+    setSent(true);
+    try {
+      sessionStorage.setItem(`ck-sent-${slug}`, "1");
+    } catch {
+      // Storage can be blocked; nothing depends on it.
+    }
+  }
+
+  /** One tap for a signed-in member: their own card's details go straight to
+   *  this card's owner. If the owner's form asks for something their card
+   *  can't answer, the form opens with what we know filled in. */
+  async function sendMine() {
+    if (!mine || sending || sentMine) return;
+    const details = prefillSubmission(form, mine);
+    if (submissionProblem(form, { ...details, answers: [] }, first)) {
+      setOpen(true);
+      return;
+    }
+    setSending(true);
+    try {
+      await submitShareback({ data: { slug, ...details } });
+      markSent();
+      toast.success(`Sent. ${first} now has your details.`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Couldn't send your details. Please try again.",
+      );
+    } finally {
+      setSending(false);
+    }
   }
 
   async function shareCard() {
@@ -279,12 +361,13 @@ function PublicCard() {
               </button>
               {card.shareback_open !== false && (
                 <button
-                  onClick={() => setOpen(true)}
-                  className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80"
+                  onClick={mine ? sendMine : () => setOpen(true)}
+                  disabled={sending || sentMine}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-70"
                   style={{ borderColor: card.accent_color, color: inCardFg }}
                 >
-                  <Send className="h-4 w-4" />
-                  Share yours
+                  {sentMine ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                  {sentMine ? "Sent" : sending ? "Sending…" : mine ? "Send my card" : "Share yours"}
                 </button>
               )}
             </div>
@@ -317,95 +400,15 @@ function PublicCard() {
           Create your own card · ContactKickstart
         </a>
       </footer>
-      <ShareBack slug={slug} name={card.full_name} open={open} onOpenChange={setOpen} />
+      <ShareBack
+        slug={slug}
+        ownerName={card.full_name}
+        form={form}
+        prefill={mine}
+        open={open}
+        onOpenChange={setOpen}
+        onSent={mine ? markSent : undefined}
+      />
     </div>
-  );
-}
-
-function ShareBack({ slug, name, open, onOpenChange }: { slug: string; name: string; open: boolean; onOpenChange: (o: boolean) => void }) {
-  const [f, setF] = useState({ name: "", email: "", phone: "", company: "", note: "" });
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
-  const first = name.split(" ")[0] || "me";
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!f.email.trim() && !f.phone.trim()) {
-      toast.error(`Add an email or phone number so ${first} can reach you.`);
-      return;
-    }
-    setBusy(true);
-    try {
-      // Server function: saves via the same RPC, then notifies the card owner.
-      await submitShareback({
-        data: {
-          slug,
-          name: f.name,
-          email: f.email,
-          phone: f.phone,
-          company: f.company,
-          note: f.note,
-        },
-      });
-      setDone(true);
-    } catch (err) {
-      // Server function messages are already visitor-safe (sharebackErrorMessage).
-      toast.error(err instanceof Error ? err.message : "Couldn't send your details. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-md px-6 pb-8">
-          <DrawerHeader className="px-0"><DrawerTitle>{done ? "Sent!" : `Share your details with ${first}`}</DrawerTitle></DrawerHeader>
-          {done ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Thanks — {first} now has your details.</p>
-              {/* The viral loop: the person who just shared is the next card owner. */}
-              <Button asChild className="h-11 w-full">
-                <a href={`/?ref=shareback&c=${encodeURIComponent(slug)}`}>Get your own free card</a>
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                A digital card like this one, with your own QR code and share-back form. Free, no credit card.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={submit} className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="sb-name">Your name</Label>
-                <Input id="sb-name" required maxLength={120} autoComplete="name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="sb-email">Email</Label>
-                  <Input id="sb-email" type="email" inputMode="email" maxLength={255} autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="sb-phone">Phone</Label>
-                  <Input id="sb-phone" type="tel" inputMode="tel" maxLength={40} autoComplete="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="sb-company">Company <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                <Input id="sb-company" maxLength={120} autoComplete="organization" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="sb-note">Note <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                <Textarea id="sb-note" maxLength={1000} placeholder="Where we met, what you need…" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
-              </div>
-              <p className="text-xs text-muted-foreground">An email or phone number is needed so {first} can reach you.</p>
-              <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Sending…" : "Send my details"}</Button>
-              <p className="text-center text-xs text-muted-foreground">
-                Only {first} receives these details, to follow up with you. Delivered by ContactKickstart —{" "}
-                <a href="/privacy" className="underline">privacy</a>.
-              </p>
-            </form>
-          )}
-        </div>
-      </DrawerContent>
-    </Drawer>
   );
 }

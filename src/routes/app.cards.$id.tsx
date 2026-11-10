@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { BrandPanel } from "@/components/card/BrandPanel";
+import { ExchangePanel } from "@/components/card/ExchangePanel";
 import { CardView } from "@/components/card/CardView";
 import { ICON_LABELS, LinkIcon } from "@/components/card/LinkIcon";
 import { QrPanel } from "@/components/card/QrPanel";
@@ -120,7 +121,7 @@ function Editor({
   const lastLinks = useRef(JSON.stringify(initial.links));
 
   useEffect(() => { signedUrls([card.headshot_path, card.logo_path, card.banner_path]).then((u) => setUrls((p) => ({ ...p, ...u }))); }, [card.headshot_path, card.logo_path, card.banner_path]);
-  const { isPremium } = usePlan();
+  const { isPremium, isPro } = usePlan();
   // The verified badge is granted by an admin; the owner can only see it.
   const { data: verified } = useQuery({
     queryKey: ["verified", user?.id],
@@ -170,10 +171,10 @@ function Editor({
         timer.current = null;
       }
       try {
-        const { links, slug: _s, theme, ...fields } = c;
+        const { links, slug: _s, theme, exchange, ...fields } = c;
         const { error } = await supabase
           .from("cards")
-          .update({ ...fields, theme: theme ?? null })
+          .update({ ...fields, theme: theme ?? null, exchange: exchange ?? null })
           .eq("id", cardId);
         if (error) throw error;
         const lj = JSON.stringify(links);
@@ -758,7 +759,7 @@ function Editor({
             </div>
           </TabsContent>
 
-          <TabsContent value="share">
+          <TabsContent value="share" className="space-y-10">
             <QrPanel
               cardId={cardId}
               slug={card.slug}
@@ -768,6 +769,11 @@ function Editor({
               headshotPath={card.headshot_path}
               logoPath={card.logo_path}
               qrCenter={qrCenter}
+            />
+            <ExchangePanel
+              card={card}
+              canEditForm={isPro}
+              onChange={(x) => set("exchange", x)}
             />
           </TabsContent>
         </Tabs>

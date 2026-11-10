@@ -270,6 +270,7 @@ export type Database = {
           slug: string
           template: string
           theme: Json | null
+          exchange: Json | null
           updated_at: string
           user_id: string
           website: string | null
@@ -298,6 +299,7 @@ export type Database = {
           slug: string
           template?: string
           theme?: Json | null
+          exchange?: Json | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -326,6 +328,7 @@ export type Database = {
           slug?: string
           template?: string
           theme?: Json | null
+          exchange?: Json | null
           updated_at?: string
           user_id?: string
           website?: string | null

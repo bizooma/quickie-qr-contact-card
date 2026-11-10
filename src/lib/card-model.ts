@@ -2,6 +2,7 @@
 // No browser or network dependencies so these stay unit-testable.
 
 import type { CardTheme } from "./card-theme";
+import type { CardExchange, VCardPart } from "./exchange";
 import { guessPlatform, LINK_PLATFORMS } from "./link-catalog";
 
 export type LabeledValue = { label: string; value: string };
@@ -31,6 +32,8 @@ export type CardData = {
   template: string;
   /** Liquid Glass settings; null or absent means the defaults. */
   theme?: CardTheme | null | undefined;
+  /** Save-contact and share-back settings; null or absent means the defaults. */
+  exchange?: CardExchange | null | undefined;
   links: CardLink[];
 };
 
@@ -129,8 +132,11 @@ export function buildVCard(
     photoBase64?: string | undefined;
     photoType?: string | undefined;
     cardUrl?: string | undefined;
+    /** Parts the owner chose to leave out. The name and card link always stay. */
+    hide?: readonly VCardPart[] | undefined;
   } = {},
 ): string {
+  const hidden = new Set<VCardPart>(opts.hide ?? []);
   const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
   const name = card.full_name.trim() || "Contact";
   const parts = name.split(/\s+/);
@@ -138,29 +144,30 @@ export function buildVCard(
   const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] ?? "");
   lines.push(`N:${esc(last)};${esc(first)};;;`);
   lines.push(`FN:${esc(name)}`);
-  if (card.company) lines.push(`ORG:${esc(card.company)}`);
-  if (card.job_title) lines.push(`TITLE:${esc(card.job_title)}`);
-  for (const p of card.phones) {
+  if (card.company && !hidden.has("company")) lines.push(`ORG:${esc(card.company)}`);
+  if (card.job_title && !hidden.has("company")) lines.push(`TITLE:${esc(card.job_title)}`);
+  for (const p of hidden.has("phones") ? [] : card.phones) {
     if (!p.value.trim()) continue;
     const type = /mobile|cell/i.test(p.label) ? "CELL" : /home/i.test(p.label) ? "HOME" : "WORK";
     lines.push(`TEL;TYPE=${type},VOICE:${esc(p.value.trim())}`);
   }
-  for (const e of card.emails) {
+  for (const e of hidden.has("emails") ? [] : card.emails) {
     if (!e.value.trim()) continue;
     const type = /home|personal/i.test(e.label) ? "HOME" : "WORK";
     lines.push(`EMAIL;TYPE=INTERNET,${type}:${esc(e.value.trim())}`);
   }
-  if (card.website) lines.push(`URL:${esc(normalizeUrl(card.website))}`);
+  if (card.website && !hidden.has("website")) lines.push(`URL:${esc(normalizeUrl(card.website))}`);
   if (opts.cardUrl) lines.push(`URL;TYPE=Card:${esc(opts.cardUrl)}`);
-  for (const l of card.links) {
+  for (const l of hidden.has("links") ? [] : card.links) {
     if (!l.url.trim()) continue;
     lines.push(
       `URL;TYPE=${esc(l.label || l.icon).replace(/[^A-Za-z0-9-]/g, "") || "Link"}:${esc(normalizeUrl(l.url))}`,
     );
   }
-  if (card.location) lines.push(`ADR;TYPE=WORK:;;${esc(card.location)};;;;`);
-  if (card.bio) lines.push(`NOTE:${esc(card.bio)}`);
-  if (opts.photoBase64)
+  if (card.location && !hidden.has("location"))
+    lines.push(`ADR;TYPE=WORK:;;${esc(card.location)};;;;`);
+  if (card.bio && !hidden.has("bio")) lines.push(`NOTE:${esc(card.bio)}`);
+  if (opts.photoBase64 && !hidden.has("photo"))
     lines.push(`PHOTO;ENCODING=b;TYPE=${opts.photoType ?? "JPEG"}:${opts.photoBase64}`);
   lines.push("END:VCARD");
   return lines.map(fold).join("\r\n") + "\r\n";
