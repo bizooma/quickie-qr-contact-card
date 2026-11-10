@@ -115,6 +115,25 @@ export async function settleUsage(reservation: Reservation, actual: number): Pro
   }
 }
 
+/** Runs an AI action against a reservation and ALWAYS settles it: keeps
+ *  `units` on success, releases everything (refunding starter/top-up credits)
+ *  when `run` throws for any reason — AI outage, timeout, missing record or a
+ *  handled refusal. */
+export async function runMetered<T>(
+  reservation: Reservation,
+  run: () => Promise<{ result: T; units: number }>,
+): Promise<T> {
+  let outcome: { result: T; units: number };
+  try {
+    outcome = await run();
+  } catch (e) {
+    await settleUsage(reservation, 0);
+    throw e;
+  }
+  await settleUsage(reservation, outcome.units);
+  return outcome.result;
+}
+
 /** One push when this action crosses 80% or 100% of a capped allowance. */
 async function warnNearCap(r: Reservation, actual: number): Promise<void> {
   if (r.limit === Infinity) return;
