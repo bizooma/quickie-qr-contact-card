@@ -17,7 +17,7 @@ export const HEADLINES: Record<
   },
   // C — the original brand rhythm, with the meaning restored in the subhead
   c: {
-    lines: ["One tap. They have you. ", "You have them."],
+    lines: ["One tap. They have you. ", "\nYou have them."],
     accented: "second",
     sub: "A digital business card that shares your details and captures theirs — no app, no typing, no lost leads.",
   },
