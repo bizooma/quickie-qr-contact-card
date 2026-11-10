@@ -1,0 +1,104 @@
+import { describe, expect, it } from "vitest";
+import {
+  LINK_GROUPS,
+  LINK_PLATFORMS,
+  guessPlatform,
+  linkHost,
+  linkKind,
+  linkLabel,
+} from "./link-catalog";
+
+describe("the platform catalog", () => {
+  it("has unique ids and a known group for every platform", () => {
+    const ids = LINK_PLATFORMS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const p of LINK_PLATFORMS) expect(LINK_GROUPS).toContain(p.group);
+  });
+
+  it("keeps every id that existing cards already use", () => {
+    const ids = LINK_PLATFORMS.map((p) => p.id);
+    for (const id of [
+      "link",
+      "linkedin",
+      "x",
+      "instagram",
+      "youtube",
+      "tiktok",
+      "facebook",
+      "github",
+      "calendar",
+      "payment",
+      "website",
+      "message",
+    ]) {
+      expect(ids).toContain(id);
+    }
+  });
+
+  it("never lists the same host under two platforms", () => {
+    const hosts = LINK_PLATFORMS.flatMap((p) => ("hosts" in p ? [...p.hosts] : []));
+    expect(new Set(hosts).size).toBe(hosts.length);
+  });
+});
+
+describe("guessPlatform", () => {
+  it.each([
+    ["https://www.linkedin.com/in/kale", "linkedin"],
+    ["https://x.com/kale", "x"],
+    ["twitter.com/kale", "x"],
+    ["https://youtu.be/abc123", "youtube"],
+    ["https://m.youtube.com/watch?v=abc", "youtube"],
+    ["wa.me/15305551234", "whatsapp"],
+    ["https://t.me/kale", "telegram"],
+    ["https://bsky.app/profile/kale.bsky.social", "bluesky"],
+    ["https://www.threads.net/@kale", "threads"],
+    ["https://open.spotify.com/show/1", "spotify"],
+    ["https://podcasts.apple.com/us/podcast/x/id1", "podcast"],
+    ["https://kale.substack.com", "substack"],
+    ["https://calendly.com/kale", "calendar"],
+    ["cal.com/kale/intro", "calendar"],
+    ["https://buy.stripe.com/abc", "payment"],
+    ["https://www.paypal.me/kale", "payment"],
+    ["https://g.page/r/abc/review", "reviews"],
+    ["https://kale.myshopify.com", "shop"],
+    ["https://zoom.us/j/123", "videocall"],
+    ["mailto:kale@example.com", "email"],
+    ["tel:+15305551234", "phone"],
+  ])("%s is %s", (url, id) => {
+    expect(guessPlatform(url)).toBe(id);
+  });
+
+  it("falls back to a plain link", () => {
+    for (const url of ["", "   ", "https://northwind.co/about", "not a url at all", "sms:+1530"]) {
+      expect(guessPlatform(url)).toBe("link");
+    }
+  });
+
+  it("matches on the host, not on a mention in the path", () => {
+    expect(guessPlatform("https://northwind.co/blog/why-we-left-linkedin.com")).toBe("link");
+    expect(guessPlatform("https://notlinkedin.com/in/kale")).toBe("link");
+  });
+});
+
+describe("link details", () => {
+  it("sorts platforms into compact and wide tiles", () => {
+    expect(linkKind("instagram")).toBe("social");
+    expect(linkKind("whatsapp")).toBe("social");
+    expect(linkKind("calendar")).toBe("link");
+    expect(linkKind("website")).toBe("link");
+    expect(linkKind("something-unknown")).toBe("link");
+  });
+
+  it("labels a platform, and an unknown one as a link", () => {
+    expect(linkLabel("applepodcasts")).toBe("Link");
+    expect(linkLabel("podcast")).toBe("Podcast");
+  });
+
+  it("shortens an address for display", () => {
+    expect(linkHost("https://www.cal.com/kale/intro?x=1")).toBe("cal.com");
+    expect(linkHost("northwind.co/case-studies")).toBe("northwind.co");
+    expect(linkHost("mailto:kale@example.com?subject=Hi")).toBe("kale@example.com");
+    expect(linkHost("tel:+15305551234")).toBe("+15305551234");
+    expect(linkHost("")).toBe("");
+  });
+});

@@ -2,19 +2,8 @@ import { ChevronDown, Globe, Mail, MapPin, Phone } from "lucide-react";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { initials, normalizeUrl, type CardData } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
+import { linkHost, linkKind } from "@/lib/link-catalog";
 import { ICON_LABELS, LinkIcon } from "./LinkIcon";
-
-// Links that read as an icon become compact tiles; everything else is a
-// wide tile with its label.
-const SOCIAL_ICONS = new Set([
-  "linkedin",
-  "x",
-  "instagram",
-  "youtube",
-  "tiktok",
-  "facebook",
-  "github",
-]);
 
 type Row = { kind: string; verb: string; icon: ReactNode; text: string; sub: string; href: string };
 
@@ -97,8 +86,10 @@ export function GlassCard({
   // One quick button per kind (the first phone, the first email, …).
   const quick = rows.filter((r, i) => rows.findIndex((x) => x.kind === r.kind) === i);
   const links = card.links.filter((l) => l.url);
-  const social = links.filter((l) => SOCIAL_ICONS.has(l.icon));
-  const portfolio = links.filter((l) => !SOCIAL_ICONS.has(l.icon));
+  // Platforms that read as an icon become compact tiles; everything else is a
+  // wide tile with its label and address.
+  const social = links.filter((l) => linkKind(l.icon) === "social");
+  const portfolio = links.filter((l) => linkKind(l.icon) !== "social");
   const logo = logoUrl || "/brand/logo-badge.webp";
   const logoHeight = logoUrl ? (card.logo_size === "large" ? 56 : 40) : 28;
 
@@ -251,7 +242,10 @@ export function GlassCard({
                     onClick={() => onLinkClick?.(l.label || l.icon)}
                   >
                     <LinkIcon icon={l.icon} />
-                    <span>{l.label || l.url}</span>
+                    <span className="ck-wide-text">
+                      <b>{l.label || ICON_LABELS[l.icon] || "Link"}</b>
+                      {linkHost(l.url) && <small>{linkHost(l.url)}</small>}
+                    </span>
                   </a>
                 ))}
               </div>
