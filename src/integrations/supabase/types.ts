@@ -72,17 +72,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          credit?: boolean
-          reservation?: string | null
           created_at?: string
+          credit?: boolean
           id?: string
           kind: string
+          reservation?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          credit?: boolean
           id?: string
           kind?: string
+          reservation?: string | null
           user_id?: string
         }
         Relationships: []
@@ -254,6 +256,7 @@ export type Database = {
           company: string | null
           created_at: string
           emails: Json
+          exchange: Json | null
           font: string
           full_name: string
           headshot_path: string | null
@@ -270,7 +273,6 @@ export type Database = {
           slug: string
           template: string
           theme: Json | null
-          exchange: Json | null
           updated_at: string
           user_id: string
           website: string | null
@@ -283,6 +285,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           emails?: Json
+          exchange?: Json | null
           font?: string
           full_name?: string
           headshot_path?: string | null
@@ -299,7 +302,6 @@ export type Database = {
           slug: string
           template?: string
           theme?: Json | null
-          exchange?: Json | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -312,6 +314,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           emails?: Json
+          exchange?: Json | null
           font?: string
           full_name?: string
           headshot_path?: string | null
@@ -328,7 +331,6 @@ export type Database = {
           slug?: string
           template?: string
           theme?: Json | null
-          exchange?: Json | null
           updated_at?: string
           user_id?: string
           website?: string | null
@@ -707,16 +709,16 @@ export type Database = {
           onboarded: boolean
           plan: string
           plan_expires_at: string | null
+          signup_attribution: Json | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           suspended: boolean
           suspended_at: string | null
           team_seats: number
           updated_at: string
-          webhook_url: string | null
           verified_at: string | null
+          webhook_url: string | null
           winback_sent_at: string | null
-          signup_attribution: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -732,16 +734,16 @@ export type Database = {
           onboarded?: boolean
           plan?: string
           plan_expires_at?: string | null
+          signup_attribution?: Json | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           suspended?: boolean
           suspended_at?: string | null
           team_seats?: number
           updated_at?: string
-          webhook_url?: string | null
           verified_at?: string | null
+          webhook_url?: string | null
           winback_sent_at?: string | null
-          signup_attribution?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -757,16 +759,16 @@ export type Database = {
           onboarded?: boolean
           plan?: string
           plan_expires_at?: string | null
+          signup_attribution?: Json | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           suspended?: boolean
           suspended_at?: string | null
           team_seats?: number
           updated_at?: string
-          webhook_url?: string | null
           verified_at?: string | null
+          webhook_url?: string | null
           winback_sent_at?: string | null
-          signup_attribution?: Json | null
         }
         Relationships: []
       }
@@ -914,7 +916,15 @@ export type Database = {
           referred_user_id?: string
           source?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referrals_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       roadmap_votes: {
         Row: {
@@ -994,24 +1004,6 @@ export type Database = {
         }
         Relationships: []
       }
-      stripe_events: {
-        Row: {
-          created_at: string
-          id: string
-          type: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          type: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          type?: string
-        }
-        Relationships: []
-      }
       site_events: {
         Row: {
           created_at: string
@@ -1030,6 +1022,24 @@ export type Database = {
           event_type?: string
           id?: string
           meta?: string | null
+        }
+        Relationships: []
+      }
+      stripe_events: {
+        Row: {
+          created_at: string
+          id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          type?: string
         }
         Relationships: []
       }
@@ -1063,40 +1073,27 @@ export type Database = {
         Args: { _token: string; _user: string }
         Returns: Json
       }
+      add_topup_credits: {
+        Args: { _follow_ups: number; _scans: number; _user: string }
+        Returns: undefined
+      }
       admin_analytics: { Args: never; Returns: Json }
       admin_overview: { Args: never; Returns: Json }
       apply_purchase_entitlements: {
         Args: { _email: string; _user: string }
         Returns: undefined
       }
+      card_event_series: {
+        Args: { p_card?: string; p_since: string }
+        Returns: Json
+      }
+      card_is_locked: { Args: { _card: string }; Returns: boolean }
       claim_verified_signup_grant: {
         Args: { p_user: string }
         Returns: undefined
       }
       cleanup_rpc_rate_limits: { Args: never; Returns: number }
-      add_topup_credits: { Args: { _follow_ups: number; _scans: number; _user: string }; Returns: undefined }
-      record_signup_attribution: { Args: { _attrib: Json; _user: string }; Returns: Json }
-      roadmap_vote_counts: { Args: never; Returns: Json }
-      my_referral_summary: { Args: never; Returns: Json }
-      referral_reward_state: { Args: { _owner: string }; Returns: Json }
       cleanup_stale_data: { Args: never; Returns: Json }
-      card_event_series: {
-        Args: { p_card?: string; p_since: string }
-        Returns: Json
-      }
-      org_event_totals: {
-        Args: { p_org: string; p_since: string }
-        Returns: Json
-      }
-      reserve_ai_usage: {
-        Args: { _kind: string; _limit: number; _units: number; _user: string }
-        Returns: Json
-      }
-      settle_ai_usage: {
-        Args: { _actual: number; _reservation: string }
-        Returns: undefined
-      }
-      winback_candidates: { Args: { p_limit?: number }; Returns: string[] }
       consume_starter_credit: {
         Args: { _kind: string; _user: string }
         Returns: undefined
@@ -1120,12 +1117,19 @@ export type Database = {
         Args: { _event_type: string; _meta?: string }
         Returns: undefined
       }
+      my_referral_summary: { Args: never; Returns: Json }
+      org_event_totals: {
+        Args: { p_org: string; p_since: string }
+        Returns: Json
+      }
       org_role_of: { Args: { _org: string }; Returns: string }
       org_shares_contacts_of: { Args: { _owner: string }; Returns: boolean }
       premium_card_insights: {
         Args: { p_card?: string; p_since: string }
         Returns: Json
       }
+      public_card_exchange: { Args: { plan: string; x: Json }; Returns: Json }
+      public_card_theme: { Args: { plan: string; t: Json }; Returns: Json }
       record_app_purchase: {
         Args: {
           _amount_cents: number
@@ -1139,13 +1143,28 @@ export type Database = {
         }
         Returns: Json
       }
+      record_signup_attribution: {
+        Args: { _attrib: Json; _user: string }
+        Returns: Json
+      }
+      referral_reward_state: { Args: { _owner: string }; Returns: Json }
       refund_app_purchase: {
         Args: { _kind: string; _order_id: string }
         Returns: Json
       }
+      reserve_ai_usage: {
+        Args: { _kind: string; _limit: number; _units: number; _user: string }
+        Returns: Json
+      }
       resolve_card_slug: { Args: { _slug: string }; Returns: string }
       restore_entitlement_plan: { Args: { _user: string }; Returns: undefined }
+      roadmap_vote_counts: { Args: never; Returns: Json }
       rpc_client_ip_hash: { Args: never; Returns: string }
+      settle_ai_usage: {
+        Args: { _actual: number; _reservation: string }
+        Returns: undefined
+      }
+      shareback_open: { Args: { _owner: string }; Returns: boolean }
       submit_shareback: {
         Args: {
           _company: string
@@ -1165,6 +1184,10 @@ export type Database = {
         }[]
       }
       team_seat_count: { Args: { p_org: string }; Returns: number }
+      theme_needs_premium: { Args: { t: Json }; Returns: boolean }
+      valid_card_exchange: { Args: { x: Json }; Returns: boolean }
+      valid_card_theme: { Args: { t: Json }; Returns: boolean }
+      winback_candidates: { Args: { p_limit?: number }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
