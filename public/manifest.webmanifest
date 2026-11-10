@@ -32,6 +32,13 @@
       "description": "Scan a paper business card into your contacts",
       "url": "/app/scan",
       "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Event prep",
+      "short_name": "Prep",
+      "description": "Your checklist, openers and goal sheet for the event",
+      "url": "/app/tools/prep",
+      "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

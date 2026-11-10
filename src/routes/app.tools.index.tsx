@@ -1,23 +1,33 @@
 import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ImageIcon, PenLine } from "lucide-react";
+import { ClipboardCheck, ImageIcon, PenLine } from "lucide-react";
 
-export const Route = createFileRoute("/app/tools/")({ head: appHead('Tools', 'Tools to share your card further.'), component: ToolsIndex });
+export const Route = createFileRoute("/app/tools/")({
+  head: appHead("Tools", "Tools to share your card further."),
+  component: ToolsIndex,
+});
 
 const TOOLS = [
+  {
+    to: "/app/tools/prep",
+    icon: ClipboardCheck,
+    name: "Event prep",
+    desc: "Your pre-event checklist, 20 conversation openers and goal sheet, ready on your phone at the event.",
+    badge: "Paid plans",
+  },
   {
     to: "/app/tools/signature",
     icon: PenLine,
     name: "Email signature",
     desc: "A polished signature with a 'Save my contact' button that links to your card — in every email you send.",
-    premium: true,
+    badge: "Premium",
   },
   {
     to: "/app/tools/background",
     icon: ImageIcon,
     name: "Virtual background",
     desc: "A branded Zoom/Meet/Teams background with your card's QR code, so meetings capture contacts too.",
-    premium: false,
+    badge: null,
   },
 ] as const;
 
@@ -37,9 +47,9 @@ function ToolsIndex() {
           >
             <div className="flex items-start justify-between">
               <t.icon className="h-6 w-6 text-brand" />
-              {t.premium && (
+              {t.badge && (
                 <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                  Premium
+                  {t.badge}
                 </span>
               )}
             </div>
