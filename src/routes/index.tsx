@@ -11,6 +11,7 @@ import {
   CalendarX,
   CheckCircle2,
   ExternalLink,
+  EyeOff,
   Palette,
   QrCode,
   ScanLine,
@@ -578,17 +579,24 @@ function Landing() {
             <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
             <p className="mt-4 text-white/70">
               Invite your team with a link, provision branded cards for every member, and lock your
-              colors and logo so no card drifts off-brand. Opt in to shared contacts and see
-              team-wide analytics in one place.
+              colors and logo so no card drifts off-brand. Take the ContactKickstart name off every
+              card so people see your brand only. Opt in to shared contacts and see team-wide
+              analytics in one place.
             </p>
           </div>
-          <div className="relative mt-8 grid gap-6 sm:grid-cols-3">
+          <div className="relative mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 i: Palette,
                 t: "Brand lock",
                 d: "Your colors and logo on every card, enforced.",
                 c: "text-pop-amber",
+              },
+              {
+                i: EyeOff,
+                t: "Your brand only",
+                d: "Remove ContactKickstart branding from every team card. Only on Teams.",
+                c: "text-white",
               },
               {
                 i: Users,
@@ -862,6 +870,7 @@ function Landing() {
                 {[
                   "Everything in Premium — for every member",
                   "Brand lock: your colors & logo on every card",
+                  "Your brand only: no ContactKickstart branding",
                   "Shared contacts: one team pipeline",
                   "Team-wide analytics",
                   "Add seats anytime as you grow",
@@ -925,7 +934,7 @@ function Landing() {
             ],
             [
               "Can my whole team use it?",
-              "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, and see shared contacts and team analytics in one view.",
+              "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove ContactKickstart branding so cards show your brand only (Teams is the only plan with this), and see shared contacts and team analytics in one view.",
             ],
           ].map(([q, a]) => (
             <details

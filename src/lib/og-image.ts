@@ -98,6 +98,8 @@ function drawGlassBackdrop(ctx: CanvasRenderingContext2D, glass: ResolvedTheme) 
 export async function renderOgImage(
   card: CardData,
   headshotUrl: string | null,
+  /** `unbranded`: a team that removed our branding (see get_public_card). */
+  opts: { unbranded?: boolean | undefined } = {},
 ): Promise<Blob | null> {
   const canvas = document.createElement("canvas");
   canvas.width = OG_WIDTH;
@@ -204,7 +206,11 @@ export async function renderOgImage(
   ctx.fillStyle = muted;
   ctx.font = `600 ${L.footer.size}px ${sans}`;
   // On glass the footer moves up to sit inside the panel.
-  ctx.fillText("Save my contact · ContactKickstart", L.footer.x, L.footer.y - (glass ? 36 : 0));
+  ctx.fillText(
+    opts.unbranded ? "Save my contact" : "Save my contact · ContactKickstart",
+    L.footer.x,
+    L.footer.y - (glass ? 36 : 0),
+  );
 
   try {
     return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));

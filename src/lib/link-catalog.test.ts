@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   LINK_GROUPS,
   LINK_PLATFORMS,
+  displayUrl,
   guessPlatform,
   linkHost,
   linkKind,
   linkLabel,
+  tidyWebAddress,
 } from "./link-catalog";
 
 describe("the platform catalog", () => {
@@ -100,5 +102,39 @@ describe("link details", () => {
     expect(linkHost("mailto:kale@example.com?subject=Hi")).toBe("kale@example.com");
     expect(linkHost("tel:+15305551234")).toBe("+15305551234");
     expect(linkHost("")).toBe("");
+  });
+});
+
+describe("addresses typed on a phone", () => {
+  it("takes the spaces and trailing dot out of a host", () => {
+    expect(tidyWebAddress("MyAI summit.dev")).toBe("MyAIsummit.dev");
+    expect(tidyWebAddress("Cal Farley. Org")).toBe("CalFarley.Org");
+    expect(tidyWebAddress("Topropesolutionz.com.")).toBe("Topropesolutionz.com");
+    expect(tidyWebAddress("  Https://rkingdesigngroup.com ")).toBe("https://rkingdesigngroup.com");
+  });
+
+  it("leaves a good address, and anything after the host, as it was", () => {
+    const linkedin =
+      "https://www.linkedin.com/in/kale-lincoln-47402244?utm_source=share_via&utm_medium=member_android";
+    expect(tidyWebAddress(linkedin)).toBe(linkedin);
+    expect(tidyWebAddress("example.com/My Menu.pdf")).toBe("example.com/My%20Menu.pdf");
+    expect(tidyWebAddress("example.com./a.b.")).toBe("example.com/a.b.");
+    expect(tidyWebAddress("mailto:kale@example.com")).toBe("mailto:kale@example.com");
+    expect(tidyWebAddress("tel:+1 530 555 1234")).toBe("tel:+1 530 555 1234");
+    expect(tidyWebAddress("")).toBe("");
+  });
+
+  it("never shows %20 under a link, and still recognises the platform", () => {
+    expect(linkHost("MyAI summit.dev")).toBe("myaisummit.dev");
+    expect(linkHost("Cal Farley. Org")).toBe("calfarley.org");
+    expect(linkHost("Topropesolutionz.com.")).toBe("topropesolutionz.com");
+    expect(guessPlatform("Linked In.com/in/kale")).toBe("linkedin");
+  });
+
+  it("shows a website the way its owner wrote it, minus the clutter", () => {
+    expect(displayUrl("www.MyAiSummit.dev")).toBe("www.MyAiSummit.dev");
+    expect(displayUrl("Https://rkingdesigngroup.com/")).toBe("rkingdesigngroup.com");
+    expect(displayUrl("Belay Reports. com")).toBe("BelayReports.com");
+    expect(displayUrl("https://example.com/shop/")).toBe("example.com/shop");
   });
 });

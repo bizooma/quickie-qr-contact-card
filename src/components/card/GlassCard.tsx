@@ -2,7 +2,7 @@ import { ChevronDown, Globe, Mail, MapPin, Phone } from "lucide-react";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { initials, normalizeUrl, type CardData } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
-import { linkHost, linkKind } from "@/lib/link-catalog";
+import { displayUrl, linkHost, linkKind } from "@/lib/link-catalog";
 import { ICON_LABELS, LinkIcon } from "./LinkIcon";
 
 type Row = { kind: string; verb: string; icon: ReactNode; text: string; sub: string; href: string };
@@ -35,7 +35,7 @@ function contactRows(card: CardData): Row[] {
             kind: "website",
             verb: "Open",
             icon: <Globe aria-hidden />,
-            text: card.website.replace(/^https?:\/\//, ""),
+            text: displayUrl(card.website),
             sub: "Website",
             href: normalizeUrl(card.website),
           },
@@ -67,6 +67,7 @@ export function GlassCard({
   headshotUrl,
   logoUrl,
   verified,
+  unbranded,
   actions,
   onLinkClick,
 }: {
@@ -75,6 +76,8 @@ export function GlassCard({
   logoUrl?: string | null | undefined;
   /** Decided by the server (get_public_card); never by the card owner. */
   verified?: boolean | undefined;
+  /** Teams: no ContactKickstart badge on a card without a logo. */
+  unbranded?: boolean | undefined;
   actions?: ReactNode;
   onLinkClick?: ((label: string) => void) | undefined;
 }) {
@@ -90,7 +93,7 @@ export function GlassCard({
   // wide tile with its label and address.
   const social = links.filter((l) => linkKind(l.icon) === "social");
   const portfolio = links.filter((l) => linkKind(l.icon) !== "social");
-  const logo = logoUrl || "/brand/logo-badge.webp";
+  const logo = logoUrl || (unbranded ? undefined : "/brand/logo-badge.webp");
   const logoHeight = logoUrl ? (card.logo_size === "large" ? 56 : 40) : 28;
 
   return (
@@ -155,12 +158,14 @@ export function GlassCard({
             </p>
           )}
           {card.bio && <p className="ck-bio">{card.bio}</p>}
-          <img
-            className="ck-logo"
-            src={logo}
-            alt={card.company ? `${card.company} logo` : "Company logo"}
-            style={{ height: logoHeight }}
-          />
+          {logo && (
+            <img
+              className="ck-logo"
+              src={logo}
+              alt={card.company ? `${card.company} logo` : "Company logo"}
+              style={{ height: logoHeight }}
+            />
+          )}
         </header>
 
         {actions && <div className="ck-glass ck-actions">{actions}</div>}

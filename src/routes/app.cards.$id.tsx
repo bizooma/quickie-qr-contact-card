@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { BrandPanel } from "@/components/card/BrandPanel";
+import { ExchangePanel } from "@/components/card/ExchangePanel";
 import { CardView } from "@/components/card/CardView";
 import { ICON_LABELS, LinkIcon } from "@/components/card/LinkIcon";
 import { QrPanel } from "@/components/card/QrPanel";
@@ -120,7 +121,7 @@ function Editor({
   const lastLinks = useRef(JSON.stringify(initial.links));
 
   useEffect(() => { signedUrls([card.headshot_path, card.logo_path, card.banner_path]).then((u) => setUrls((p) => ({ ...p, ...u }))); }, [card.headshot_path, card.logo_path, card.banner_path]);
-  const { isPremium } = usePlan();
+  const { isPremium, isPro } = usePlan();
   // The verified badge is granted by an admin; the owner can only see it.
   const { data: verified } = useQuery({
     queryKey: ["verified", user?.id],
@@ -134,6 +135,19 @@ function Editor({
       return !!data?.verified_at;
     },
   });
+
+  // Teams can remove our branding; the server decides (get_public_card), so
+  // the preview and the share image ask it rather than guess from the plan.
+  const { data: unbranded } = useQuery({
+    queryKey: ["card-unbranded", initial.slug],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_public_card", { _slug: initial.slug });
+      return (data as { hide_branding?: boolean } | null)?.hide_branding === true;
+    },
+  });
+  // A ref, so the answer arriving doesn't look like an edit and trigger a save.
+  const unbrandedRef = useRef(false);
+  unbrandedRef.current = unbranded === true;
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,7 +164,7 @@ function Editor({
           const headshotUrl = c.headshot_path
             ? ((await signedUrls([c.headshot_path]))[c.headshot_path] ?? null)
             : null;
-          const blob = await renderOgImage(c, headshotUrl);
+          const blob = await renderOgImage(c, headshotUrl, { unbranded: unbrandedRef.current });
           if (!blob) return;
           const path = await uploadOgImage(user.id, cardId, blob);
           await supabase.from("cards").update({ og_path: path }).eq("id", cardId);
@@ -170,10 +184,10 @@ function Editor({
         timer.current = null;
       }
       try {
-        const { links, slug: _s, theme, ...fields } = c;
+        const { links, slug: _s, theme, exchange, ...fields } = c;
         const { error } = await supabase
           .from("cards")
-          .update({ ...fields, theme: theme ?? null })
+          .update({ ...fields, theme: theme ?? null, exchange: exchange ?? null })
           .eq("id", cardId);
         if (error) throw error;
         const lj = JSON.stringify(links);
@@ -290,7 +304,7 @@ function Editor({
 
   const preview = (
     <div className="phone-frame mx-auto"><div className="h-full overflow-y-auto rounded-[38px]">
-      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true}
+      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true} unbranded={unbranded === true}
         actions={<div className="h-12 rounded-full text-center text-sm font-semibold leading-[3rem]" style={{ background: card.accent_color, color: "#fff" }}>Save contact</div>} />
     </div></div>
   );
@@ -758,7 +772,7 @@ function Editor({
             </div>
           </TabsContent>
 
-          <TabsContent value="share">
+          <TabsContent value="share" className="space-y-10">
             <QrPanel
               cardId={cardId}
               slug={card.slug}
@@ -768,6 +782,11 @@ function Editor({
               headshotPath={card.headshot_path}
               logoPath={card.logo_path}
               qrCenter={qrCenter}
+            />
+            <ExchangePanel
+              card={card}
+              canEditForm={isPro}
+              onChange={(x) => set("exchange", x)}
             />
           </TabsContent>
         </Tabs>

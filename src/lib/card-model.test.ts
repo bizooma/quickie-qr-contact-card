@@ -7,6 +7,7 @@ import {
   contactsToCsv,
   contactsToVcf,
   guessIcon,
+  normalizeUrl,
   slugify,
   SLUG_RE,
   type CardData,
@@ -46,6 +47,38 @@ describe("vCard", () => {
     expect(v).toContain("EMAIL;TYPE=INTERNET,WORK:kale@acme.com");
     expect(v).toContain("URL;TYPE=LinkedIn:https://linkedin.com/in/kale");
     expect(v).toContain("PHOTO;ENCODING=b;TYPE=JPEG:AAAA");
+  });
+
+  it("leaves out the parts the owner hid, but never the name or card link", () => {
+    const full = { ...card, bio: "Hello there" };
+    const opts = { photoBase64: "AAAA", cardUrl: "https://contactkickstart.com/c/kale" };
+    const v = buildVCard(full, {
+      ...opts,
+      hide: ["phones", "emails", "company", "website", "location", "bio", "links", "photo"],
+    });
+    expect(v).toContain("FN:Kale Dabling");
+    expect(v).toContain("URL;TYPE=Card:https://contactkickstart.com/c/kale");
+    for (const gone of ["ORG:", "TITLE:", "TEL;", "EMAIL;", "URL:", "LinkedIn", "ADR;", "NOTE:", "PHOTO;"])
+      expect(v).not.toContain(gone);
+
+    const some = buildVCard(full, { ...opts, hide: ["phones", "bio"] });
+    expect(some).not.toContain("TEL;");
+    expect(some).not.toContain("NOTE:");
+    expect(some).toContain("EMAIL;TYPE=INTERNET,WORK:kale@acme.com");
+    expect(some).toContain("ORG:Acme\\, Inc.");
+    expect(some).toContain("PHOTO;ENCODING=b");
+  });
+
+  it("opens and saves a tidy address even when one was typed with spaces", () => {
+    expect(normalizeUrl("MyAI summit.dev")).toBe("https://MyAIsummit.dev");
+    expect(normalizeUrl("Cal Farley. Org")).toBe("https://CalFarley.Org");
+    expect(normalizeUrl("Https://rkingdesigngroup.com")).toBe("https://rkingdesigngroup.com");
+    expect(normalizeUrl("http://example.com")).toBe("http://example.com");
+    expect(normalizeUrl("mailto:kale@acme.com")).toBe("mailto:kale@acme.com");
+    expect(normalizeUrl("tel:+1 555 0100")).toBe("tel:+1 555 0100");
+    expect(normalizeUrl("  ")).toBe("");
+    const v = buildVCard({ ...card, website: "Acme . com" });
+    expect(v).toContain("URL:https://Acme.com");
   });
 
   it("builds a contact vCard with escaped fields and met-at note", () => {

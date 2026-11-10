@@ -663,6 +663,7 @@ export type Database = {
           accent_color: string | null
           background_color: string | null
           created_at: string
+          hide_branding: boolean
           id: string
           lock_brand: boolean
           logo_path: string | null
@@ -674,6 +675,7 @@ export type Database = {
           accent_color?: string | null
           background_color?: string | null
           created_at?: string
+          hide_branding?: boolean
           id?: string
           lock_brand?: boolean
           logo_path?: string | null
@@ -685,6 +687,7 @@ export type Database = {
           accent_color?: string | null
           background_color?: string | null
           created_at?: string
+          hide_branding?: boolean
           id?: string
           lock_brand?: boolean
           logo_path?: string | null
