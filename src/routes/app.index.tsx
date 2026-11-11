@@ -18,6 +18,11 @@ import { getBillingState } from "@/lib/billing.functions";
 import { PLAN_LIMITS, PLAN_NAMES } from "@/lib/plans";
 import { liveLinkProps } from "@/hooks/use-pwa-install";
 
+/** Phones and tablets: an autofocused field would open the keyboard at once. */
+function coarsePointer() {
+  return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+}
+
 export const Route = createFileRoute("/app/")({ head: appHead('My cards', 'All your digital business cards in one place.'), component: CardsPage });
 
 function CardsPage() {
@@ -234,25 +239,34 @@ function CardsPage() {
           <DialogHeader>
             <DialogTitle>New card</DialogTitle>
           </DialogHeader>
-          <form onSubmit={addCard} className="space-y-4">
+          {/* Scan first: on a phone the keyboard and the Create button used
+              to push it out of sight. No autofocus on touch screens, so the
+              keyboard only opens when they choose to type a name. */}
+          <div className="space-y-2 text-center">
+            <ScanMyCard className="w-full" onScanned={addCardFromScan} />
+            <p className="text-xs text-muted-foreground">
+              Build it from your paper business card — logo, colors, photo and all.
+            </p>
+          </div>
+          <form onSubmit={addCard} className="space-y-3 border-t pt-4">
+            <p className="text-center text-xs text-muted-foreground">Or start with a blank card</p>
             <Input
-              autoFocus
+              autoFocus={!coarsePointer()}
               aria-label="Card label"
               placeholder="e.g. Side business, Personal"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               maxLength={40}
             />
-            <Button type="submit" className="w-full" disabled={!label.trim() || creating}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full"
+              disabled={!label.trim() || creating}
+            >
               Create card
             </Button>
           </form>
-          <div className="space-y-2 border-t pt-4 text-center">
-            <p className="text-xs text-muted-foreground">
-              Or build it from your paper business card — logo, colors, photo and all.
-            </p>
-            <ScanMyCard variant="outline" className="w-full" onScanned={addCardFromScan} />
-          </div>
         </DialogContent>
       </Dialog>
     </div>
