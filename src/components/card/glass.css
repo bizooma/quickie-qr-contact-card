@@ -41,10 +41,10 @@
   translate: calc(var(--ck-tx, 0) * var(--ck-depth)) calc(var(--ck-ty, 0) * var(--ck-depth));
   pointer-events: none;
 }
-.ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; --ck-depth: 22px; }
-.ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; --ck-depth: -16px; }
-.ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; --ck-depth: 28px; }
-.ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; --ck-depth: -20px; }
+.ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; --ck-depth: 34px; }
+.ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; --ck-depth: -24px; }
+.ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; --ck-depth: 42px; }
+.ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; --ck-depth: -30px; }
 @keyframes ck-drift {
   from { transform: none; }
   to { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
