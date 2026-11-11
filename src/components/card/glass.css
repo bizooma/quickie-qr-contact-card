@@ -41,25 +41,44 @@
   translate: calc(var(--ck-tx, 0) * var(--ck-depth)) calc(var(--ck-ty, 0) * var(--ck-depth));
   pointer-events: none;
 }
-.ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; --ck-depth: 34px; }
-.ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; --ck-depth: -24px; }
-.ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; --ck-depth: 42px; }
-.ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; --ck-depth: -30px; }
-@keyframes ck-drift {
-  from { transform: none; }
-  to { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
+/* Each light wanders its own loop: two waypoints (--ck-a*, --ck-b*) as a
+   share of its own size, growing, shrinking and turning on the way. */
+.ck-blob-1 {
+  top: -6%; left: -22%; --ck-depth: 34px;
+  --ck-ax: 34%; --ck-ay: 26%; --ck-as: 1.3; --ck-ar: 28deg;
+  --ck-bx: 12%; --ck-by: 52%; --ck-bs: 0.82;
 }
-/* Only desktops drift the backdrop; phones keep it still, since a moving
-   backdrop makes every frosted panel re-blur on each frame. */
-@media (hover: hover) and (pointer: fine) {
-  .ck-blob {
-    animation: ck-drift 22s ease-in-out infinite alternate;
-    will-change: transform;
-  }
-  .ck-blob-2 { animation-duration: 27s; }
-  .ck-blob-3 { animation-duration: 31s; }
-  .ck-blob-4 { animation-duration: 25s; }
+.ck-blob-2 {
+  top: 20%; right: -28%; --ck-depth: -24px;
+  --ck-ax: -40%; --ck-ay: 22%; --ck-as: 0.8; --ck-ar: -34deg;
+  --ck-bx: -16%; --ck-by: -30%; --ck-bs: 1.28;
 }
+.ck-blob-3 {
+  top: 50%; left: -26%; --ck-depth: 42px;
+  --ck-ax: 38%; --ck-ay: -32%; --ck-as: 1.24; --ck-ar: 40deg;
+  --ck-bx: 22%; --ck-by: 18%; --ck-bs: 0.86;
+}
+.ck-blob-4 {
+  top: 78%; right: -20%; --ck-depth: -30px;
+  --ck-ax: -30%; --ck-ay: -40%; --ck-as: 1.32; --ck-ar: -26deg;
+  --ck-bx: -44%; --ck-by: -10%; --ck-bs: 0.84;
+}
+@keyframes ck-glass-drift {
+  0%,
+  100% { transform: none; }
+  33% { transform: translate(var(--ck-ax), var(--ck-ay)) scale(var(--ck-as)) rotate(var(--ck-ar)); }
+  66% { transform: translate(var(--ck-bx), var(--ck-by)) scale(var(--ck-bs)) rotate(calc(var(--ck-ar) * -1)); }
+}
+/* Phones and computers alike. The lights move as a transform on their own
+   layers (no blur, which is what flickered), so the frosted panels only
+   re-sample them. Different lengths keep the four from ever syncing up. */
+.ck-blob {
+  animation: ck-glass-drift 13s ease-in-out infinite;
+  will-change: transform;
+}
+.ck-blob-2 { animation-duration: 16s; animation-delay: -4s; }
+.ck-blob-3 { animation-duration: 11s; animation-delay: -7s; }
+.ck-blob-4 { animation-duration: 15s; animation-delay: -2s; }
 @media (prefers-reduced-motion: reduce) {
   .ck-blob { animation: none; }
 }
