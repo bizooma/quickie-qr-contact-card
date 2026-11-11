@@ -1,9 +1,9 @@
 import { ChevronDown, Globe, Mail, MapPin, Phone } from "lucide-react";
-import { useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { initials, linkHref, normalizeUrl, type CardData } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
 import { displayUrl, linkHost, linkKind } from "@/lib/link-catalog";
-import { useTilt } from "@/hooks/use-tilt";
+import { GlassMesh } from "./GlassMesh";
 import { ICON_LABELS, LinkIcon } from "./LinkIcon";
 
 type Row = { kind: string; verb: string; icon: ReactNode; text: string; sub: string; href: string };
@@ -85,11 +85,6 @@ export function GlassCard({
   const { theme, vars } = resolveTheme(card);
   const [open, setOpen] = useState(false);
   const detailsId = useId();
-  // SVG gradient ids are page-global; useId keeps two cards on one page apart.
-  const meshId = `ck-mesh${useId().replace(/:/g, "")}`;
-  // The lights lean with the phone's tilt (the pointer on a computer).
-  const meshRef = useRef<HTMLDivElement>(null);
-  const tilt = useTilt(meshRef);
 
   const rows = contactRows(card);
   // One quick button per kind (the first phone, the first email, …).
@@ -104,40 +99,7 @@ export function GlassCard({
 
   return (
     <div className="ck-glass-card" style={vars as CSSProperties}>
-      <div className="ck-mesh" ref={meshRef} aria-hidden>
-        {/* Each blob's soft edge is drawn into the shape with a radial
-            gradient. A CSS blur here made the frosted panels above re-blur
-            a blurred layer while it moved or scrolled, which flickered on
-            phones. */}
-        {[1, 2, 3, 4].map((n) => (
-          <svg key={n} className={`ck-blob ck-blob-${n}`} viewBox="0 0 200 200" focusable="false">
-            <defs>
-              <radialGradient id={`${meshId}-${n}`}>
-                <stop offset="0" style={{ stopColor: `var(--ck-mesh-${n})` }} />
-                <stop
-                  offset="0.45"
-                  style={{ stopColor: `var(--ck-mesh-${n})`, stopOpacity: 0.85 }}
-                />
-                <stop offset="1" style={{ stopColor: `var(--ck-mesh-${n})`, stopOpacity: 0 }} />
-              </radialGradient>
-            </defs>
-            <ellipse
-              cx="100"
-              cy="100"
-              rx={n % 2 ? 96 : 84}
-              ry={n % 2 ? 80 : 96}
-              transform={`rotate(${n * 37} 100 100)`}
-              fill={`url(#${meshId}-${n})`}
-            />
-          </svg>
-        ))}
-      </div>
-
-      {tilt.needsTap && (
-        <button type="button" className="ck-glass ck-tilt-hint" onClick={tilt.enable}>
-          ✨ Tilt to explore
-        </button>
-      )}
+      <GlassMesh />
 
       <div className="ck-glass-body">
         <header className="ck-glass ck-head">

@@ -292,3 +292,84 @@
 }
 .ck-wide-text b { font-weight: 600; }
 .ck-wide-text small { color: var(--ck-muted); font-size: 12px; font-weight: 500; }
+
+/* ---- QR screen (app.qr.tsx) ----
+   A glass card's QR screen sits on the card's own lights. The code itself
+   stays on a solid white tile so every camera reads it. */
+.ck-qr-stage {
+  min-height: 0;
+  border-radius: 28px;
+  /* Room above the panel for iPhone's "Tilt to explore" pill. */
+  padding: 32px 18px 22px;
+}
+.ck-qr-stage .ck-qr-panel {
+  position: relative;
+  z-index: 1;
+  padding: 14px 14px 16px;
+  border-radius: 24px;
+  text-align: center;
+}
+
+/* Shimmering edge: a band of light (the card's accent, --ck-shine, with a
+   white glint) slowly circles the panel's border. It is drawn only in the
+   2px ring outside the code's quiet zone, so scanning is unaffected; with
+   reduced motion it stays still. Browsers without @property show the ring
+   without the movement. */
+@property --ck-shine-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.ck-shimmer {
+  position: relative;
+  isolation: isolate;
+}
+/* A soft glow in the same colour, behind the panel. */
+.ck-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 0 32px -8px var(--ck-shine);
+  pointer-events: none;
+}
+.ck-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: 2;
+  padding: 2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--ck-shine-angle),
+    transparent 0deg,
+    var(--ck-shine) 50deg,
+    #fff 70deg,
+    var(--ck-shine) 90deg,
+    transparent 140deg,
+    transparent 180deg,
+    var(--ck-shine) 230deg,
+    #fff 250deg,
+    var(--ck-shine) 270deg,
+    transparent 320deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  /* Its own layer, so each frame repaints only the ring, never the
+     frosted panel underneath. */
+  transform: translateZ(0);
+  animation: ck-shine 7s linear infinite;
+  pointer-events: none;
+}
+@keyframes ck-shine {
+  to { --ck-shine-angle: 360deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck-shimmer::before { animation: none; }
+}
