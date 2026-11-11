@@ -4,9 +4,12 @@ import {
   LINK_PLATFORMS,
   displayUrl,
   guessPlatform,
+  isBareEmail,
+  isBarePhone,
   linkHost,
   linkKind,
   linkLabel,
+  phoneDigits,
   tidyWebAddress,
 } from "./link-catalog";
 
@@ -136,5 +139,35 @@ describe("addresses typed on a phone", () => {
     expect(displayUrl("Https://rkingdesigngroup.com/")).toBe("rkingdesigngroup.com");
     expect(displayUrl("Belay Reports. com")).toBe("BelayReports.com");
     expect(displayUrl("https://example.com/shop/")).toBe("example.com/shop");
+  });
+});
+
+describe("bare email and phone values", () => {
+  it("recognises an address or a number typed without its scheme", () => {
+    expect(isBareEmail("jane@acme.com")).toBe(true);
+    expect(isBarePhone("+1 555 0100")).toBe(true);
+    expect(isBarePhone("(555) 010-0100")).toBe(true);
+    // a web address that merely carries an address is not an email
+    expect(isBareEmail("https://acme.com?to=jane@acme.com")).toBe(false);
+    expect(isBareEmail("mailto:jane@acme.com")).toBe(false);
+    // …and text or a short number is not a phone number
+    expect(isBarePhone("Call me")).toBe(false);
+    expect(isBarePhone("555 010")).toBe(false);
+  });
+
+  it("picks the Email or Phone icon when a bare value is pasted", () => {
+    expect(guessPlatform("jane@acme.com")).toBe("email");
+    expect(guessPlatform("+1 555 0100")).toBe("phone");
+    expect(guessPlatform("acme.com")).toBe("link");
+  });
+
+  it("shows a bare address or number whole under the link", () => {
+    expect(linkHost("jane@acme.com")).toBe("jane@acme.com");
+    expect(linkHost("+1 555 0100")).toBe("+1 555 0100");
+    expect(linkHost("mailto:jane@acme.com")).toBe("jane@acme.com");
+  });
+
+  it("keeps the digits a dialer needs", () => {
+    expect(phoneDigits("+1 (555) 010-0100")).toBe("+15550100100");
   });
 });

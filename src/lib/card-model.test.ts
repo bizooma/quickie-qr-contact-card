@@ -7,6 +7,7 @@ import {
   contactsToCsv,
   contactsToVcf,
   guessIcon,
+  linkHref,
   normalizeUrl,
   slugify,
   SLUG_RE,
@@ -36,6 +37,43 @@ const card: CardData = {
   template: "classic",
   links: [{ label: "LinkedIn", url: "linkedin.com/in/kale", icon: "linkedin" }],
 };
+
+describe("card link addresses", () => {
+  it("sends a bare email typed on an Email link to the mail app", () => {
+    expect(linkHref("jane@acme.com", "email")).toBe("mailto:jane@acme.com");
+    // …even before the owner picks the type
+    expect(linkHref("jane@acme.com", "link")).toBe("mailto:jane@acme.com");
+    // …and when the address has no dot, where the picked type decides
+    expect(linkHref("jane@acme", "email")).toBe("mailto:jane@acme");
+  });
+
+  it("sends a bare phone number typed on a Phone link to the dialer", () => {
+    expect(linkHref("+1 555 0100", "phone")).toBe("tel:+15550100");
+    expect(linkHref("(555) 010-0100", "phone")).toBe("tel:5550100100");
+  });
+
+  it("keeps a value that already has a scheme, and treats the rest as web", () => {
+    expect(linkHref("mailto:jane@acme.com", "email")).toBe("mailto:jane@acme.com");
+    expect(linkHref("tel:+15550100", "phone")).toBe("tel:+15550100");
+    expect(linkHref("linkedin.com/in/kale", "linkedin")).toBe("https://linkedin.com/in/kale");
+    // an Email row holding a web address is still a web address
+    expect(linkHref("acme.com", "email")).toBe("https://acme.com");
+    expect(linkHref("  ", "email")).toBe("");
+  });
+
+  it("writes email and phone links into the saved contact as mailto:/tel:", () => {
+    const v = buildVCard({
+      ...card,
+      links: [
+        { label: "Email", url: "jane@acme.com", icon: "email" },
+        { label: "Phone", url: "+1 555 0100", icon: "phone" },
+      ],
+    });
+    expect(v).toContain("URL;TYPE=Email:mailto:jane@acme.com");
+    expect(v).toContain("URL;TYPE=Phone:tel:+15550100");
+    expect(v).not.toContain("https://jane@acme.com");
+  });
+});
 
 describe("vCard", () => {
   it("includes name, escaped org, phone, email, links and photo", () => {

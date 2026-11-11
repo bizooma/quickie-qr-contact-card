@@ -1,7 +1,7 @@
 // Email-signature HTML builder. Email clients only render table layouts with
 // inline styles, so no classes, no flexbox, no external CSS — and no <img>:
 // card media lives in a private bucket behind expiring signed URLs.
-import { initials, normalizeUrl, type CardData } from "./card-model";
+import { initials, linkHref, type CardData } from "./card-model";
 
 export const SIGNATURE_STYLES = [
   { id: "classic", name: "Classic", hint: "Initials badge + two columns" },
@@ -45,7 +45,7 @@ function parts(card: CardData, publicUrl: string): Parts {
     links: card.links
       .filter((l) => l.url.trim())
       .slice(0, MAX_SIGNATURE_LINKS)
-      .map((l) => ({ label: l.label.trim() || "Link", url: normalizeUrl(l.url) })),
+      .map((l) => ({ label: l.label.trim() || "Link", url: linkHref(l.url, l.icon) })),
     accent: card.accent_color,
     publicUrl,
   };

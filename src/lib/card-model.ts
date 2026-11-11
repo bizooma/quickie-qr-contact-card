@@ -3,7 +3,14 @@
 
 import type { CardTheme } from "./card-theme";
 import type { CardExchange, VCardPart } from "./exchange";
-import { guessPlatform, LINK_PLATFORMS, tidyWebAddress } from "./link-catalog";
+import {
+  guessPlatform,
+  isBareEmail,
+  isBarePhone,
+  LINK_PLATFORMS,
+  phoneDigits,
+  tidyWebAddress,
+} from "./link-catalog";
 
 export type LabeledValue = { label: string; value: string };
 
@@ -91,6 +98,25 @@ export function normalizeUrl(url: string): string {
   return /^https?:/.test(tidy) ? tidy : `https://${tidy}`;
 }
 
+/** The address a card link opens. An email or phone link gets its "mailto:" /
+ *  "tel:" prefix even when the owner typed a bare address or number, so the
+ *  tap reaches the mail app or dialer instead of a broken web page. Values
+ *  that already carry a scheme keep it, and anything that is not an address or
+ *  a number is treated as a web address whatever its icon says. */
+export function linkHref(url: string, icon: string): string {
+  const t = url.trim();
+  if (!t) return t;
+  // A value that already carries a scheme (mailto:, tel:, https://…) keeps it.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(t)) return normalizeUrl(t);
+  // The owner's chosen type decides when the shape is close but not provable
+  // ("jane@acme", "+1 555 0100"), so a picked Email or Phone row still opens
+  // the right app.
+  if (isBareEmail(t) || (icon === "email" && t.includes("@"))) return `mailto:${t}`;
+  if (isBarePhone(t) || (icon === "phone" && /^\+?[\d\s().-]+$/.test(t)))
+    return `tel:${phoneDigits(t)}`;
+  return normalizeUrl(t);
+}
+
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{2,48}$/;
 
 export function slugify(input: string): string {
@@ -164,7 +190,7 @@ export function buildVCard(
   for (const l of hidden.has("links") ? [] : card.links) {
     if (!l.url.trim()) continue;
     lines.push(
-      `URL;TYPE=${esc(l.label || l.icon).replace(/[^A-Za-z0-9-]/g, "") || "Link"}:${esc(normalizeUrl(l.url))}`,
+      `URL;TYPE=${esc(l.label || l.icon).replace(/[^A-Za-z0-9-]/g, "") || "Link"}:${esc(linkHref(l.url, l.icon))}`,
     );
   }
   if (card.location && !hidden.has("location"))

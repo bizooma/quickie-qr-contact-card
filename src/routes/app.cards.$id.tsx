@@ -603,7 +603,13 @@ function Editor({
                 </div>
                 <Input
                   aria-label="Link URL"
-                  placeholder="https://"
+                  placeholder={
+                    l.icon === "email"
+                      ? "name@example.com"
+                      : l.icon === "phone"
+                        ? "+1 555 0100"
+                        : "https://"
+                  }
                   value={l.url}
                   onChange={(e) => {
                     const url = e.target.value;

@@ -5,6 +5,7 @@ import {
   contrastText,
   fontCss,
   initials,
+  linkHref,
   normalizeUrl,
   type CardData,
 } from "@/lib/card-model";
@@ -264,22 +265,26 @@ export function CardView({
           <div className="mt-4 grid grid-cols-1 gap-2">
             {card.links
               .filter((l) => l.url)
-              .map((l, i) => (
-                <a
-                  key={l.id ?? i}
-                  href={normalizeUrl(l.url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => onLinkClick?.(l.label || l.icon)}
-                  className="flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-opacity hover:opacity-80"
-                  style={{
-                    borderColor: fg === "#FFFFFF" ? "rgba(255,255,255,0.14)" : "rgba(17,17,17,0.1)",
-                  }}
-                >
-                  <LinkIcon icon={l.icon} className="h-4 w-4" />
-                  <span className="truncate">{l.label || l.url}</span>
-                </a>
-              ))}
+              .map((l, i) => {
+                const href = linkHref(l.url, l.icon);
+                const web = /^https?:/i.test(href);
+                return (
+                  <a
+                    key={l.id ?? i}
+                    href={href}
+                    target={web ? "_blank" : undefined}
+                    rel={web ? "noreferrer" : undefined}
+                    onClick={() => onLinkClick?.(l.label || l.icon)}
+                    className="flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-opacity hover:opacity-80"
+                    style={{
+                      borderColor: fg === "#FFFFFF" ? "rgba(255,255,255,0.14)" : "rgba(17,17,17,0.1)",
+                    }}
+                  >
+                    <LinkIcon icon={l.icon} className="h-4 w-4" />
+                    <span className="truncate">{l.label || l.url}</span>
+                  </a>
+                );
+              })}
           </div>
         )}
       </div>

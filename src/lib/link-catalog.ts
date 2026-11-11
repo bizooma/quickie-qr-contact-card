@@ -269,6 +269,31 @@ export function tidyWebAddress(url: string): string {
   return scheme + host + rest;
 }
 
+/** A bare email address, as people type it without "mailto:". No spaces, one
+ *  "@", a dotted domain — and no "://" or path characters, so a web address
+ *  that merely carries an address in its query is not misread. */
+export function isBareEmail(value: string): boolean {
+  const t = value.trim();
+  if (/[:/?#]/.test(t)) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t);
+}
+
+/** A phone number typed without "tel:": an optional "+", then only digits and
+ *  the separators keyboards offer, with at least 7 digits. Letters, a space
+ *  before a dot or a colon rule it out, so a name or a web address is never
+ *  read as a number. */
+export function isBarePhone(value: string): boolean {
+  const t = value.trim();
+  if (!/^\+?[\d\s.()-]+$/.test(t)) return false;
+  return (t.match(/\d/g) ?? []).length >= 7;
+}
+
+/** The digits part of a phone number: the spaces, dots, dashes and brackets
+ *  people type are dropped, so "tel:" gets what a dialer expects. */
+export function phoneDigits(value: string): string {
+  return value.trim().replace(/[\s().-]/g, "");
+}
+
 /** A web address for showing on a card: tidied, without "https://" or a
  *  bare trailing slash, in the capitals its owner typed. */
 export function displayUrl(url: string): string {
@@ -297,6 +322,8 @@ export function guessPlatform(url: string): LinkIconId {
   const t = url.trim().toLowerCase();
   if (t.startsWith("mailto:")) return "email";
   if (t.startsWith("tel:")) return "phone";
+  if (isBareEmail(t)) return "email";
+  if (isBarePhone(t)) return "phone";
   const host = hostOf(t);
   if (!host) return "link";
   for (const p of LINK_PLATFORMS) {
@@ -311,5 +338,8 @@ export function linkHost(url: string): string {
   const t = url.trim();
   const scheme = /^(mailto|tel):(.*)$/i.exec(t);
   if (scheme) return (scheme[2] ?? "").split("?")[0] ?? "";
+  // A bare address or number is shown whole: its domain alone ("acme.com")
+  // would leave the owner's address or number half-hidden on the card.
+  if (isBareEmail(t) || isBarePhone(t)) return t;
   return hostOf(t);
 }

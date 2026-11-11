@@ -18,3 +18,4 @@
 - Public RPC abuse tracking stays in private database functions/tables; the existing authorized reminders cron calls its cleanup RPC. Why: contain limits without a new service or schedule.
 - Server-mediated public RPCs forward visitor IP through a request-scoped header trusted only for service-role calls; missing visitor headers skip per-IP limits. Why: the database's network headers otherwise identify the app server and merge visitors into one counter.
 - Metered AI actions run everything after `reserveUsage` inside `runMetered` (usage.server.ts). Why: any thrown error must release the reservation and refund credits.
+- Card link addresses go through `linkHref(url, icon)` in `src/lib/card-model.ts`, never `normalizeUrl` alone. Why: an Email or Phone link typed as a bare address or number must open the mail app or dialer, not a broken web page.

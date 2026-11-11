@@ -1,6 +1,6 @@
 import { ChevronDown, Globe, Mail, MapPin, Phone } from "lucide-react";
 import { useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { initials, normalizeUrl, type CardData } from "@/lib/card-model";
+import { initials, linkHref, normalizeUrl, type CardData } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
 import { displayUrl, linkHost, linkKind } from "@/lib/link-catalog";
 import { useTilt } from "@/hooks/use-tilt";
@@ -246,39 +246,47 @@ export function GlassCard({
           <section className="ck-glass ck-links" aria-label="Links">
             {social.length > 0 && (
               <div className="ck-social">
-                {social.map((l, i) => (
-                  <a
-                    key={l.id ?? i}
-                    className="ck-tile"
-                    href={normalizeUrl(l.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => onLinkClick?.(l.label || l.icon)}
-                  >
-                    <LinkIcon icon={l.icon} />
-                    <span>{l.label || ICON_LABELS[l.icon] || "Link"}</span>
-                  </a>
-                ))}
+                {social.map((l, i) => {
+                  const href = linkHref(l.url, l.icon);
+                  const web = /^https?:/i.test(href);
+                  return (
+                    <a
+                      key={l.id ?? i}
+                      className="ck-tile"
+                      href={href}
+                      target={web ? "_blank" : undefined}
+                      rel={web ? "noreferrer" : undefined}
+                      onClick={() => onLinkClick?.(l.label || l.icon)}
+                    >
+                      <LinkIcon icon={l.icon} />
+                      <span>{l.label || ICON_LABELS[l.icon] || "Link"}</span>
+                    </a>
+                  );
+                })}
               </div>
             )}
             {portfolio.length > 0 && (
               <div className="ck-portfolio">
-                {portfolio.map((l, i) => (
-                  <a
-                    key={l.id ?? i}
-                    className="ck-wide"
-                    href={normalizeUrl(l.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => onLinkClick?.(l.label || l.icon)}
-                  >
-                    <LinkIcon icon={l.icon} />
-                    <span className="ck-wide-text">
-                      <b>{l.label || ICON_LABELS[l.icon] || "Link"}</b>
-                      {linkHost(l.url) && <small>{linkHost(l.url)}</small>}
-                    </span>
-                  </a>
-                ))}
+                {portfolio.map((l, i) => {
+                  const href = linkHref(l.url, l.icon);
+                  const web = /^https?:/i.test(href);
+                  return (
+                    <a
+                      key={l.id ?? i}
+                      className="ck-wide"
+                      href={href}
+                      target={web ? "_blank" : undefined}
+                      rel={web ? "noreferrer" : undefined}
+                      onClick={() => onLinkClick?.(l.label || l.icon)}
+                    >
+                      <LinkIcon icon={l.icon} />
+                      <span className="ck-wide-text">
+                        <b>{l.label || ICON_LABELS[l.icon] || "Link"}</b>
+                        {linkHost(l.url) && <small>{linkHost(l.url)}</small>}
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
             )}
           </section>
