@@ -1086,6 +1086,7 @@ export type Database = {
         Args: { _email: string; _user: string }
         Returns: undefined
       }
+      card_branding_hidden: { Args: { _user: string }; Returns: boolean }
       card_event_series: {
         Args: { p_card?: string; p_since: string }
         Returns: Json
