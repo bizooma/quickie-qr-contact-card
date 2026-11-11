@@ -19,6 +19,10 @@ export type QrSnapshot = {
   bg: string;
   // Inline (data URL) so the photo/logo center still shows with no signal.
   center?: QrCenterImage | null;
+  // The card's look, so the QR screen dresses to match before any network.
+  template?: string | null;
+  font?: string | null;
+  theme?: unknown;
 };
 
 export const QR_CACHE_KEY = "ck-qr-card";

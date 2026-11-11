@@ -1,7 +1,7 @@
 import { appHead } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -25,10 +25,12 @@ import {
   useQr,
   type QrCenterImage,
 } from "@/components/card/QrPanel";
+import { GlassMesh } from "@/components/card/GlassMesh";
 import { usePlan } from "@/components/PremiumGate";
 import { useAuth } from "@/hooks/use-auth";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { detectPlatform } from "@/lib/feature-tips";
+import { resolveTheme } from "@/lib/card-theme";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { parseQrCenter, qrCenterSource } from "@/lib/qr-logo";
 import {
@@ -141,6 +143,9 @@ function QuickQr() {
         accent: fresh.accent_color,
         bg: fresh.background_color,
         center: centerSettled ? freshCenter : snapCenter,
+        template: fresh.template,
+        font: fresh.font,
+        theme: fresh.theme,
       }
     : snap;
 
@@ -164,6 +169,11 @@ function QuickQr() {
     view?.center ?? null,
   );
   const url = view ? publicCardUrl(view.slug) : "";
+  // The QR screen follows the card's look: glass cards get their lights.
+  const glass =
+    view?.template === "glass"
+      ? resolveTheme({ accent_color: view.accent, font: view.font ?? "sans", theme: view.theme })
+      : null;
   const [openOnQr, setOpenOnQrState] = useState(getOpenOnQr);
   const [slideFrom, setSlideFrom] = useState<"left" | "right" | null>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -265,6 +275,21 @@ function QuickQr() {
     );
   }
 
+  const slideClass =
+    slideFrom === "right"
+      ? "animate-in fade-in slide-in-from-right-8 duration-200"
+      : slideFrom === "left"
+        ? "animate-in fade-in slide-in-from-left-8 duration-200"
+        : "";
+  const code = svg ? (
+    <div
+      className="mx-auto w-full max-w-[320px] [&_svg]:h-auto [&_svg]:w-full"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  ) : (
+    <div className="mx-auto aspect-square w-full max-w-[320px] animate-pulse rounded-2xl bg-stone-100" />
+  );
+
   return (
     <div className="mx-auto flex max-w-md flex-col items-center">
       <Link
@@ -288,33 +313,54 @@ function QuickQr() {
           if (start && t) step(swipeStep(t.clientX - start.x, t.clientY - start.y));
         }}
       >
-        <div
-          key={view.slug}
-          className={`w-full rounded-3xl bg-white p-6 text-center shadow-float ${
-            slideFrom === "right"
-              ? "animate-in fade-in slide-in-from-right-8 duration-200"
-              : slideFrom === "left"
-                ? "animate-in fade-in slide-in-from-left-8 duration-200"
-                : ""
-          }`}
-        >
-          {svg ? (
+        {glass ? (
+          // Glass cards: the card's own lights behind a frosted panel.
+          <div className="ck-glass-card ck-qr-stage" style={glass.vars as CSSProperties}>
+            <GlassMesh />
             <div
-              className="mx-auto w-full max-w-[320px] [&_svg]:h-auto [&_svg]:w-full"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
-          ) : (
-            <div className="mx-auto aspect-square w-full max-w-[320px] animate-pulse rounded-2xl bg-stone-100" />
-          )}
-          <p className="mt-4 font-display text-xl font-bold text-stone-900">{view.full_name}</p>
-          <p
-            className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: view.accent }}
+              key={view.slug}
+              className={`ck-shimmer rounded-3xl ${slideClass}`}
+              style={{ "--ck-shine": glass.accent } as CSSProperties}
+            >
+              <div className="ck-glass ck-qr-panel">
+                <div className="rounded-2xl bg-white p-3">{code}</div>
+                <p
+                  className="mt-3 text-xl font-bold"
+                  style={{ fontFamily: "var(--ck-font-heading)" }}
+                >
+                  {view.full_name}
+                </p>
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: "var(--ck-muted)" }}
+                >
+                  {view.label}
+                </p>
+                <p className="mt-1 break-all text-xs" style={{ color: "var(--ck-muted)" }}>
+                  {url.replace(/^https?:\/\//, "")}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            key={view.slug}
+            className={`ck-shimmer w-full rounded-3xl bg-white p-6 text-center shadow-float ${slideClass}`}
+            style={{ "--ck-shine": view.accent } as CSSProperties}
           >
-            {view.label}
-          </p>
-          <p className="mt-1 break-all text-xs text-stone-400">{url.replace(/^https?:\/\//, "")}</p>
-        </div>
+            {code}
+            <p className="mt-4 font-display text-xl font-bold text-stone-900">{view.full_name}</p>
+            <p
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: view.accent }}
+            >
+              {view.label}
+            </p>
+            <p className="mt-1 break-all text-xs text-stone-400">
+              {url.replace(/^https?:\/\//, "")}
+            </p>
+          </div>
+        )}
         {canSwipe && (
           <>
             <button
