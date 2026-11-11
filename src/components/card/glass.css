@@ -35,12 +35,16 @@
      blur: a blurred layer under the frosted panels flickered on phones.
      The scale stands in for the spread the blur used to add. */
   scale: 1.35;
+  /* Parallax: --ck-tx / --ck-ty (-1..1) come from the phone's tilt or the
+     pointer (use-tilt.ts). Each light has its own depth, some moving the
+     other way, so the backdrop feels layered. */
+  translate: calc(var(--ck-tx, 0) * var(--ck-depth)) calc(var(--ck-ty, 0) * var(--ck-depth));
   pointer-events: none;
 }
-.ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; }
-.ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; }
-.ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; }
-.ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; }
+.ck-blob-1 { top: -6%; left: -22%; --ck-dx: 26px; --ck-dy: 34px; --ck-ds: 1.16; --ck-depth: 22px; }
+.ck-blob-2 { top: 20%; right: -28%; --ck-dx: -32px; --ck-dy: 22px; --ck-ds: 0.92; --ck-depth: -16px; }
+.ck-blob-3 { top: 50%; left: -26%; --ck-dx: 30px; --ck-dy: -36px; --ck-ds: 1.12; --ck-depth: 28px; }
+.ck-blob-4 { top: 78%; right: -20%; --ck-dx: -24px; --ck-dy: -28px; --ck-ds: 1.08; --ck-depth: -20px; }
 @keyframes ck-drift {
   from { transform: none; }
   to { transform: translate(var(--ck-dx), var(--ck-dy)) scale(var(--ck-ds)); }
@@ -70,6 +74,22 @@
   margin: 0 auto;
   padding: 28px 20px 40px;
 }
+
+/* iPhone asks before a page may read the tilt: this pill is the tap. */
+.ck-tilt-hint {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 2;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--ck-fg);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ck-tilt-hint:focus-visible { outline: 2px solid var(--ck-fg); outline-offset: 2px; }
 
 /* ---- Frosted panel ---- */
 .ck-glass {
