@@ -21,6 +21,7 @@ import { recordSignupAttribution } from "@/lib/attribution.functions";
 import { trackMeta } from "@/lib/meta-pixel";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { FeatureTips } from "@/components/FeatureTip";
+import { QrFab } from "@/components/QrFab";
 import { isStandalone } from "@/hooks/use-pwa-install";
 import { consumeLaunch, getOpenOnQr, shouldOpenOnQr } from "@/lib/quick-qr";
 import { trackActivity } from "@/lib/activity.functions";
@@ -245,18 +246,11 @@ function AppLayout() {
       </main>
       {/* Not over the code people are scanning; its tip covers installing. */}
       {pathname !== "/app/qr" && <InstallPrompt />}
-      {/* One-tap "scan me" from anywhere in the app on a phone. */}
-      {pathname !== "/app/qr" && (
-        <Link
-          to="/app/qr"
-          aria-label="Show my QR code"
-          className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float transition-transform active:scale-95 md:hidden [body:has([data-savebar])_&]:hidden"
-        >
-          <QrCode className="h-6 w-6" />
-        </Link>
-      )}
+      {/* One-tap "scan me" from anywhere in the app on a phone; drag to move. */}
+      {pathname !== "/app/qr" && <QrFab />}
       <nav
         aria-label="Main"
+        data-tabbar
         className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background/90 backdrop-blur md:hidden"
       >
         {TABS.map((n) => (

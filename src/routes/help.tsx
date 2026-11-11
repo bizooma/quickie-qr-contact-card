@@ -70,11 +70,15 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Android: one tap from your home screen",
-        "In Chrome, tap ⋮ then Install app (or Add to Home screen). For a separate one-tap QR icon, go to My QR, tap “Add a My QR icon”, then “Install My QR” — or turn on “Open the app on my QR code” in My QR.",
+        "In Chrome, tap ⋮ then Install app (or Add to Home screen). For a separate one-tap QR icon, touch and hold the ContactKickstart icon and drag “My QR code” to your home screen, or go to My QR, tap “Add a My QR icon”, then “Install My QR”. You can also turn on “Open the app on my QR code” in My QR.",
       ],
       [
         "Put your QR code on your lock screen or home screen",
         "In My QR, tap “Lock-screen wallpaper” or “Home-screen wallpaper” and save the image. iPhone: open it in Photos, tap Share → Use as Wallpaper. Android: open it in Photos or Gallery → Set as wallpaper. The home-screen version sits higher up, so keep that spot free of app icons.",
+      ],
+      [
+        "Move the QR button",
+        "On your phone, the round QR button floats over every screen in the app. Press and drag it anywhere you like; it stays where you drop it on that phone. A quick tap still opens your code.",
       ],
       [
         "Works with no signal",

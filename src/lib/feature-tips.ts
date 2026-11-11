@@ -79,7 +79,7 @@ export const TIPS = {
         only: ["ios", "android"],
       },
       {
-        text: "**Or add a My QR icon:** tap **Add a My QR icon** below. Chrome opens your code; tap **Install My QR** and a separate My QR icon lands on your home screen that opens straight to it, even with no signal.",
+        text: "**Or add a My QR icon:** touch and hold the ContactKickstart icon on your home screen, then drag **My QR code** to an empty spot. Or tap **Add a My QR icon** below and tap **Install My QR**. Either way you get a separate icon that opens straight to your code, even with no signal.",
         only: ["android"],
       },
       {

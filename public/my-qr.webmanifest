@@ -3,7 +3,7 @@
   "short_name": "My QR",
   "description": "Your digital business card's QR code, one tap from your home screen.",
   "id": "/my-qr",
-  "start_url": "/my-qr",
+  "start_url": "/my-qr?source=icon",
   "scope": "/my-qr",
   "display": "standalone",
   "background_color": "#FAF8F5",
