@@ -1,1 +1,0 @@
-ALTER TABLE public.contacts ADD COLUMN website text, ADD COLUMN linkedin_url text;
