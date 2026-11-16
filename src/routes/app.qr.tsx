@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowLeft,
   ChevronLeft,
+  WifiOff,
   ChevronRight,
   Copy,
   LayoutGrid,
@@ -264,13 +265,20 @@ function QuickQr() {
 
   if (!view) {
     return (
-      <div className="mx-auto max-w-md text-center">
-        <p className="text-sm text-muted-foreground">
-          Create a card first — your QR code comes from it.{" "}
-          <Link to="/app" className="underline">
-            Go to cards
-          </Link>
-        </p>
+      <div className="dark relative mx-auto max-w-xl overflow-hidden rounded-[2rem] bg-[#0B0D1C] p-10 text-center text-foreground">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-pop-lime text-[#0E1230]">
+          <QrCode className="h-7 w-7" />
+        </span>
+        <h1 className="mt-5 font-display text-2xl font-extrabold tracking-tight">
+          Your code comes from your card.
+        </h1>
+        <p className="mt-2 text-sm text-white/60">Make your card first — it takes a minute.</p>
+        <Link
+          to="/app"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-pop-lime px-5 py-3 text-sm font-extrabold text-[#0E1230]"
+        >
+          Go to cards
+        </Link>
       </div>
     );
   }
@@ -283,204 +291,265 @@ function QuickQr() {
         : "";
   const code = svg ? (
     <div
-      className="mx-auto w-full max-w-[320px] [&_svg]:h-auto [&_svg]:w-full"
+      className="mx-auto w-full max-w-[340px] [&_svg]:h-auto [&_svg]:w-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   ) : (
-    <div className="mx-auto aspect-square w-full max-w-[320px] animate-pulse rounded-2xl bg-stone-100" />
+    <div className="mx-auto aspect-square w-full max-w-[340px] animate-pulse rounded-2xl bg-stone-100" />
   );
 
+  const rowClass =
+    "flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/60 disabled:opacity-50";
+  const chip =
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand";
+
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center">
+    <div className="mx-auto max-w-5xl">
       <Link
         to="/app"
-        className="mb-4 inline-flex items-center gap-2 self-start text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Cards
       </Link>
 
-      <div
-        className="relative w-full touch-pan-y select-none"
-        onTouchStart={(e) => {
-          const t = e.touches[0];
-          touch.current = t ? { x: t.clientX, y: t.clientY } : null;
-        }}
-        onTouchEnd={(e) => {
-          const start = touch.current;
-          const t = e.changedTouches[0];
-          touch.current = null;
-          if (start && t) step(swipeStep(t.clientX - start.x, t.clientY - start.y));
-        }}
-      >
-        {glass ? (
-          // Glass cards: the card's own lights behind a frosted panel.
-          <div className="ck-glass-card ck-qr-stage" style={glass.vars as CSSProperties}>
-            <GlassMesh />
-            <div
-              key={view.slug}
-              className={`ck-shimmer rounded-3xl ${slideClass}`}
-              style={{ "--ck-shine": glass.accent } as CSSProperties}
-            >
-              <div className="ck-glass ck-qr-panel">
-                <div className="rounded-2xl bg-white p-3">{code}</div>
-                <p
-                  className="mt-3 text-xl font-bold"
-                  style={{ fontFamily: "var(--ck-font-heading)" }}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* The stage: nothing but the code, big, on dark so it pops. */}
+        <section className="dark relative overflow-hidden rounded-[2rem] bg-[#0B0D1C] px-6 pb-8 pt-6 text-foreground sm:px-10 sm:pb-10">
+          <div className="qq-dots pointer-events-none absolute inset-0 opacity-[0.07]" />
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-3xl"
+            style={{ background: view.accent }}
+          />
+          <div className="relative mb-6 flex justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-pop-lime px-3.5 py-1.5 text-xs font-extrabold text-[#0E1230]">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#0E1230]" />
+              Ready to scan
+            </span>
+          </div>
+
+          <div
+            className="relative mx-auto w-full max-w-md touch-pan-y select-none"
+            onTouchStart={(e) => {
+              const t = e.touches[0];
+              touch.current = t ? { x: t.clientX, y: t.clientY } : null;
+            }}
+            onTouchEnd={(e) => {
+              const start = touch.current;
+              const t = e.changedTouches[0];
+              touch.current = null;
+              if (start && t) step(swipeStep(t.clientX - start.x, t.clientY - start.y));
+            }}
+          >
+            {glass ? (
+              // Glass cards: the card's own lights behind a frosted panel.
+              <div className="ck-glass-card ck-qr-stage" style={glass.vars as CSSProperties}>
+                <GlassMesh />
+                <div
+                  key={view.slug}
+                  className={`ck-shimmer rounded-3xl ${slideClass}`}
+                  style={{ "--ck-shine": glass.accent } as CSSProperties}
                 >
+                  <div className="ck-glass ck-qr-panel">
+                    <div className="rounded-2xl bg-white p-3">{code}</div>
+                    <p
+                      className="mt-3 text-xl font-bold"
+                      style={{ fontFamily: "var(--ck-font-heading)" }}
+                    >
+                      {view.full_name}
+                    </p>
+                    <p
+                      className="text-xs font-semibold uppercase tracking-wider"
+                      style={{ color: "var(--ck-muted)" }}
+                    >
+                      {view.label}
+                    </p>
+                    <p className="mt-1 break-all text-xs" style={{ color: "var(--ck-muted)" }}>
+                      {url.replace(/^https?:\/\//, "")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                key={view.slug}
+                className={`ck-shimmer w-full rounded-[1.75rem] bg-white p-6 text-center shadow-float ${slideClass}`}
+                style={{ "--ck-shine": view.accent } as CSSProperties}
+              >
+                {code}
+                <p className="mt-4 font-display text-2xl font-extrabold tracking-tight text-[#0E1230]">
                   {view.full_name}
                 </p>
                 <p
-                  className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: "var(--ck-muted)" }}
+                  className="text-xs font-bold uppercase tracking-wider"
+                  style={{ color: view.accent }}
                 >
                   {view.label}
                 </p>
-                <p className="mt-1 break-all text-xs" style={{ color: "var(--ck-muted)" }}>
+                <p className="mt-1 break-all font-mono text-xs text-[#5A6080]">
                   {url.replace(/^https?:\/\//, "")}
                 </p>
               </div>
+            )}
+            {canSwipe && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  aria-label="Previous card"
+                  className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white p-2 text-[#0E1230] shadow-float transition-transform hover:scale-105"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  aria-label="Next card"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-white p-2 text-[#0E1230] shadow-float transition-transform hover:scale-105"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {canSwipe && mine && (
+            <div className="relative mt-5 flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2" role="tablist" aria-label="Your cards">
+                {mine.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === index}
+                    aria-label={c.label}
+                    onClick={() => step(i - index)}
+                    className={`h-2 rounded-full transition-all ${
+                      i === index ? "w-6 bg-pop-lime" : "w-2 bg-white/30 hover:bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-white/50">
+                Swipe for your other cards · {index + 1} of {mine.length}
+              </p>
+            </div>
+          )}
+
+          <p className="relative mt-6 flex items-center justify-center gap-1.5 text-xs text-white/45">
+            <WifiOff className="h-3.5 w-3.5" />
+            Works even with no signal
+          </p>
+        </section>
+
+        <aside className="space-y-5">
+          <div className="surface rounded-3xl p-5">
+            <h2 className="font-display text-lg font-extrabold">Share it</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Not in the room? Send the link instead.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={share}
+                className="h-11 flex-1 rounded-full bg-brand font-bold text-white hover:bg-brand/90"
+              >
+                <Share2 className="h-4 w-4" />
+                Share link
+              </Button>
+              <Button variant="outline" className="h-11 rounded-full px-5" onClick={copy}>
+                <Copy className="h-4 w-4" />
+                Copy
+              </Button>
             </div>
           </div>
-        ) : (
-          <div
-            key={view.slug}
-            className={`ck-shimmer w-full rounded-3xl bg-white p-6 text-center shadow-float ${slideClass}`}
-            style={{ "--ck-shine": view.accent } as CSSProperties}
-          >
-            {code}
-            <p className="mt-4 font-display text-xl font-bold text-stone-900">{view.full_name}</p>
-            <p
-              className="text-xs font-semibold uppercase tracking-wider"
-              style={{ color: view.accent }}
-            >
-              {view.label}
-            </p>
-            <p className="mt-1 break-all text-xs text-stone-400">
-              {url.replace(/^https?:\/\//, "")}
-            </p>
-          </div>
-        )}
-        {canSwipe && (
-          <>
-            <button
-              type="button"
-              onClick={() => step(-1)}
-              aria-label="Previous card"
-              className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background p-2 shadow-soft transition-colors hover:bg-muted"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => step(1)}
-              aria-label="Next card"
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-background p-2 shadow-soft transition-colors hover:bg-muted"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </>
-        )}
-      </div>
 
-      {canSwipe && mine && (
-        <div className="mt-4 flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2" role="tablist" aria-label="Your cards">
-            {mine.map((c, i) => (
+          <div className="surface overflow-hidden rounded-3xl">
+            <div className="px-5 pb-2 pt-5">
+              <h2 className="font-display text-lg font-extrabold">Get here in one tap</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                The quicker your code is up, the quicker they're saved.
+              </p>
+            </div>
+            <div className="divide-y">
+              <label className={`${rowClass} cursor-pointer`}>
+                <span className={chip}>
+                  <QrCode className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">Open the app on my QR</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Tapping the app icon on this device shows your code straight away.
+                  </span>
+                </span>
+                <Switch
+                  checked={openOnQr}
+                  onCheckedChange={(on) => {
+                    setOpenOnQr(on);
+                    setOpenOnQrState(on);
+                    toast.success(
+                      on ? "The app will open on your QR code" : "The app will open on Cards",
+                    );
+                  }}
+                />
+              </label>
+              {homeScreen && (
+                <button type="button" className={rowClass} onClick={() => void addToHomeScreen()}>
+                  <span className={chip}>
+                    <SquarePlus className="h-4 w-4" />
+                  </span>
+                  <span className="flex-1 text-sm font-semibold">{homeScreen.label}</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+              {myQrHref && (
+                <a href={myQrHref} className={rowClass}>
+                  <span className={chip}>
+                    <QrCode className="h-4 w-4" />
+                  </span>
+                  <span className="flex-1 text-sm font-semibold">Add a My QR icon</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </a>
+              )}
               <button
-                key={c.id}
                 type="button"
-                role="tab"
-                aria-selected={i === index}
-                aria-label={c.label}
-                onClick={() => step(i - index)}
-                className={`h-2 rounded-full transition-all ${
-                  i === index
-                    ? "w-6 bg-brand"
-                    : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                }`}
-              />
-            ))}
+                className={rowClass}
+                onClick={() => void saveWallpaper("lock")}
+                disabled={!svg || !!savingWallpaper}
+              >
+                <span className={chip}>
+                  <Smartphone className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">Lock-screen wallpaper</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Your code on the lock screen, no unlocking needed.
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <button
+                type="button"
+                className={rowClass}
+                onClick={() => void saveWallpaper("home")}
+                disabled={!svg || !!savingWallpaper}
+              >
+                <span className={chip}>
+                  <LayoutGrid className="h-4 w-4" />
+                </span>
+                <span className="flex-1 text-sm font-semibold">Home-screen wallpaper</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => openTip("qr")}
+              className="flex w-full items-center justify-center gap-1.5 border-t bg-muted/40 px-4 py-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <Lightbulb className="h-3.5 w-3.5" />
+              How to get to your QR code in one tap
+            </button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Swipe for your other cards · {index + 1} of {mine.length}
-          </p>
-        </div>
-      )}
-
-      <div className="mt-5 flex gap-2">
-        <Button onClick={share}>
-          <Share2 className="h-4 w-4" />
-          Share link
-        </Button>
-        <Button variant="outline" onClick={copy}>
-          <Copy className="h-4 w-4" />
-          Copy
-        </Button>
-      </div>
-
-      <div className="mt-8 w-full space-y-3">
-        <label className="surface flex items-center gap-3 px-4 py-3">
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">Open the app on my QR code</span>
-            <span className="block text-xs text-muted-foreground">
-              Tapping the app icon on this device shows your code straight away.
-            </span>
-          </span>
-          <Switch
-            checked={openOnQr}
-            onCheckedChange={(on) => {
-              setOpenOnQr(on);
-              setOpenOnQrState(on);
-              toast.success(
-                on ? "The app will open on your QR code" : "The app will open on Cards",
-              );
-            }}
-          />
-        </label>
-        {homeScreen && (
-          <Button variant="outline" className="w-full" onClick={() => void addToHomeScreen()}>
-            <SquarePlus className="h-4 w-4" />
-            {homeScreen.label}
-          </Button>
-        )}
-        {myQrHref && (
-          <Button asChild variant="outline" className="w-full">
-            <a href={myQrHref}>
-              <QrCode className="h-4 w-4" />
-              Add a My QR icon
-            </a>
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => void saveWallpaper("lock")}
-          disabled={!svg || !!savingWallpaper}
-        >
-          <Smartphone className="h-4 w-4" />
-          Lock-screen wallpaper
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => void saveWallpaper("home")}
-          disabled={!svg || !!savingWallpaper}
-        >
-          <LayoutGrid className="h-4 w-4" />
-          Home-screen wallpaper
-        </Button>
-        <button
-          type="button"
-          onClick={() => openTip("qr")}
-          className="mx-auto flex items-center gap-1.5 text-xs text-muted-foreground underline hover:text-foreground"
-        >
-          <Lightbulb className="h-3.5 w-3.5" />
-          How to get to your QR code in one tap
-        </button>
-        <p className="text-center text-xs text-muted-foreground">
-          This screen works even with no signal.
-        </p>
+        </aside>
       </div>
     </div>
   );
