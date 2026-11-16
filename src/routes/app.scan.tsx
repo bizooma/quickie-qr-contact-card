@@ -1,16 +1,18 @@
 import { appHead } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useRef, useState, type DragEvent } from "react";
 import {
   Camera,
-  CheckCircle2,
+  Check,
+  ImagePlus,
   Loader2,
   Pencil,
   ScanLine,
   Smartphone,
   Sparkles,
   Trash2,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AllowanceNote } from "@/components/AllowanceNote";
@@ -217,26 +219,71 @@ function ScanPage() {
     toast.success("Contact file downloaded — open it to add everyone to your phone");
   }
 
+  const step = savedBatch ? 3 : results ? 2 : 1;
+  const chosenCount = results?.filter((c) => c.include).length ?? 0;
+  const [dragging, setDragging] = useState(false);
+
+  function onDrop(e: DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    void addFiles(e.dataTransfer.files);
+  }
+
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-1 text-2xl font-bold">Scan business cards</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Snap or upload photos of paper cards — they become contacts you can follow up with.
-      </p>
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">
+            Scan business cards
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Snap a stack of paper cards. We read them, you check them, they're contacts.
+          </p>
+        </div>
+        <ol className="flex items-center gap-1.5 text-xs font-bold" aria-label="Progress">
+          {["Snap", "Check", "Saved"].map((label, i) => {
+            const n = i + 1;
+            const done = step > n;
+            const on = step === n;
+            return (
+              <li key={label} className="flex items-center gap-1.5">
+                {i > 0 && <span className="h-px w-4 bg-border" />}
+                <span
+                  aria-current={on ? "step" : undefined}
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
+                    on
+                      ? "bg-brand text-white"
+                      : done
+                        ? "bg-brand-soft text-brand"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {done ? <Check className="h-3 w-3" strokeWidth={3} /> : n}
+                  <span>{label}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
       {unlocked && !results && !savedBatch && (
-        <div className="mb-6 rounded-xl border border-brand/40 bg-brand-soft/40 px-4 py-3 text-sm">
-          <p className="font-semibold">
-            Your {billing.credits.scan} card scans and {billing.credits.follow_up} follow-up drafts
-            are unlocked.
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            Photograph your first stack below — a few cards per photo is fine. Want your own digital
-            card first?{" "}
-            <Link to="/app/onboarding" className="underline">
-              Set it up here
-            </Link>
-            .
-          </p>
+        <div className="mb-6 flex gap-3 rounded-2xl bg-pop-lime px-4 py-3.5 text-sm text-[#0E1230]">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-bold">
+              Your {billing.credits.scan} card scans and {billing.credits.follow_up} follow-up
+              drafts are unlocked.
+            </p>
+            <p className="mt-0.5 opacity-75">
+              Photograph your first stack below — a few cards per photo is fine. Want your own
+              digital card first?{" "}
+              <Link to="/app/onboarding" className="font-semibold underline">
+                Set it up here
+              </Link>
+              .
+            </p>
+          </div>
         </div>
       )}
 
@@ -252,82 +299,154 @@ function ScanPage() {
 
       {!results && !savedBatch && (
         <>
-          <div className="mb-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {images.map((img, i) => (
-              <div
-                key={i}
-                className="group relative aspect-[4/3] overflow-hidden rounded-xl border"
-              >
-                <img
-                  src={img.previewUrl}
-                  alt={`Card photo ${i + 1}`}
-                  className="h-full w-full object-cover"
-                />
+          {/* The viewfinder: drop zone, photo tray and camera button in one. */}
+          <section
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            className={`dark relative overflow-hidden rounded-[2rem] bg-[#0B0D1C] p-5 text-foreground transition-shadow sm:p-8 ${
+              dragging ? "ring-4 ring-pop-lime" : ""
+            }`}
+          >
+            <div className="qq-dots pointer-events-none absolute inset-0 opacity-[0.07]" />
+            {[
+              "left-4 top-4 border-l-4 border-t-4 rounded-tl-2xl",
+              "right-4 top-4 border-r-4 border-t-4 rounded-tr-2xl",
+              "bottom-4 left-4 border-b-4 border-l-4 rounded-bl-2xl",
+              "bottom-4 right-4 border-b-4 border-r-4 rounded-br-2xl",
+            ].map((c) => (
+              <span
+                key={c}
+                aria-hidden
+                className={`pointer-events-none absolute h-8 w-8 ${c} ${
+                  images.length || dragging ? "border-pop-lime" : "border-white/30"
+                }`}
+              />
+            ))}
+            {images.length === 0 ? (
+              <div className="relative flex flex-col items-center px-4 py-10 text-center sm:py-14">
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-pop-lime text-[#0E1230]">
+                  <Camera className="h-8 w-8" />
+                </span>
+                <h2 className="mt-5 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                  Snap the stack.
+                </h2>
+                <p className="mt-2 max-w-sm text-sm text-white/60">
+                  Lay a few cards on a table and take one photo, or add up to {SCAN_IMAGE_LIMIT}{" "}
+                  photos. <span className="hidden md:inline">You can also drop images here.</span>
+                </p>
                 <button
-                  onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                  aria-label="Remove photo"
-                  className="absolute right-1 top-1 rounded-full bg-background/80 p-1.5 text-muted-foreground hover:text-destructive"
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-pop-lime px-6 py-3 text-sm font-extrabold text-[#0E1230] transition-transform hover:-translate-y-0.5"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Camera className="h-4 w-4" />
+                  Take or add photos
                 </button>
               </div>
-            ))}
-            {images.length < SCAN_IMAGE_LIMIT && (
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-xs text-muted-foreground hover:bg-muted"
-              >
-                <Camera className="h-5 w-5" />
-                Add photos
-              </button>
-            )}
-          </div>
-
-          <div className="mb-6 space-y-1">
-            <Label htmlFor="met-at">Where did you meet these people? (optional)</Label>
-            <Input
-              id="met-at"
-              placeholder="e.g. Web Summit 2026"
-              value={metAt}
-              onChange={(e) => setMetAt(e.target.value)}
-            />
-          </div>
-
-          <Button
-            onClick={runScan}
-            disabled={!images.length || scanning}
-            className="w-full sm:w-auto"
-          >
-            {scanning ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ScanLine className="h-4 w-4" />
+              <div className="relative p-4 sm:p-5">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-white/50">
+                  {images.length} of {SCAN_IMAGE_LIMIT} photos
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {images.map((img, i) => (
+                    <div
+                      key={i}
+                      className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10"
+                    >
+                      <img
+                        src={img.previewUrl}
+                        alt={`Card photo ${i + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
+                        aria-label="Remove photo"
+                        className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white backdrop-blur hover:bg-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {images.length < SCAN_IMAGE_LIMIT && (
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      className="flex aspect-[4/3] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-white/20 text-xs font-semibold text-white/60 transition-colors hover:border-pop-lime hover:text-pop-lime"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                      Add more
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
-            {scanning ? "Reading cards…" : "Upload Contact"}
-          </Button>
-          <AllowanceNote kind="scan" className="mt-3" />
+          </section>
+
+          <div className="surface mt-5 space-y-4 rounded-3xl p-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="met-at" className="font-semibold">
+                Where did you meet these people?{" "}
+                <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="met-at"
+                placeholder="e.g. JAX Bar mixer, Web Summit 2026"
+                value={metAt}
+                onChange={(e) => setMetAt(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <AllowanceNote kind="scan" />
+              <Button
+                onClick={runScan}
+                disabled={!images.length || scanning}
+                className="h-12 w-full rounded-full bg-brand px-6 text-base font-bold text-white hover:bg-brand/90 sm:ml-auto sm:w-auto"
+              >
+                {scanning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ScanLine className="h-4 w-4" />
+                )}
+                {scanning ? "Reading cards…" : "Read cards"}
+              </Button>
+            </div>
+          </div>
         </>
       )}
 
       {results && (
         <>
-          <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Sparkles className="h-4 w-4 text-brand" />
+          <div className="mb-4 flex items-center gap-2 rounded-2xl bg-brand-soft px-4 py-3 text-sm font-semibold text-accent-foreground">
+            <Sparkles className="h-4 w-4 shrink-0" />
             Found {results.length} card{results.length > 1 ? "s" : ""}. Check the details, then
             save.
           </div>
           <ul className="space-y-4">
             {results.map((c, i) => (
-              <li key={i} className={`surface space-y-3 p-4 ${c.include ? "" : "opacity-50"}`}>
-                <div className="flex items-center gap-3">
+              <li
+                key={i}
+                className={`surface overflow-hidden rounded-3xl transition-opacity ${c.include ? "" : "opacity-50"}`}
+              >
+                <div className="flex items-center gap-3 border-b bg-muted/40 px-5 py-3.5">
                   <Checkbox
                     checked={c.include}
                     onCheckedChange={(v) => edit(i, { include: v === true })}
                     aria-label={`Include ${c.full_name || "this card"}`}
                   />
-                  <span className="text-sm font-semibold">Card {i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-display text-lg font-extrabold leading-tight">
+                      {c.full_name || `Card ${i + 1}`}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[c.job_title, c.company].filter(Boolean).join(" · ") || `Card ${i + 1}`}
+                    </p>
+                  </div>
                   {c.headshot ? (
-                    <div className="group relative ml-auto">
+                    <div className="group relative">
                       <button
                         type="button"
                         onClick={() => setEditingPhoto(i)}
@@ -338,7 +457,7 @@ function ScanPage() {
                         <img
                           src={c.headshot.previewUrl}
                           alt={`Photo of ${c.full_name || "this contact"} from the card`}
-                          className="h-12 w-12 rounded-full border object-cover"
+                          className="h-12 w-12 rounded-full border-2 border-surface object-cover shadow-soft"
                         />
                         <span className="absolute -bottom-1 -left-1 rounded-full border bg-background p-0.5 text-muted-foreground">
                           <Pencil className="h-3 w-3" />
@@ -358,7 +477,7 @@ function ScanPage() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="ml-auto"
+                      className="rounded-full"
                       onClick={() => setEditingPhoto(i)}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -377,7 +496,7 @@ function ScanPage() {
                     onRemove={c.headshot ? async () => edit(i, { headshot: null }) : undefined}
                   />
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 p-5 sm:grid-cols-2">
                   {(
                     [
                       ["full_name", "Name"],
@@ -391,7 +510,10 @@ function ScanPage() {
                     ] as const
                   ).map(([k, l]) => (
                     <div key={k} className="space-y-1">
-                      <Label htmlFor={`scan-${i}-${k}`} className="text-xs">
+                      <Label
+                        htmlFor={`scan-${i}-${k}`}
+                        className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                      >
                         {l}
                       </Label>
                       <Input
@@ -401,61 +523,91 @@ function ScanPage() {
                       />
                     </div>
                   ))}
+                  {c.extra && (
+                    <p className="rounded-xl bg-muted/60 px-3 py-2 text-xs text-muted-foreground sm:col-span-2">
+                      <span className="font-semibold text-foreground">Also on the card:</span>{" "}
+                      {c.extra}
+                    </p>
+                  )}
                 </div>
-                {c.extra && (
-                  <p className="text-xs text-muted-foreground">Also on the card: {c.extra}</p>
-                )}
               </li>
             ))}
           </ul>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Button onClick={saveAll} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save {results.filter((c) => c.include).length} contact
-              {results.filter((c) => c.include).length === 1 ? "" : "s"}
-            </Button>
-            <Button variant="outline" onClick={() => setResults(null)} disabled={saving}>
+          {/* Stays in reach while scrolling a long batch; sits above the phone tab bar. */}
+          <div className="sticky bottom-24 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-full border bg-background/90 p-2 pl-5 shadow-float backdrop-blur md:bottom-6">
+            <button
+              type="button"
+              onClick={() => setResults(null)}
+              disabled={saving}
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+            >
               Back to photos
+            </button>
+            <Button
+              onClick={saveAll}
+              disabled={saving || !chosenCount}
+              className="h-11 rounded-full bg-brand px-6 font-bold text-white hover:bg-brand/90"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Save {chosenCount} contact{chosenCount === 1 ? "" : "s"}
             </Button>
           </div>
         </>
       )}
 
       {savedBatch && (
-        <div className="surface space-y-4 p-6 text-center">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-brand" />
-          <div>
-            <h2 className="text-lg font-bold">
-              {savedBatch.length} contact{savedBatch.length > 1 ? "s" : ""} saved
+        <section className="dark relative overflow-hidden rounded-[2rem] bg-[#0B0D1C] p-8 text-center text-foreground sm:p-12">
+          <div className="qq-dots pointer-events-none absolute inset-0 opacity-[0.07]" />
+          <div className="relative">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-pop-lime text-[#0E1230]">
+              <Check className="h-8 w-8" strokeWidth={3} />
+            </span>
+            <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight">
+              {savedBatch.length} contact{savedBatch.length > 1 ? "s" : ""} saved.
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mx-auto mt-2 max-w-md text-sm text-white/60">
               Add them to your phone's contacts too — one tap downloads a contact file, and opening
               it imports the whole batch.
             </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={addBatchToPhone}
+                className="inline-flex items-center gap-2 rounded-full bg-pop-lime px-5 py-3 text-sm font-extrabold text-[#0E1230]"
+              >
+                <Smartphone className="h-4 w-4" />
+                Add to phone contacts
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/app/contacts" })}
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/15"
+              >
+                <Users className="h-4 w-4" />
+                View contacts
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedBatch(null);
+                  setImages([]);
+                }}
+                className="inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white/70 hover:text-white"
+              >
+                <ScanLine className="h-4 w-4" />
+                Scan more
+              </button>
+            </div>
+            <p className="mt-6 text-xs text-white/45">
+              iPhone: open the downloaded file and tap "Add all contacts". Android: open it and
+              confirm the import.
+            </p>
           </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button onClick={addBatchToPhone}>
-              <Smartphone className="h-4 w-4" />
-              Add to phone contacts
-            </Button>
-            <Button variant="outline" onClick={() => navigate({ to: "/app/contacts" })}>
-              View contacts
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSavedBatch(null);
-                setImages([]);
-              }}
-            >
-              Scan more cards
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            iPhone: open the downloaded file and tap "Add all contacts". Android: open it and
-            confirm the import.
-          </p>
-        </div>
+        </section>
       )}
     </div>
   );

@@ -110,7 +110,7 @@ export const TIPS = {
         text: "Take or upload photos of business cards — up to 12 photos at once, and a photo can hold several cards.",
       },
       {
-        text: "Tap **Upload Contact**. The scanner reads names, titles, phones, emails, addresses and photos; QR codes on cards (vCard, LinkedIn) are read too.",
+        text: "Tap **Read cards**. The scanner reads names, titles, phones, emails, addresses and photos; QR codes on cards (vCard, LinkedIn) are read too.",
       },
       { text: "Check what was read, untick anything you don't want, then tap **Save**." },
       {
