@@ -317,7 +317,41 @@
   }
 }
 
+/* Hero scan demo: the camera's sweeping line and the tap ripple. */
+@keyframes qq-scan {
+  0%,
+  100% {
+    top: 10%;
+  }
+  50% {
+    top: 88%;
+  }
+}
+
+@keyframes qq-ripple {
+  from {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
+  }
+}
+
+/* Faint QR-dot texture for dark full-bleed bands. */
+@utility qq-dots {
+  background-image: radial-gradient(oklch(1 0 0 / 7%) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .qq-scanline {
+    animation: qq-scan 1.2s ease-in-out infinite;
+  }
+  .qq-ripple {
+    animation: qq-ripple 0.5s ease-out both;
+  }
   .bubble-pop {
     opacity: 0;
     animation: ck-pop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;

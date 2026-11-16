@@ -1,4 +1,4 @@
-import { BrandLogo } from "@/components/BrandLogo";
+import { BrandLogo, BrandMark } from "@/components/BrandLogo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CardView } from "@/components/card/CardView";
+import { ScanHero } from "@/components/landing/ScanHero";
 import { DEMO_CARD_PATH, LiveCardButton, LiveCardDialog } from "@/components/LiveCardDialog";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -56,7 +56,6 @@ import {
 } from "@/lib/ab";
 import { logSiteEvent } from "@/lib/site-events";
 import { useRevealOnScroll } from "@/hooks/use-reveal";
-import type { CardData } from "@/lib/card-model";
 import { ProfileMenu } from "@/components/ProfileMenu";
 
 export const Route = createFileRoute("/")({
@@ -95,40 +94,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Landing,
 });
-
-const DEMO: CardData = {
-  slug: "demo",
-  label: "Work",
-  full_name: "Tamzyn Williams",
-  job_title: "Head of Marketing",
-  company: "QuickieQR",
-  phones: [{ label: "Mobile", value: "+1 530-867-5309" }],
-  emails: [{ label: "Work", value: "tamzyn@quickieqr.com" }],
-  website: "QuickieQR.com",
-  location: null,
-  bio: null,
-  headshot_path: null,
-  logo_path: null,
-  logo_size: "standard",
-  banner_path: null,
-  accent_color: "#4B3BFF",
-  background_color: "#FFFFFF",
-  font: "display",
-  template: "glass",
-  theme: {
-    mesh: "brand",
-    tint: "smoke",
-    strength: "regular",
-    avatar: "circle",
-    status: "Open to intros",
-  },
-  links: [
-    { label: "", url: "linkedin.com/in/tamzyn", icon: "linkedin" },
-    { label: "", url: "instagram.com/tamzyn", icon: "instagram" },
-    { label: "", url: "youtube.com/@tamzyn", icon: "youtube" },
-    { label: "Book a call", url: "cal.com/tamzyn", icon: "calendar" },
-  ],
-};
 
 /** Sticky 50/50 headline assignment. SSR and first paint render variant A;
  *  the stored (or freshly drawn) variant applies after hydration. */
@@ -248,6 +213,47 @@ function perMonth(annualUsd: number): string {
   return `$${(annualUsd / 12).toFixed(2).replace(/\.00$/, "")}/mo`;
 }
 
+const HERO_PERSON = {
+  name: "Tamzyn Williams",
+  title: "Head of Marketing",
+  company: "QuickieQR",
+  photo: "/demo/maya.webp",
+  slug: DEMO_CARD_PATH.split("/").pop()!,
+};
+
+/** Section heading: big, left-aligned, with a highlighter swipe on the accent words. */
+function Heading({
+  kicker,
+  children,
+  className = "",
+}: {
+  kicker?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      {kicker && (
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand">{kicker}</p>
+      )}
+      <h2 className="max-w-3xl text-4xl font-extrabold leading-[1.02] md:text-6xl">{children}</h2>
+    </div>
+  );
+}
+
+/** Highlighter-pen accent for headings. */
+function Hl({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="relative isolate whitespace-nowrap">
+      <span
+        aria-hidden
+        className="absolute -inset-x-1.5 bottom-[0.06em] -z-10 h-[0.42em] -skew-x-12 rounded-sm bg-pop-lime dark:bg-pop-lime/35"
+      />
+      {children}
+    </span>
+  );
+}
+
 function Landing() {
   const { user } = useAuth();
   const ab = useHeadlineVariant();
@@ -256,373 +262,460 @@ function Landing() {
   useRevealOnScroll();
   return (
     <div className="min-h-screen overflow-x-clip">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
-        <BrandLogo className="text-[1.5rem] md:text-[2.25rem]" />
-        <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
-          {(
-            [
-              ["#how", "How it works"],
-              ["#teams", "Teams"],
-              ["#pricing", "Pricing"],
-              ["#faq", "FAQ"],
-            ] as const
-          ).map(([href, label]) => (
-            <a
-              key={href}
-              href={href}
-              className="relative transition-colors after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand after:transition-all after:duration-300 hover:text-foreground hover:after:w-full"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="ghost">
-            <Link to={user ? "/app" : "/auth"}>{user ? "Open app" : "Sign in"}</Link>
-          </Button>
-          {user && <ProfileMenu />}
-          {!user && (
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/auth" onClick={() => logSiteEvent("cta_click", variantMeta("nav", ab))}>
-                Get started free
-              </Link>
-            </Button>
-          )}
-        </div>
-      </header>
+      {/* 1 · Header + hero: one full-bleed dark band */}
+      <div className="dark relative overflow-hidden bg-background text-foreground">
+        <div aria-hidden className="qq-dots pointer-events-none absolute inset-0" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-40 top-10 h-[620px] w-[620px] rounded-full bg-brand/35 blur-[140px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-40 left-1/4 h-[360px] w-[360px] rounded-full bg-pop-rose/20 blur-[120px]"
+        />
 
-      {/* 2 · Hero */}
-      <section className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 pb-16 pt-10 lg:grid-cols-[1.1fr_1fr]">
-        {/* Soft aurora wash behind the hero — color without noise. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          <div className="aurora-blob absolute -left-24 -top-16 h-80 w-80 rounded-full bg-brand-soft blur-3xl" />
-          <div className="aurora-blob absolute right-0 top-8 h-96 w-96 rounded-full bg-pop-amber-soft blur-3xl" />
-          <div className="aurora-blob absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-pop-teal-soft blur-3xl" />
-        </div>
-        <div>
-          <p
-            data-reveal="0"
-            className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand-soft px-3.5 py-1 text-xs font-semibold text-accent-foreground"
-          >
-            <Zap className="h-3.5 w-3.5" />
-            Digital business cards, done quick
-          </p>
-          <h1 data-reveal="1" className="text-4xl font-extrabold leading-[1.05] md:text-6xl">
-            {headline.lines[0]}
-            <span className="text-gradient-brand">{headline.lines[1]}</span>
-          </h1>
-          <p data-reveal="2" className="mt-6 max-w-md text-lg text-muted-foreground">
-            {headline.sub}
-          </p>
-          <div data-reveal="3" className="mt-8 flex flex-wrap items-center gap-4">
-            <Cta label="Create your free card" from="hero" ab={ab} />
-            <LiveCardDialog from={variantMeta("hero", ab)}>
-              <LiveCardButton />
-            </LiveCardDialog>
-          </div>
-          <p data-reveal="4" className="mt-3 text-xs text-muted-foreground">
-            Free plan forever · No credit card · Ready in 2 minutes
-          </p>
-          <div
-            data-reveal="5"
-            className="mt-10 flex max-w-md flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground"
-          >
-            {["No app to install", "iPhone & Android", "Edits go live instantly"].map((t) => (
-              <span key={t} className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-brand" />
-                {t}
-              </span>
+        <header className="relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5 lg:px-10">
+          <BrandLogo className="text-[1.5rem] md:text-[2rem]" />
+          <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
+            {(
+              [
+                ["#how", "How it works"],
+                ["#who", "Who it's for"],
+                ["#pricing", "Pricing"],
+                ["#faq", "FAQ"],
+              ] as const
+            ).map(([href, label]) => (
+              <a key={href} href={href} className="transition-colors hover:text-foreground">
+                {label}
+              </a>
             ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="ghost">
+              <Link to={user ? "/app" : "/auth"}>{user ? "Open app" : "Sign in"}</Link>
+            </Button>
+            {user && <ProfileMenu />}
+            {!user && (
+              <Button
+                asChild
+                size="sm"
+                className="hidden bg-pop-lime text-[#0E1230] hover:bg-pop-lime/85 sm:inline-flex"
+              >
+                <Link to="/auth" onClick={() => logSiteEvent("cta_click", variantMeta("nav", ab))}>
+                  Get started free
+                </Link>
+              </Button>
+            )}
           </div>
-        </div>
-        <div className="relative flex justify-center">
-          <div className="phone-frame phone-float rotate-2">
-            <div className="h-full overflow-hidden rounded-[38px]">
-              <CardView card={DEMO} headshotUrl="/demo/maya.webp" bannerUrl="/demo/banner.webp" />
+        </header>
+
+        <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-16 pt-8 lg:min-h-[calc(100svh-180px)] lg:grid-cols-[1.05fr_1fr] lg:px-10 lg:pb-20">
+          <div>
+            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold text-white/85">
+              <Zap className="h-3.5 w-3.5 text-pop-lime" />
+              Contact exchange in about 3 seconds
+            </p>
+            <h1 className="text-[3rem] font-extrabold leading-[0.95] tracking-[-0.04em] text-white sm:text-7xl xl:text-[5.75rem]">
+              {headline.lines[0]}
+              <span className="relative isolate whitespace-nowrap text-[#0E1230]">
+                <span
+                  aria-hidden
+                  className="absolute -inset-x-2 inset-y-[0.08em] -z-10 -skew-x-6 rounded-lg bg-pop-lime"
+                />
+                {headline.lines[1].trim()}
+              </span>
+            </h1>
+            <p className="mt-6 max-w-lg text-base text-white/70 sm:text-lg md:text-xl">
+              {headline.sub}
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 bg-pop-lime px-7 text-base font-bold text-[#0E1230] hover:bg-pop-lime/85"
+              >
+                <Link
+                  to={user ? "/app" : "/auth"}
+                  onClick={() => logSiteEvent("cta_click", variantMeta("hero", ab))}
+                >
+                  Create your free card <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <LiveCardDialog from={variantMeta("hero", ab)}>
+                <LiveCardButton />
+              </LiveCardDialog>
             </div>
+            <p className="mt-4 text-sm text-white/50">
+              Free plan forever · No credit card · Nothing for them to install
+            </p>
           </div>
-          {/* The conversation, started quick. Decorative — screen readers skip it. */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 hidden sm:block">
-            <div
-              className="chat-bubble bubble-pop absolute -left-2 top-10 max-w-[180px] lg:-left-12"
-              style={{ "--pop-delay": "0.5s" } as React.CSSProperties}
-            >
-              Great meeting you today! 👋
-            </div>
-            <div
-              className="chat-bubble-brand bubble-pop absolute -right-2 top-36 lg:-right-10"
-              style={{ "--pop-delay": "1.1s" } as React.CSSProperties}
-            >
-              Saved to contacts ✓
-            </div>
-            <div
-              className="chat-bubble bubble-pop absolute -left-1 bottom-20 lg:-left-8"
-              style={{ "--pop-delay": "1.7s" } as React.CSSProperties}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                Coffee Tuesday?
-                <span className="inline-flex items-end gap-0.5 pb-0.5">
-                  <span className="typing-dot h-1 w-1 rounded-full bg-pop-teal" />
-                  <span className="typing-dot h-1 w-1 rounded-full bg-pop-teal" />
-                  <span className="typing-dot h-1 w-1 rounded-full bg-pop-teal" />
-                </span>
-              </span>
-            </div>
+          <div>
+            <ScanHero person={HERO_PERSON} />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 3 · Problem */}
-      <section className="border-y bg-muted/40">
-        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-14 md:grid-cols-3">
-          {[
-            {
-              i: Trash2,
-              t: "Paper cards get tossed",
-              d: "The card you paid for ends up in a drawer or a bin — usually within the week.",
-            },
-            {
-              i: UserX,
-              t: "You can't follow up with a pocket",
-              d: "Handing out your card gives them your details. It gets you nothing back.",
-            },
-            {
-              i: CalendarX,
-              t: "Every event leaks leads",
-              d: "Great conversations, a stack of cards, and no idea who was who by Monday.",
-            },
-          ].map(({ i: I, t, d }, idx) => (
-            <div key={t} data-reveal={idx}>
-              <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-pop-rose-soft">
-                <I className="h-5 w-5 text-pop-rose" />
-              </span>
-              <h2 className="text-base font-bold">{t}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-            </div>
-          ))}
+        <div className="relative border-t border-white/10">
+          <dl className="mx-auto grid max-w-7xl grid-cols-3 divide-x divide-white/10 px-6 lg:px-10">
+            {(
+              [
+                ["0", "apps they need"],
+                ["1", "tap to save you"],
+                ["~3s", "hello to saved"],
+              ] as const
+            ).map(([n, l]) => (
+              <div key={l} className="px-3 py-6 first:pl-0 sm:px-8 sm:first:pl-0">
+                <dt className="sr-only">{l}</dt>
+                <dd className="font-display text-3xl font-extrabold text-white sm:text-5xl">{n}</dd>
+                <dd className="mt-1 text-xs text-white/55 sm:text-sm">{l}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
-      </section>
+      </div>
 
-      {/* 4 · How it works */}
-      <section id="how" className="mx-auto max-w-6xl scroll-mt-6 px-6 py-20">
-        <h2 className="text-3xl font-extrabold md:text-4xl">How it works</h2>
-        <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
-        <div className="mt-10 grid gap-10 md:grid-cols-3">
-          {[
-            {
-              n: "1",
-              t: "Build your card in 2 minutes",
-              d: "Name, photo, links, brand colors. It lives at your own link and updates instantly, print nothing, ever again.",
-            },
-            {
-              n: "2",
-              t: "They scan your QR — no app",
-              d: "Your card opens as a web page on any phone. One tap saves you straight to their contacts.",
-            },
-            {
-              n: "3",
-              t: "Their details come back to you",
-              d: "A “Share yours” button on your card sends their name, email and phone to your contact list — with a notification the moment it happens.",
-            },
-          ].map(({ n, t, d }, idx) => (
-            <div
-              key={n}
-              data-reveal={idx}
-              className={n === "3" ? "rounded-2xl bg-brand-soft p-6 -m-6 md:m-0" : ""}
-            >
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--brand),var(--pop-rose))] font-display text-xl font-extrabold text-white shadow-soft">
-                {n}
-              </span>
-              <h3 className="mt-3 text-lg font-bold">{t}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{d}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-6 text-sm font-semibold text-brand">
-          Step 3 is the one paper can't do — the card works in both directions.
-        </p>
-        <div className="mt-8">
-          <Cta label="Make my card free" from="how-it-works" ab={ab} />
-        </div>
-      </section>
-
-      {/* 5 · Beyond the card */}
-      <section className="border-y bg-muted/40">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="text-3xl font-extrabold md:text-4xl">More than a card, it's a workflow</h2>
-          <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-teal),var(--brand))]" />
-          <div className="mt-10 grid gap-8 sm:grid-cols-2">
+      {/* 2 · How it works: three beats on a timeline */}
+      <section id="how" className="scroll-mt-6 px-6 py-24 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <Heading kicker="How it works">
+            From hello to <Hl>saved</Hl>, in three beats.
+          </Heading>
+          <ol className="relative mt-16 grid gap-12 md:grid-cols-3 md:gap-8">
+            <span
+              aria-hidden
+              className="absolute left-0 right-0 top-[2.1rem] hidden h-px bg-border md:block"
+            />
             {[
               {
-                i: ScanLine,
-                t: "Card scanner",
-                d: "Photograph the paper cards you collect. The scanner reads names, titles, phones, emails, addresses — even the headshot — straight into your contacts.",
+                at: "0:00",
+                t: "Hold up your code",
+                d: "On your phone, your lock screen, a sticker on your laptop, the back of your old paper card. Build it once in about two minutes.",
               },
+              {
+                at: "0:01",
+                t: "They point their camera",
+                d: "No app, no download. Your card opens on any iPhone or Android, and one tap drops you into their contacts.",
+              },
+              {
+                at: "0:03",
+                t: "You get them back",
+                d: "The “Share yours” button sends their name, email and phone straight to your contact list, with a ping the moment it lands.",
+              },
+            ].map(({ at, t, d }, idx) => (
+              <li key={at} data-reveal={idx} className="relative">
+                <span className="relative inline-flex items-center gap-3 bg-background pr-4">
+                  <span
+                    className={`h-3 w-3 rounded-full ${idx === 2 ? "bg-pop-lime ring-4 ring-pop-lime/30" : "bg-brand"}`}
+                  />
+                  <span className="font-display text-5xl font-extrabold tabular-nums tracking-tight text-brand md:text-6xl">
+                    {at}
+                  </span>
+                </span>
+                <h3 className="mt-5 text-xl font-bold">{t}</h3>
+                <p className="mt-2 max-w-sm text-muted-foreground">{d}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <Cta label="Make my card free" from="how-it-works" ab={ab} />
+            <p className="text-sm font-semibold text-muted-foreground">
+              Beat three is the one paper can't do.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3 · Paper vs QuickieQR: a full-bleed split */}
+      <section className="grid md:grid-cols-2">
+        <div className="bg-muted px-6 py-20 lg:px-16">
+          <div className="ml-auto max-w-xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              The paper card
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold text-muted-foreground line-through decoration-pop-rose decoration-4 md:text-4xl">
+              Hand it over and hope.
+            </h2>
+            <ul className="mt-10 space-y-7">
+              {[
+                {
+                  i: Trash2,
+                  t: "It gets tossed",
+                  d: "The card you paid for ends up in a drawer or a bin, usually within the week.",
+                },
+                {
+                  i: UserX,
+                  t: "It only works one way",
+                  d: "They get your details. You get nothing back.",
+                },
+                {
+                  i: CalendarX,
+                  t: "Events leak leads",
+                  d: "Great conversations, a stack of cards, and no idea who was who by Monday.",
+                },
+              ].map(({ i: I, t, d }) => (
+                <li key={t} className="flex gap-4">
+                  <I className="mt-0.5 h-6 w-6 shrink-0 text-pop-rose" />
+                  <div>
+                    <h3 className="font-bold">{t}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{d}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="relative overflow-hidden bg-brand px-6 py-20 text-white lg:px-16">
+          <QrCode
+            aria-hidden
+            className="pointer-events-none absolute -bottom-16 -right-16 h-72 w-72 text-white/10"
+          />
+          <div className="relative max-w-xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-pop-lime">QuickieQR</p>
+            <h2 className="mt-3 text-3xl font-extrabold md:text-4xl">Scan, save, follow up.</h2>
+            <ul className="mt-10 space-y-7">
+              {[
+                {
+                  t: "It lives in their phone",
+                  d: "Saved straight to their contacts, with your photo, links and booking page.",
+                },
+                {
+                  t: "It works both ways",
+                  d: "They share their details back with a tap, and you get notified.",
+                },
+                {
+                  t: "Monday is already sorted",
+                  d: "Every contact stamped with when and where you met, ready for notes, tags and follow-up.",
+                },
+              ].map(({ t, d }) => (
+                <li key={t} className="flex gap-4">
+                  <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-pop-lime" />
+                  <div>
+                    <h3 className="font-bold">{t}</h3>
+                    <p className="mt-1 text-sm text-white/75">{d}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* 4 · Beyond the card: a bento grid */}
+      <section className="px-6 py-24 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <Heading kicker="Beyond the card">
+            More than a card. It's your <Hl>follow-up</Hl> machine.
+          </Heading>
+          <div className="mt-14 grid gap-4 md:grid-cols-3 md:grid-rows-2">
+            <div
+              data-reveal="0"
+              className="dark relative overflow-hidden rounded-3xl border border-white/10 bg-background p-8 text-foreground md:col-span-2 md:row-span-2 md:p-10"
+            >
+              <div aria-hidden className="qq-dots pointer-events-none absolute inset-0" />
+              <ScanLine className="relative h-10 w-10 text-pop-lime" />
+              <h3 className="relative mt-6 max-w-md text-3xl font-extrabold md:text-4xl">
+                Card scanner for the paper ones you still get
+              </h3>
+              <p className="relative mt-4 max-w-md text-white/70">
+                Photograph the paper cards people hand you. The scanner reads names, titles, phones,
+                emails, addresses, even the headshot, straight into your contacts.
+              </p>
+              <div className="relative mt-10 flex flex-wrap gap-2">
+                {["Name", "Title", "Phone", "Email", "Address", "Headshot"].map((f) => (
+                  <span
+                    key={f}
+                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80"
+                  >
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {[
               {
                 i: BarChart3,
                 t: "Know who kept your card",
-                d: "Views, saves and link clicks per card, by day and by device. A paper card tells you nothing after it leaves your hand.",
+                d: "Views, saves and link clicks per card, by day and device.",
+                c: "bg-pop-lime/25 dark:bg-pop-lime/10",
               },
               {
                 i: Sparkles,
-                t: "Follow-ups & enrichment",
-                d: "Draft the follow-up email from your notes, enrich a thin contact from their company, summarize long voice notes.",
+                t: "Follow-ups, drafted",
+                d: "Draft the follow-up email from your notes, enrich a thin contact, summarize voice notes.",
+                c: "bg-brand-soft",
               },
-              {
-                i: Bell,
-                t: "Know the moment they share back",
-                d: "On Pro: push notifications on your phone, plus webhooks into Make, Zapier or your CRM when a new contact arrives.",
-              },
-            ].map(({ i: I, t, d }, idx) => {
-              const tones = [
-                ["bg-brand-soft", "text-brand"],
-                ["bg-pop-amber-soft", "text-pop-amber"],
-                ["bg-pop-teal-soft", "text-pop-teal"],
-                ["bg-pop-rose-soft", "text-pop-rose"],
-              ] as const;
-              const [chip, icon] = tones[idx % tones.length]!;
-              return (
-                <div key={t} data-reveal={idx} className="surface card-lift p-6">
-                  <span
-                    className={`mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl ${chip}`}
-                  >
-                    <I className={`h-5 w-5 ${icon}`} />
+            ].map(({ i: I, t, d, c }, idx) => (
+              <div key={t} data-reveal={idx + 1} className={`rounded-3xl p-7 ${c}`}>
+                <I className="h-7 w-7 text-brand" />
+                <h3 className="mt-4 text-lg font-bold">{t}</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">{d}</p>
+              </div>
+            ))}
+          </div>
+          <div
+            data-reveal="3"
+            className="mt-4 flex flex-col gap-4 rounded-3xl bg-pop-rose-soft p-7 sm:flex-row sm:items-center"
+          >
+            <Bell className="h-7 w-7 shrink-0 text-pop-rose" />
+            <div>
+              <h3 className="text-lg font-bold">Know the moment they share back</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                On Pro: a push notification on your phone, plus webhooks into Make, Zapier or your
+                CRM when a new contact arrives.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5 · Who it's for: editorial rows */}
+      <section id="who" className="scroll-mt-6 border-t px-6 py-24 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <Heading kicker="Who it's for">
+            Built for people who <Hl>meet people</Hl>.
+          </Heading>
+          <ul className="mt-12 border-t">
+            {(
+              [
+                [
+                  "Lawyers & law firms",
+                  "Bar luncheons, CLEs, the courthouse hallway. They save you in a tap, and their details come back for your follow-up.",
+                  null,
+                ],
+                [
+                  "Sales teams",
+                  "Every rep on-brand, every lead captured to one pipeline.",
+                  "teams",
+                ],
+                ["Realtors", "Your card on every yard sign and open-house table.", "realtors"],
+                [
+                  "Recruiters",
+                  "Candidates share their details back before they leave the booth.",
+                  "recruiters",
+                ],
+                [
+                  "Founders & freelancers",
+                  "Look established from day one, and never reprint a title change.",
+                  null,
+                ],
+              ] as const
+            ).map(([t, d, slug]) => {
+              const row = (
+                <>
+                  <span className="font-display text-2xl font-extrabold tracking-tight md:text-4xl">
+                    {t}
                   </span>
-                  <h3 className="text-lg font-bold">{t}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{d}</p>
-                </div>
+                  <span className="text-muted-foreground md:max-w-md">{d}</span>
+                  <ArrowRight
+                    className={`hidden h-6 w-6 shrink-0 justify-self-end text-brand transition-transform group-hover:translate-x-1 md:block ${slug ? "" : "invisible"}`}
+                  />
+                </>
+              );
+              const cls =
+                "group grid gap-2 border-b py-7 md:grid-cols-[1.1fr_1.4fr_auto] md:items-center md:gap-8";
+              return (
+                <li key={t}>
+                  {slug ? (
+                    <Link
+                      to="/for/$audience"
+                      params={{ audience: slug }}
+                      className={`${cls} transition-colors hover:text-brand`}
+                    >
+                      {row}
+                    </Link>
+                  ) : (
+                    <div className={cls}>{row}</div>
+                  )}
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* 6 · Who it's for */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-3xl font-extrabold md:text-4xl">Built for people who meet people</h2>
-        <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-amber),var(--pop-rose))]" />
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {(
-            [
-              ["Sales teams", "Every rep on-brand, every lead captured to one pipeline.", "teams"],
-              ["Realtors", "Your card on every yard sign and open-house table.", "realtors"],
-              [
-                "Recruiters",
-                "Candidates share their details back before they leave the booth.",
-                "recruiters",
-              ],
-              [
-                "Founders & freelancers",
-                "Look established from day one — and never reprint a title change.",
-                null,
-              ],
-            ] as const
-          ).map(([t, d, slug], idx) => {
-            const bars = ["var(--brand)", "var(--pop-teal)", "var(--pop-amber)", "var(--pop-rose)"];
-            const bar = (
-              <span
-                className="mb-3 block h-1 w-9 rounded-full"
-                style={{ background: bars[idx % bars.length] }}
-              />
-            );
-            return slug ? (
-              <Link
-                key={t}
-                to="/for/$audience"
-                params={{ audience: slug }}
-                data-reveal={idx}
-                className="surface card-lift group block p-5 hover:border-brand"
-              >
-                {bar}
-                <h3 className="text-base font-bold">{t}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand">
-                  Learn more{" "}
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
-            ) : (
-              <div key={t} data-reveal={idx} className="p-5">
-                {bar}
-                <h3 className="text-base font-bold">{t}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{d}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 7 · Teams — a deep-ink panel for contrast */}
-      <section id="teams" className="mx-auto max-w-6xl scroll-mt-6 px-6 py-10">
+      {/* 6 · Teams: full-bleed dark band */}
+      <section
+        id="teams"
+        className="dark relative scroll-mt-6 overflow-hidden bg-background px-6 py-24 text-foreground lg:px-10"
+      >
+        <div aria-hidden className="qq-dots pointer-events-none absolute inset-0" />
         <div
-          data-reveal="0"
-          className="relative overflow-hidden rounded-[2rem] bg-ink px-6 py-14 text-white shadow-float md:px-12"
-        >
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="aurora-blob absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand/25 blur-3xl" />
-            <div className="aurora-blob absolute -bottom-24 left-1/4 h-64 w-64 rounded-full bg-pop-teal/20 blur-3xl" />
-          </div>
-          <div className="relative max-w-2xl">
-            <h2 className="text-3xl font-extrabold md:text-4xl">Put your whole team on-brand</h2>
-            <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
-            <p className="mt-4 text-white/70">
-              Invite your team with a link, provision branded cards for every member, and lock your
-              colors and logo so no card drifts off-brand. Take the QuickieQR name off every card so
-              people see your brand only. Opt in to shared contacts and see team-wide analytics in
-              one place.
+          aria-hidden
+          className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-brand/30 blur-[120px]"
+        />
+        <div className="relative mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-pop-lime">
+              QuickieQR for Teams
             </p>
+            <h2 className="text-4xl font-extrabold leading-[1.02] text-white md:text-6xl">
+              Your whole team, on-brand.
+            </h2>
+            <p className="mt-6 max-w-lg text-lg text-white/70">
+              Invite your team with a link, provision branded cards for every member, and lock your
+              colors and logo so no card drifts off-brand. Take the QuickieQR name off every card,
+              share contacts if you choose, and see team-wide analytics in one place.
+            </p>
+            <div className="mt-9">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 bg-pop-lime px-7 font-bold text-[#0E1230] hover:bg-pop-lime/85"
+              >
+                <Link
+                  to={user ? "/app" : "/auth"}
+                  onClick={() => logSiteEvent("cta_click", variantMeta("teams", ab))}
+                >
+                  Set up your team <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
-          <div className="relative mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2">
             {[
-              {
-                i: Palette,
-                t: "Brand lock",
-                d: "Your colors and logo on every card, enforced.",
-                c: "text-pop-amber",
-              },
+              { i: Palette, t: "Brand lock", d: "Your colors and logo on every card, enforced." },
               {
                 i: EyeOff,
                 t: "Your brand only",
                 d: "Remove QuickieQR branding from every team card. Only on Teams.",
-                c: "text-white",
               },
               {
                 i: Users,
                 t: "Shared contacts",
-                d: "Every captured lead visible to the team — if you turn it on.",
-                c: "text-pop-teal",
+                d: "Every captured lead visible to the team, if you turn it on.",
               },
               {
                 i: Building2,
                 t: "Team analytics",
                 d: "Views, saves and share-backs across all team cards.",
-                c: "text-brand",
               },
-            ].map(({ i: I, t, d, c }) => (
-              <div key={t} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <I className={`mb-2 h-5 w-5 ${c}`} />
-                <h3 className="text-sm font-bold">{t}</h3>
+            ].map(({ i: I, t, d }) => (
+              <div key={t} className="bg-background p-7">
+                <I className="h-6 w-6 text-pop-lime" />
+                <h3 className="mt-4 font-bold text-white">{t}</h3>
                 <p className="mt-1 text-sm text-white/60">{d}</p>
               </div>
             ))}
           </div>
-          <div className="relative mt-8">
-            <Cta label="Set up your team" from="teams" ab={ab} variant="secondary" />
-          </div>
         </div>
       </section>
 
-      {/* 8 · Proof (honest only: live demo + builder's note) */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="grid items-center gap-10 md:grid-cols-2">
-          <div>
-            <h2 className="text-3xl font-extrabold md:text-4xl">
-              Don't take our word for it, tap one now!
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              The fastest way to understand QuickieQR is to open a real card. This one is live right
-              now: save it to your phone, tap the links, try the “Share yours” button. Everything
-              you see is what the people you meet will see.
+      {/* 7 · Try one: a real card */}
+      <section className="px-6 py-24 lg:px-10">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.3fr_1fr]">
+          <blockquote>
+            <p className="font-display text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
+              “A business card should work both ways: share who you are, and{" "}
+              <Hl>keep who you meet</Hl>. Paper does half of that, badly.”
+            </p>
+            <footer className="mt-6 text-sm font-semibold text-muted-foreground">
+              — the QuickieQR team
+            </footer>
+          </blockquote>
+          <div className="rounded-3xl border-2 border-dashed border-brand/40 p-8">
+            <h2 className="text-2xl font-extrabold">Don't take our word for it.</h2>
+            <p className="mt-3 text-muted-foreground">
+              Open a real card. Save it to your phone, tap the links, try the “Share yours” button.
+              It's exactly what the people you meet will see.
             </p>
             <LiveCardDialog from={variantMeta("proof", ab)}>
               <button
@@ -633,38 +726,22 @@ function Landing() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75 motion-reduce:animate-none" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
                 </span>
-                Open Tamzyn's live card
+                Open a live card
               </button>
             </LiveCardDialog>
-          </div>
-          <div data-reveal="1" className="surface card-lift relative p-7">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute -top-4 left-5 font-serif text-7xl leading-none text-brand/25"
-            >
-              “
-            </span>
-            <p className="relative font-serif text-lg italic leading-relaxed text-foreground/85">
-              “A business card should work in both directions: share who you are, and keep who you
-              meet. Paper does half of that, badly. QuickieQR does both in the time it takes to say
-              hello. That's the whole product.”
-            </p>
-            <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
-              <span className="h-1 w-6 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
-              — the QuickieQR team
-            </p>
           </div>
         </div>
       </section>
 
-      {/* 9 · Pricing */}
-      <section id="pricing" className="border-y bg-muted/40">
-        <div className="mx-auto max-w-6xl scroll-mt-6 px-6 py-20">
-          <h2 className="text-3xl font-extrabold md:text-4xl">Simple pricing</h2>
-          <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-rose))]" />
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            A box of 500 paper cards runs $20–40, gets thrown away, and tells you nothing. Start
-            free; upgrade when it pays for itself.
+      {/* 8 · Pricing */}
+      <section id="pricing" className="scroll-mt-6 border-t bg-muted/50 px-6 py-24 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <Heading kicker="Pricing">
+            Cheaper than a <Hl>box of cards</Hl>.
+          </Heading>
+          <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
+            500 paper cards run $20–40, get thrown away, and tell you nothing. Start free; upgrade
+            when it pays for itself.
           </p>
           <div className="mt-8 inline-flex items-center rounded-full border bg-surface p-1 shadow-soft">
             <button
@@ -889,70 +966,78 @@ function Landing() {
         </div>
       </section>
 
-      {/* 10 · FAQ */}
-      <section id="faq" className="mx-auto max-w-3xl scroll-mt-6 px-6 py-20">
-        <h2 className="text-3xl font-extrabold md:text-4xl">Questions, answered</h2>
-        <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--pop-teal),var(--pop-amber))]" />
-        <div className="mt-8 space-y-3">
-          {[
-            [
-              "Does the other person need the app?",
-              "No. Your card is a web page — they scan your QR or tap your link, see your card instantly, and save you to their phone with one tap. Nothing to install on their side, ever.",
-            ],
-            [
-              "What if my details change?",
-              "Edit your card and it's live everywhere immediately. Your QR code and link never change, so the card on your email signature, slide deck or sticker keeps working.",
-            ],
-            [
-              "How does capturing their info work?",
-              "Your card has a “Share yours” button. They type their name and contact details once, you get a push notification, and they land in your QuickieQR contacts — with notes, tags and follow-up drafting ready.",
-            ],
-            [
-              "What happens to my data and my contacts?",
-              "They're yours. Every contact can be saved to your phone as a vCard or exported as a CSV for any spreadsheet or CRM — on every plan, free included — and you can delete your account — and everything in it — from Settings with one button.",
-            ],
-            [
-              "What does the free plan include, forever?",
-              `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try QuickieQR before you pay. Card scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
-            ],
-            [
-              "What happens if I cancel a paid plan?",
-              "Your plan runs to the end of the month or year you've already paid for — you lose nothing you paid for — and it simply doesn't renew after that. Annual plans aren't refunded mid-term; cancelling just turns off the renewal. Either way your digital card (link + QR) stays live on the free plan — free for life.",
-            ],
-            [
-              "Can my whole team use it?",
-              "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove QuickieQR branding so cards show your brand only (Teams is the only plan with this), and see shared contacts and team analytics in one view.",
-            ],
-          ].map(([q, a]) => (
-            <details
-              key={q}
-              className="surface group px-5 py-4 transition-colors hover:border-brand/40"
-            >
-              <summary className="cursor-pointer list-none text-sm font-bold marker:content-none">
-                {q}
-              </summary>
-              <p className="mt-2 text-sm text-muted-foreground">{a}</p>
-            </details>
-          ))}
+      {/* 9 · FAQ */}
+      <section id="faq" className="scroll-mt-6 px-6 py-24 lg:px-10">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_1.6fr]">
+          <div className="lg:sticky lg:top-10 lg:self-start">
+            <Heading kicker="FAQ">
+              Quick <Hl>answers</Hl>.
+            </Heading>
+            <p className="mt-5 text-muted-foreground">
+              Something else?{" "}
+              <a href="mailto:support@quickieqr.com" className="font-semibold text-brand underline">
+                support@quickieqr.com
+              </a>
+            </p>
+          </div>
+          <div className="divide-y border-y">
+            {[
+              [
+                "Does the other person need the app?",
+                "No. Your card is a web page — they scan your QR or tap your link, see your card instantly, and save you to their phone with one tap. Nothing to install on their side, ever.",
+              ],
+              [
+                "What if my details change?",
+                "Edit your card and it's live everywhere immediately. Your QR code and link never change, so the card on your email signature, slide deck or sticker keeps working.",
+              ],
+              [
+                "How does capturing their info work?",
+                "Your card has a “Share yours” button. They type their name and contact details once, you get a push notification, and they land in your QuickieQR contacts — with notes, tags and follow-up drafting ready.",
+              ],
+              [
+                "What happens to my data and my contacts?",
+                "They're yours. Every contact can be saved to your phone as a vCard or exported as a CSV for any spreadsheet or CRM — on every plan, free included — and you can delete your account — and everything in it — from Settings with one button.",
+              ],
+              [
+                "What does the free plan include, forever?",
+                `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try QuickieQR before you pay. Card scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
+              ],
+              [
+                "What happens if I cancel a paid plan?",
+                "Your plan runs to the end of the month or year you've already paid for — you lose nothing you paid for — and it simply doesn't renew after that. Annual plans aren't refunded mid-term; cancelling just turns off the renewal. Either way your digital card (link + QR) stays live on the free plan — free for life.",
+              ],
+              [
+                "Can my whole team use it?",
+                "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove QuickieQR branding so cards show your brand only (Teams is the only plan with this), and see shared contacts and team analytics in one view.",
+              ],
+            ].map(([q, a]) => (
+              <details key={q} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-lg font-bold marker:content-none">
+                  {q}
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xl leading-none text-brand transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 max-w-2xl text-muted-foreground">{a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 11 · Final CTA + footer */}
-      <section className="relative overflow-hidden bg-[linear-gradient(130deg,oklch(0.64_0.21_35),oklch(0.5_0.2_18))]">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-16 top-6 h-48 w-48 rounded-full border border-white/15" />
-          <div className="absolute -right-10 bottom-0 h-64 w-64 rounded-full border border-white/10" />
-          <QrCode className="absolute right-[12%] top-8 h-10 w-10 text-white/15" />
-          <div className="absolute left-[10%] bottom-10 rounded-2xl rounded-bl-sm border border-white/20 px-4 py-2 text-xs font-semibold text-white/40">
-            Great meeting you! 👋
-          </div>
-        </div>
-        <div className="relative mx-auto max-w-6xl px-6 py-16 text-center">
-          <h2 className="mx-auto max-w-2xl text-3xl font-extrabold text-white md:text-4xl">
+      {/* 10 · Final CTA: full-bleed lime */}
+      <section className="relative overflow-hidden bg-pop-lime px-6 py-24 text-[#0E1230] lg:px-10">
+        <BrandMark className="pointer-events-none absolute -right-20 -top-20 h-[420px] w-[420px] rotate-12 opacity-[0.12]" />
+        <div className="relative mx-auto max-w-7xl">
+          <h2 className="max-w-4xl text-4xl font-extrabold leading-[1.02] md:text-7xl">
             The next person you meet should never have to type your name.
           </h2>
-          <div className="mt-8 flex justify-center">
-            <Button asChild size="lg" variant="secondary">
+          <div className="mt-10 flex flex-wrap items-center gap-4">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 bg-[#0E1230] px-7 text-base font-bold text-white hover:bg-[#0E1230]/85"
+            >
               <Link
                 to={user ? "/app" : "/auth"}
                 onClick={() => logSiteEvent("cta_click", variantMeta("final", ab))}
@@ -960,10 +1045,10 @@ function Landing() {
                 Create your free card <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
+            <p className="text-sm font-semibold text-[#0E1230]/70">
+              Free plan forever · No credit card · Ready in 2 minutes
+            </p>
           </div>
-          <p className="mt-3 text-xs text-white/80">
-            Free plan forever · No credit card · Ready in 2 minutes
-          </p>
         </div>
       </section>
       <footer className="border-t">

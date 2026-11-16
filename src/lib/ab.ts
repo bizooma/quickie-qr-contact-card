@@ -3,23 +3,23 @@
 
 export type HeadlineVariant = "a" | "c";
 
-export const AB_STORAGE_KEY = "ck-ab-headline";
+export const AB_STORAGE_KEY = "qq-ab-headline";
 
 export const HEADLINES: Record<
   HeadlineVariant,
   { lines: [string, string]; accented: "first" | "second"; sub: string }
 > = {
-  // A — outcome + enemy (live default since the CRO rebuild)
+  // A — the product in three words
   a: {
-    lines: ["Never lose another lead to a ", "paper card."],
+    lines: ["Scan. Saved. ", "Done."],
     accented: "second",
-    sub: "Share your card with one QR scan and capture their details back, automatically. No app for them to install.",
+    sub: "Hold up your QuickieQR code. They point their camera, tap once, and you're in their contacts before the handshake's over. One more tap and they're in yours.",
   },
-  // C — the original brand rhythm, with the meaning restored in the subhead
+  // C — speed, framed against the thing everyone already does
   c: {
-    lines: ["One tap. They have you. ", "\nYou have them."],
+    lines: ["Quicker than ", "a handshake."],
     accented: "second",
-    sub: "A digital business card that shares your details and captures theirs — no app, no typing, no lost leads.",
+    sub: "Your digital business card, one scan away. No app for them, no typing for anyone, and their details come straight back to you.",
   },
 };
 
