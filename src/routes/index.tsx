@@ -1109,8 +1109,8 @@ function Landing() {
             <h3 className="text-sm font-bold">Get started</h3>
             <ul className="mt-3 space-y-2.5 text-sm text-muted-foreground">
               <li>
-                <Link to="/auth" className="hover:text-foreground">
-                  Create your free card
+                <Link to={user ? "/app" : "/auth"} className="hover:text-foreground">
+                  {user ? "Your cards" : "Create your free card"}
                 </Link>
               </li>
               <li>
@@ -1119,8 +1119,8 @@ function Landing() {
                 </a>
               </li>
               <li>
-                <Link to="/auth" className="hover:text-foreground">
-                  Sign in
+                <Link to={user ? "/app" : "/auth"} className="hover:text-foreground">
+                  {user ? "Open app" : "Sign in"}
                 </Link>
               </li>
               <li>

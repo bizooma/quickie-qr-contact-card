@@ -227,7 +227,7 @@ function AppLayout() {
       {/* Dark ink rail, like the landing hero. `dark` swaps in the dark tokens
           for just this column, whatever theme the rest of the app is in. */}
       <aside className="dark fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#0B0D1C] px-4 py-6 text-foreground md:flex">
-        <Link to="/app" className="mb-7 px-2">
+        <Link to="/" className="mb-7 px-2" aria-label="QuickieQR home">
           <BrandLogo className="text-[1.65rem]" />
         </Link>
         {/* The one thing people open the app to do, one click from anywhere. */}
@@ -333,7 +333,7 @@ function TopBar({ title }: { title: string }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 md:px-10">
-        <Link to="/app" className="md:hidden">
+        <Link to="/" className="md:hidden" aria-label="QuickieQR home">
           <BrandLogo className="text-[1.35rem]" />
         </Link>
         <p className="hidden truncate font-display text-lg font-extrabold tracking-tight md:block">
