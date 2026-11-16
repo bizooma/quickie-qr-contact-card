@@ -64,11 +64,11 @@ tags and reporting, HubSpot sync, Zapier webhooks, team features
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://contactkickstart.lovable.app
+**Live app**: https://quickieqr.com
 
 ## Build with Lovable
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/47eb069c-46a5-4b91-8359-3b044f3e0bde).
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/be72c9ec-ba21-46c8-a8d2-6447efdd9d9a).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.

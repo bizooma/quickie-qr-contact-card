@@ -23,8 +23,7 @@ const FALLBACK_ORIGIN = "https://quickieqr.com";
 const ALLOWED_ORIGINS = new Set([
   "https://quickieqr.com",
   "https://www.quickieqr.com",
-  "https://contactkickstart.lovable.app",
-  "https://id-preview--47eb069c-46a5-4b91-8359-3b044f3e0bde.lovable.app",
+  "https://id-preview--be72c9ec-ba21-46c8-a8d2-6447efdd9d9a.lovable.app",
 ]);
 
 function requestOrigin(): string {
