@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Phone, Mail, Globe, UserPlus } from "lucide-react";
+import { Check, Download, Mail, Send } from "lucide-react";
 import { useQr } from "@/components/card/QrPanel";
 
 // The hero's "how quick is it" demo: a phone camera finds a QuickieQR code,
@@ -26,6 +26,12 @@ export type ScanHeroPerson = {
   company: string;
   photo: string;
   slug: string;
+  /** The card as its owner set it up, so the demo looks like the real thing. */
+  banner: string;
+  logo: string;
+  bio: string;
+  email: string;
+  accent: string;
 };
 
 function useScanLoop(reduced: boolean) {
@@ -194,58 +200,80 @@ export function ScanHero({ person }: { person: ScanHeroPerson }) {
               </div>
             </div>
 
-            {/* Card view */}
+            {/* Card view: a mini copy of the real card (Banner layout). */}
             <div
-              className={`absolute inset-0 flex flex-col bg-white px-5 pb-6 pt-14 text-[#0E1230] transition-all duration-500 ${
+              className={`absolute inset-0 flex flex-col bg-white text-[#0E1230] transition-all duration-500 ${
                 camera ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
               }`}
             >
-              <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(135deg,var(--brand),#7A5CFF_60%,var(--pop-rose))]" />
+              {/* The phone browser's address bar, as on a real scan. */}
+              <div className="flex h-[58px] shrink-0 items-end justify-center bg-white pb-1.5">
+                <span className="rounded-full bg-[#F1F1F4] px-3 py-0.5 text-[8.5px] font-medium text-[#5A6080]">
+                  quickieqr.com
+                </span>
+              </div>
+              <img
+                src={person.banner}
+                alt=""
+                className="h-[96px] w-full shrink-0 object-cover sm:h-[110px]"
+              />
               <img
                 src={person.photo}
                 alt=""
-                className="relative mx-auto mt-6 h-24 w-24 rounded-full border-4 border-white object-cover shadow-soft"
+                className="relative mx-auto -mt-11 h-[84px] w-[84px] rounded-full border-[3px] border-white object-cover shadow-soft sm:h-[96px] sm:w-[96px]"
               />
-              <p className="relative mt-3 text-center font-display text-xl font-extrabold">
-                {person.name}
-              </p>
-              <p className="relative text-center text-xs text-[#5A6080]">
-                {person.title} · {person.company}
-              </p>
-              <div className="relative mt-5 grid grid-cols-3 gap-2">
-                {[Phone, Mail, Globe].map((I, i) => (
-                  <span
-                    key={i}
-                    className="flex h-10 items-center justify-center rounded-xl bg-[#F1F1FA] text-brand"
+              <div className="flex flex-1 flex-col px-4 pb-4 sm:px-5">
+                <p className="mt-2 text-center font-display text-[17px] font-extrabold leading-tight sm:text-lg">
+                  {person.name}
+                </p>
+                <p className="mt-0.5 text-center text-[9.5px] text-[#5A6080] sm:text-[10.5px]">
+                  {person.title} ·{" "}
+                  <span className="font-semibold text-[#0E1230]">{person.company}</span>
+                </p>
+                <p className="mt-2 line-clamp-4 text-center text-[8.5px] leading-snug text-[#5A6080] sm:text-[9.5px]">
+                  {person.bio}
+                </p>
+                <img src={person.logo} alt="" className="mx-auto mt-3 h-7 w-auto sm:h-8" />
+                <div className="mt-auto grid grid-cols-2 gap-1.5">
+                  <div
+                    className={`relative flex h-8 items-center justify-center gap-1 overflow-hidden rounded-full text-[10px] font-bold transition-all duration-300 ${
+                      done
+                        ? "bg-pop-lime text-[#0E1230]"
+                        : stage === "tap"
+                          ? "scale-95 text-white"
+                          : "text-white"
+                    }`}
+                    style={done ? undefined : { background: person.accent }}
                   >
-                    <I className="h-4 w-4" />
-                  </span>
-                ))}
-              </div>
-              <div className="relative mt-auto">
-                <div
-                  className={`relative flex h-12 items-center justify-center gap-2 overflow-hidden rounded-2xl text-sm font-bold transition-all duration-300 ${
-                    done
-                      ? "bg-pop-lime text-[#0E1230]"
-                      : stage === "tap"
-                        ? "scale-95 bg-brand text-white"
-                        : "bg-brand text-white"
-                  }`}
-                >
-                  {done ? (
-                    <>
-                      <Check className="h-4 w-4" strokeWidth={3} /> Saved to contacts
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-4 w-4" /> Save contact
-                    </>
-                  )}
-                  {stage === "tap" && (
-                    <span className="qq-ripple absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/50" />
-                  )}
+                    {done ? (
+                      <>
+                        <Check className="h-3 w-3" strokeWidth={3} /> Saved
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-3 w-3" /> Save contact
+                      </>
+                    )}
+                    {stage === "tap" && (
+                      <span className="qq-ripple absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/50" />
+                    )}
+                  </div>
+                  <div
+                    className="flex h-8 items-center justify-center gap-1 rounded-full border text-[10px] font-semibold"
+                    style={{ borderColor: person.accent }}
+                  >
+                    <Send className="h-3 w-3" /> Share yours
+                  </div>
                 </div>
-                <p className="mt-2 text-center text-[10px] text-[#5A6080]">No app. No typing.</p>
+                <div className="mt-2 flex items-center gap-2 rounded-xl bg-[#F3F3F5] px-2.5 py-2">
+                  <span
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white"
+                    style={{ background: person.accent }}
+                  >
+                    <Mail className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="truncate text-[9.5px]">{person.email}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -253,7 +281,7 @@ export function ScanHero({ person }: { person: ScanHeroPerson }) {
 
         {/* Fingertip */}
         <span
-          className={`absolute bottom-[78px] right-[118px] z-20 h-11 w-11 rounded-full border-2 border-white/70 bg-white/25 backdrop-blur-sm transition-all duration-300 sm:right-[134px] ${
+          className={`absolute bottom-[70px] right-[164px] z-20 h-10 w-10 rounded-full border-2 border-white/70 bg-white/25 backdrop-blur-sm transition-all duration-300 sm:right-[204px] ${
             stage === "tap" ? "scale-90 opacity-100" : "scale-125 opacity-0"
           }`}
         />

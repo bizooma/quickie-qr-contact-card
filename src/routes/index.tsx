@@ -219,6 +219,11 @@ const HERO_PERSON = {
   company: "Bizooma, LLC",
   photo: "/demo/joe.jpg",
   slug: DEMO_CARD_PATH.split("/").pop()!,
+  banner: "/demo/joe-banner.jpg",
+  logo: "/demo/joe-logo.png",
+  bio: "Marketer who codes. I build websites, software, and AI tools that turn attention into clients, mostly for law firms and nonprofits. Founder of Bizooma, based in Jacksonville.",
+  email: "joe@bizooma.com",
+  accent: "#B70606",
 };
 
 /** Section heading: big, left-aligned, with a highlighter swipe on the accent words. */
