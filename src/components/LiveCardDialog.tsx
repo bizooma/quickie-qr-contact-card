@@ -10,7 +10,7 @@ import { CreditCard, ExternalLink, QrCode } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { logSiteEvent } from "@/lib/site-events";
 
-export const DEMO_CARD_PATH = "/c/tamzyn";
+export const DEMO_CARD_PATH = "/c/joseph-murphy";
 const DEMO_SLUG = DEMO_CARD_PATH.split("/").pop()!;
 
 // The QR view pulls in the QR generator, so it loads only when opened.
@@ -18,7 +18,7 @@ const DemoQr = lazy(() => import("@/components/card/DemoQr"));
 
 /** Opens the live demo card in a popup so visitors never leave the page.
  *  The iframe loads the real public card — everything on it works — and a
- *  second tab shows the card's QR code with her photo in the middle. */
+ *  second tab shows the card's QR code with the owner's photo in the middle. */
 export function LiveCardDialog({ from, children }: { from: string; children: ReactNode }) {
   const [view, setView] = useState<"card" | "qr">("card");
   return (
@@ -65,7 +65,7 @@ export function LiveCardDialog({ from, children }: { from: string; children: Rea
         {/* Kept mounted so switching back doesn't reload the card. */}
         <iframe
           src={DEMO_CARD_PATH}
-          title="Tamzyn's live QuickieQR card"
+          title="Joseph Murphy's live QuickieQR card"
           className={`h-[70vh] max-h-[640px] w-full border-0 ${view === "card" ? "" : "hidden"}`}
         />
         {view === "qr" && (

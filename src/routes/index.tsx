@@ -214,10 +214,10 @@ function perMonth(annualUsd: number): string {
 }
 
 const HERO_PERSON = {
-  name: "Tamzyn Williams",
-  title: "Head of Marketing",
-  company: "QuickieQR",
-  photo: "/demo/maya.webp",
+  name: "Joseph Murphy",
+  title: "Marketing Technologist",
+  company: "Bizooma, LLC",
+  photo: "/demo/joe.jpg",
   slug: DEMO_CARD_PATH.split("/").pop()!,
 };
 
