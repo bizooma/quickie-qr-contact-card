@@ -20,6 +20,15 @@ import {
 const FALLBACK_ORIGIN = "https://quickieqr.com";
 
 // Stripe return URLs only ever point back at our own domains.
+// Checkout shows the Stripe account's name ("Pay Bizooma"), so say up front
+// that QuickieQR is Bizooma's product and that's the name on the statement.
+const CHECKOUT_TEXT = {
+  submit: {
+    message:
+      "QuickieQR is a product of Bizooma, LLC, so your receipt and card statement will show Bizooma.",
+  },
+};
+
 const ALLOWED_ORIGINS = new Set([
   "https://quickieqr.com",
   "https://www.quickieqr.com",
@@ -191,6 +200,7 @@ export const createCheckout = createServerFn({ method: "POST" })
         },
         ...customer,
         allow_promotion_codes: true,
+        custom_text: CHECKOUT_TEXT,
         success_url: `${origin}/app/settings?billing=success`,
         cancel_url: `${origin}/app/settings?billing=cancelled`,
       });
@@ -263,6 +273,7 @@ export const createCheckout = createServerFn({ method: "POST" })
       subscription_data: { metadata: { ck_plan: data.plan, ck_seats: String(seats) } },
       ...customer,
       ...discount,
+      custom_text: CHECKOUT_TEXT,
       success_url: `${origin}/app/settings?billing=success`,
       cancel_url: `${origin}/app/settings?billing=cancelled`,
     });
