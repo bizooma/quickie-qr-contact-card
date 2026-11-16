@@ -82,7 +82,57 @@ import { ProUpsell, usePlan } from "@/components/PremiumGate";
 import { ProfilePhotoPicker } from "@/components/ProfilePhotoPicker";
 import { NextTierCard } from "@/components/NextTierCard";
 
-export const Route = createFileRoute("/app/settings")({ head: appHead('Settings', 'Manage your profile, cards and account.'), component: Settings });
+export const Route = createFileRoute("/app/settings")({
+  head: appHead("Settings", "Manage your profile, cards and account."),
+  component: Settings,
+});
+
+// Every settings section is a panel; the side menu jumps between them.
+const PANEL = "surface scroll-mt-24 space-y-4 rounded-3xl p-5 sm:p-6";
+const H2 = "font-display text-xl font-extrabold tracking-tight";
+const SECTIONS: [string, string][] = [
+  ["profile", "Profile"],
+  ["plan", "Plan & usage"],
+  ["invite", "Invite friends"],
+  ["cards", "Cards & team"],
+  ["notifications", "Notifications"],
+  ["install", "Install the app"],
+  ["tips", "Tips"],
+  ["account", "Account"],
+];
+
+function SectionNav() {
+  return (
+    <nav aria-label="Settings sections">
+      {/* Phones: a swipeable row of chips. */}
+      <ul className="-mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+        {SECTIONS.map(([id, label]) => (
+          <li key={id} className="shrink-0">
+            <a
+              href={`#${id}`}
+              className="block rounded-full border bg-surface px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {/* Desktop: a sticky side menu. */}
+      <ul className="sticky top-24 hidden space-y-0.5 lg:block">
+        {SECTIONS.map(([id, label]) => (
+          <li key={id}>
+            <a
+              href={`#${id}`}
+              className="block rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
 
 function Settings() {
   const { user } = useAuth();
@@ -129,110 +179,124 @@ function Settings() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-10 pb-10">
-      <h1 className="text-3xl font-bold">Settings</h1>
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold">Profile</h2>
-        <ProfilePhotoPicker />
-        <div className="space-y-1">
-          <Label htmlFor="profile-email">Email</Label>
-          <Input id="profile-email" value={user?.email ?? ""} disabled />
+    <div className="mx-auto max-w-5xl pb-10">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">Settings</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{user?.email}</p>
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="display-name">Display name</Label>
-          <Input id="display-name" value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <ThemePicker />
-        <Button onClick={saveProfile}>Save</Button>
-        <Link
-          to="/app/roadmap"
-          className="surface flex items-center gap-3 px-4 py-3 hover:bg-muted/50"
-        >
-          <Rocket className="h-4 w-4 text-brand" />
-          <span className="flex-1">
-            <span className="block text-sm font-medium">Roadmap & requests</span>
-            <span className="block text-xs text-muted-foreground">
-              See what's coming, vote for what you want, and request features
-            </span>
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
-      </section>
-      <PlanSection />
-      <InviteSection />
-      <section>
-        <h2 className="mb-3 text-lg font-bold">Team</h2>
-        <Link to="/app/org" className="surface flex items-center gap-3 px-4 py-3 hover:bg-muted/50">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="flex-1 text-sm font-medium">Manage your team</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
-      </section>
-      <section>
-        <h2 className="mb-3 text-lg font-bold">Cards</h2>
-        <ul className="surface divide-y">
-          {cards.map((c) => (
-            <li key={c.id}>
-              <Link
-                to="/app/cards/$id"
-                params={{ id: c.id }}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50"
-              >
-                <span className="h-3 w-3 rounded-full" style={{ background: c.accent_color }} />
-                <span className="flex-1 font-medium">{c.label}</span>
-                <span className="text-xs text-muted-foreground">/c/{c.slug}</span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <TipsSection />
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold">Install the app</h2>
-        <InstallInstructions />
-      </section>
-      <section className="space-y-4">
-        <h2 className="text-lg font-bold">Notifications & integrations</h2>
-        {plan === "free" ? (
-          <ProUpsell feature="An instant alert when someone shares their details">
-            <p className="text-sm text-muted-foreground">
-              Pro can also send every new contact to Zapier or your CRM through a webhook.
-            </p>
-          </ProUpsell>
-        ) : (
-          <>
-            <PushToggle />
-            <WebhookField
-              initial={profile?.webhook_url ?? ""}
-              onSave={async (url) => {
-                const { error } = await supabase
-                  .from("profiles")
-                  .update({ webhook_url: url || null })
-                  .eq("id", user!.id);
-                if (error) toast.error(error.message);
-                else toast.success(url ? "Webhook saved" : "Webhook removed");
-              }}
-            />
-          </>
-        )}
-      </section>
-      <section className="space-y-3">
-        <Button variant="outline" onClick={signOut}>
+        <Button variant="outline" className="rounded-full" onClick={signOut}>
           <LogOut className="h-4 w-4" />
           Sign out
         </Button>
-      </section>
-      <DangerZone
-        confirm={confirm}
-        setConfirm={setConfirm}
-        busy={busy}
-        deleteAccount={deleteAccount}
-      />
+      </div>
+      <div className="lg:grid lg:grid-cols-[190px_minmax(0,1fr)] lg:gap-8">
+        <SectionNav />
+        <div className="space-y-6">
+          <section id="profile" className={PANEL}>
+            <h2 className={H2}>Profile</h2>
+            <ProfilePhotoPicker />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="profile-email">Email</Label>
+                <Input id="profile-email" value={user?.email ?? ""} disabled />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="display-name">Display name</Label>
+                <Input id="display-name" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+            </div>
+            <ThemePicker />
+            <Button
+              onClick={saveProfile}
+              className="rounded-full bg-brand px-6 font-bold text-white hover:bg-brand/90"
+            >
+              Save profile
+            </Button>
+            <Link
+              to="/app/roadmap"
+              className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 transition-colors hover:bg-muted"
+            >
+              <Rocket className="h-4 w-4 text-brand" />
+              <span className="flex-1">
+                <span className="block text-sm font-semibold">Roadmap & requests</span>
+                <span className="block text-xs text-muted-foreground">
+                  See what's coming, vote for what you want, and request features
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </section>
+          <PlanSection />
+          <InviteSection />
+          <section id="cards" className={PANEL}>
+            <h2 className={H2}>Cards & team</h2>
+            <ul className="divide-y overflow-hidden rounded-2xl border">
+              {cards.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to="/app/cards/$id"
+                    params={{ id: c.id }}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                  >
+                    <span className="h-3 w-3 rounded-full" style={{ background: c.accent_color }} />
+                    <span className="flex-1 font-semibold">{c.label}</span>
+                    <span className="font-mono text-xs text-muted-foreground">/c/{c.slug}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/app/org"
+              className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 transition-colors hover:bg-muted"
+            >
+              <Building2 className="h-4 w-4 text-brand" />
+              <span className="flex-1 text-sm font-semibold">Manage your team</span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </section>
+          <section id="notifications" className={PANEL}>
+            <h2 className={H2}>Notifications & integrations</h2>
+            {plan === "free" ? (
+              <ProUpsell feature="An instant alert when someone shares their details">
+                <p className="text-sm text-muted-foreground">
+                  Pro can also send every new contact to Zapier or your CRM through a webhook.
+                </p>
+              </ProUpsell>
+            ) : (
+              <>
+                <PushToggle />
+                <WebhookField
+                  initial={profile?.webhook_url ?? ""}
+                  onSave={async (url) => {
+                    const { error } = await supabase
+                      .from("profiles")
+                      .update({ webhook_url: url || null })
+                      .eq("id", user!.id);
+                    if (error) toast.error(error.message);
+                    else toast.success(url ? "Webhook saved" : "Webhook removed");
+                  }}
+                />
+              </>
+            )}
+          </section>
+          <section id="install" className={PANEL}>
+            <h2 className={H2}>Install the app</h2>
+            <InstallInstructions />
+          </section>
+          <TipsSection />
+          <DangerZone
+            confirm={confirm}
+            setConfirm={setConfirm}
+            busy={busy}
+            deleteAccount={deleteAccount}
+          />
+        </div>
+      </div>
     </div>
   );
 }
-
 
 type ReferralSummary = {
   signups: number;
@@ -287,25 +351,24 @@ function InviteSection() {
   }
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-bold">Invite friends</h2>
+    <section id="invite" className={PANEL}>
+      <h2 className={H2}>Invite friends</h2>
       <p className="text-sm text-muted-foreground">
-        Friends who sign up with your link get {FRIEND_FIRST_PCT}% off their first month (or
-        year) of Pro or Premium. When they pay, you get {REFERRER_FIRST_PCT}% off your next
-        payment, then {REFERRER_ONGOING_PCT}% off every payment for as long as they stay
-        subscribed — it stacks, up to {MAX_REFERRAL_PCT}% off with{" "}
-        {MAX_REFERRAL_PCT / REFERRER_ONGOING_PCT} paying friends. You also get 5 bonus card scans for
-        every friend who signs up.
+        Friends who sign up with your link get {FRIEND_FIRST_PCT}% off their first month (or year)
+        of Pro or Premium. When they pay, you get {REFERRER_FIRST_PCT}% off your next payment, then{" "}
+        {REFERRER_ONGOING_PCT}% off every payment for as long as they stay subscribed — it stacks,
+        up to {MAX_REFERRAL_PCT}% off with {MAX_REFERRAL_PCT / REFERRER_ONGOING_PCT} paying friends.
+        You also get 5 bonus card scans for every friend who signs up.
       </p>
       {link ? (
-        <div className="surface space-y-3 p-4">
+        <div className="space-y-3 rounded-2xl bg-muted/50 p-4">
           <div className="flex items-center gap-2">
             <input
               readOnly
               aria-label="Your invite link"
               value={link}
               onFocus={(e) => e.currentTarget.select()}
-              className="h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"
+              className="h-9 min-w-0 flex-1 rounded-full border bg-background px-3.5 font-mono text-xs"
             />
             <Button size="sm" variant="outline" onClick={() => void copy()}>
               <Copy className="h-3.5 w-3.5" />
@@ -319,20 +382,20 @@ function InviteSection() {
           <dl className="grid grid-cols-3 gap-2 text-center">
             <div>
               <dt className="text-xs text-muted-foreground">Signed up</dt>
-              <dd className="text-lg font-bold tabular-nums">{s.signups}</dd>
+              <dd className="font-display text-2xl font-extrabold tabular-nums">{s.signups}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Paying</dt>
-              <dd className="text-lg font-bold tabular-nums">{s.paying}</dd>
+              <dd className="font-display text-2xl font-extrabold tabular-nums">{s.paying}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Your next payment</dt>
-              <dd className="text-lg font-bold tabular-nums">{next}% off</dd>
+              <dd className="font-display text-2xl font-extrabold tabular-nums">{next}% off</dd>
             </div>
           </dl>
           <p className="text-xs text-muted-foreground">
-            Discounts apply to your own Pro or Premium subscription (Teams bills aren't
-            discounted). No subscription yet? They're applied when you start one.
+            Discounts apply to your own Pro or Premium subscription (Teams bills aren't discounted).
+            No subscription yet? They're applied when you start one.
           </p>
         </div>
       ) : (
@@ -348,8 +411,8 @@ function InviteSection() {
 function TipsSection() {
   const { dismissed, resetAll } = useDismissedTips();
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-bold">Tips</h2>
+    <section id="tips" className={PANEL}>
+      <h2 className={H2}>Tips</h2>
       <p className="text-sm text-muted-foreground">
         Each screen has a short guide — tap <strong>Tips</strong> at the top of any screen to see
         it. {dismissed.length > 0 && `You've turned off ${dismissed.length} of them.`}
@@ -459,8 +522,8 @@ function PlanSection() {
 
   if (billingFailed && !billing)
     return (
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold">Plan & usage</h2>
+      <section id="plan" className={PANEL}>
+        <h2 className={H2}>Plan & usage</h2>
         <p className="text-sm text-muted-foreground">
           Couldn’t load your plan.{" "}
           <button type="button" onClick={() => refetchBilling()} className="underline">
@@ -472,16 +535,16 @@ function PlanSection() {
   if (!billing) return null;
   const paid = billing.plan !== "free";
   return (
-    <section id="plan" className="scroll-mt-20 space-y-3">
+    <section id="plan" className={PANEL}>
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-bold">Plan & usage</h2>
+        <h2 className={H2}>Plan & usage</h2>
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${paid ? "bg-brand text-white" : "bg-muted text-muted-foreground"}`}
         >
           {PLAN_NAMES[billing.plan]}
         </span>
       </div>
-      <div className="surface space-y-3 p-4">
+      <div className="space-y-3 rounded-2xl bg-muted/50 p-4">
         {USAGE_KINDS.map((k) => {
           const u = billing.usage[k];
           const pct = u.limit ? Math.min(100, Math.round((u.used / u.limit) * 100)) : 0;
@@ -551,8 +614,8 @@ function PlanSection() {
       )}
       {billing.coveredByTeam ? (
         <p className="text-sm text-muted-foreground">
-          Premium is covered by your seat on <strong>{billing.coveredByTeam}</strong>. The team owner
-          manages billing.
+          Premium is covered by your seat on <strong>{billing.coveredByTeam}</strong>. The team
+          owner manages billing.
         </p>
       ) : billing.plan === "premium" ? (
         <div id="top-ups" className="flex scroll-mt-20 flex-wrap gap-2">
@@ -562,7 +625,11 @@ function PlanSection() {
             </Button>
           )}
           {billing.teamConfigured && billing.teamSeats < TEAM_MIN_SEATS && (
-            <Button variant="outline" disabled={busy} onClick={() => upgrade("team", "month", seats)}>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => upgrade("team", "month", seats)}
+            >
               Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo
             </Button>
           )}
@@ -640,7 +707,8 @@ function PlanSection() {
                 disabled={busy}
                 onClick={() => upgrade("team", "month", seats)}
               >
-                {billing.hasSubscription ? "Switch to Teams" : "Get Teams"} — {TEAM_SEAT_PRICE_LABEL}
+                {billing.hasSubscription ? "Switch to Teams" : "Get Teams"} —{" "}
+                {TEAM_SEAT_PRICE_LABEL}
                 /mo
               </Button>
               {billing.teamAnnualConfigured && (
@@ -660,19 +728,19 @@ function PlanSection() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            Free is for trying QuickieQR: one card, {FREE_SHAREBACK_LIMIT} share-backs and
-            QR-code scanning. Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with{" "}
-            {annualFreeMonths()} months free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus{" "}
-            {PLAN_LIMITS.pro.enrich} contact enrichments a month, note summaries, unlimited
-            share-backs, instant lead alerts, the Zapier webhook, event mode, and up to 3 cards.
-            Premium ({PREMIUM_PRICE_LABEL}, or {PREMIUM_ANNUAL_PRICE_LABEL} with{" "}
-            {premiumAnnualFreeMonths()} months free): everything in Pro, with{" "}
-            {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, email
-            signatures, follow-up reminders, and advanced analytics. Teams ({TEAM_SEAT_PRICE_LABEL}
+            Free is for trying QuickieQR: one card, {FREE_SHAREBACK_LIMIT} share-backs and QR-code
+            scanning. Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with {annualFreeMonths()}{" "}
+            months free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus {PLAN_LIMITS.pro.enrich} contact
+            enrichments a month, note summaries, unlimited share-backs, instant lead alerts, the
+            Zapier webhook, event mode, and up to 3 cards. Premium ({PREMIUM_PRICE_LABEL}, or{" "}
+            {PREMIUM_ANNUAL_PRICE_LABEL} with {premiumAnnualFreeMonths()} months free): everything
+            in Pro, with {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards,
+            email signatures, follow-up reminders, and advanced analytics. Teams (
+            {TEAM_SEAT_PRICE_LABEL}
             /mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with everything in Premium for
-            every member, and the only plan that can remove QuickieQR branding from cards. Plans auto-renew; cancelling stops the renewal and your plan runs to the
-            end of the period you've paid for. Every account keeps one live digital card (link + QR)
-            free for life.
+            every member, and the only plan that can remove QuickieQR branding from cards. Plans
+            auto-renew; cancelling stops the renewal and your plan runs to the end of the period
+            you've paid for. Every account keeps one live digital card (link + QR) free for life.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">
@@ -829,9 +897,12 @@ function DangerZone({
   deleteAccount: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-xl">
-      <section className="rounded-xl border border-destructive/40 p-5">
-        <h2 className="text-lg font-bold text-destructive">Delete account</h2>
+    <div>
+      <section
+        id="account"
+        className="scroll-mt-24 rounded-3xl border border-destructive/40 p-5 sm:p-6"
+      >
+        <h2 className={`${H2} text-destructive`}>Delete account</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Permanently deletes your cards, contacts, notes, analytics, photos and login.
         </p>

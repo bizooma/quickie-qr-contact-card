@@ -418,431 +418,469 @@ function ContactDetail() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-5xl">
       <Link
         to="/app/contacts"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Contacts
       </Link>
-      <div className="mb-8 overflow-hidden rounded-3xl border bg-card">
-        <div className="relative h-24 overflow-hidden bg-brand md:h-28">
-          <img
-            src={bannerLogo}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full scale-150 object-cover opacity-25 blur-2xl"
-            loading="lazy"
-          />
-          <span className="absolute right-4 top-1/2 flex h-16 w-16 -translate-y-1/2 items-center justify-center rounded-2xl bg-white/95 shadow-md">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:items-start">
+        {/* Who they are and the one-tap ways to reach them. */}
+        <div className="dark overflow-hidden rounded-[2rem] bg-[#0B0D1C] text-foreground lg:col-start-1 lg:row-start-1">
+          <div className="relative h-24 overflow-hidden bg-brand md:h-28">
             <img
-              key={bannerLogo}
               src={bannerLogo}
-              alt={bannerAlt}
-              className="h-11 w-11 rounded object-contain"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full scale-150 object-cover opacity-25 blur-2xl"
               loading="lazy"
-              onError={() => setLogoError(true)}
             />
-            <button
-              type="button"
-              onClick={() => setEditing("logo")}
-              aria-label="Edit company logo"
-              title="Edit company logo"
-              className="absolute -right-2 -top-2 z-20 rounded-full border bg-background p-1.5 text-muted-foreground shadow hover:text-foreground"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-          </span>
-        </div>
-        <div className="relative z-10 -mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
-          <div className="relative">
-            {photoUrl ? (
+            <span className="absolute right-4 top-1/2 flex h-16 w-16 -translate-y-1/2 items-center justify-center rounded-2xl bg-white/95 shadow-md">
               <img
-                src={photoUrl}
-                alt={`Photo of ${c.full_name}`}
-                className="h-24 w-24 rounded-full border-4 border-card object-cover shadow md:h-28 md:w-28"
+                key={bannerLogo}
+                src={bannerLogo}
+                alt={bannerAlt}
+                className="h-11 w-11 rounded object-contain"
+                loading="lazy"
+                onError={() => setLogoError(true)}
               />
-            ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-card bg-[image:linear-gradient(var(--brand-soft),var(--brand-soft))] text-2xl font-semibold text-accent-foreground shadow md:h-28 md:w-28">
-                {initials(c.full_name)}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setEditing("photo")}
-              aria-label={photoUrl ? "Edit photo" : "Add photo"}
-              title={photoUrl ? "Edit photo" : "Add photo"}
-              className="absolute bottom-0 right-0 rounded-full border bg-background p-1.5 text-muted-foreground shadow hover:text-foreground"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setEditing("logo")}
+                aria-label="Edit company logo"
+                title="Edit company logo"
+                className="absolute -right-2 -top-2 z-20 rounded-full border bg-background p-1.5 text-muted-foreground shadow hover:text-foreground"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            </span>
           </div>
-          <PhotoEditor
-            open={editing === "photo"}
-            onOpenChange={(o) => !o && setEditing(null)}
-            title={photoUrl ? "Edit photo" : "Add a photo"}
-            sourceUrl={photoUrl}
-            shape="circle"
-            onSave={(b) => saveImage("photo", b)}
-            onRemove={photoUrl ? () => removeImage("photo") : undefined}
-          />
-          <PhotoEditor
-            open={editing === "logo"}
-            onOpenChange={(o) => !o && setEditing(null)}
-            title="Company logo"
-            sourceUrl={ownLogoUrl}
-            shape="square"
-            output="image/png"
-            onSave={(b) => saveImage("logo", b)}
-            onRemove={ownLogoUrl ? () => removeImage("logo") : undefined}
-          />
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold">{c.full_name}</h1>
-            {(c.job_title || c.company) && (
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {c.job_title}
-                {c.job_title && c.company ? " · " : ""}
-                {c.company && <span className="font-semibold text-foreground">{c.company}</span>}
-              </p>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">
-              {eventLabel && (
-                <span className="mb-1 flex items-center justify-center gap-1 font-semibold text-foreground">
-                  <MapPin className="h-3 w-3 text-brand" />
-                  Met at {eventLabel}
-                </span>
+          <div className="relative z-10 -mt-12 flex flex-col items-center gap-3 px-6 pb-6 text-center md:-mt-14">
+            <div className="relative">
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt={`Photo of ${c.full_name}`}
+                  className="h-24 w-24 rounded-full border-4 border-[#0B0D1C] object-cover shadow md:h-28 md:w-28"
+                />
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-[#0B0D1C] bg-gradient-to-br from-brand to-[#7A5CFF] font-display text-2xl font-extrabold text-white shadow md:h-28 md:w-28">
+                  {initials(c.full_name)}
+                </div>
               )}
-              Captured {format(new Date(c.created_at), "MMM d, yyyy 'at' h:mm a")}
-              {cardLabel
-                ? ` via ${cardLabel} card`
-                : c.source === "manual"
-                  ? " · added manually"
-                  : ""}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="mb-8 flex flex-wrap justify-center gap-2">
-        {c.email && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={`mailto:${c.email}`}>
-              <Mail className="h-4 w-4" />
-              Email
-            </a>
-          </Button>
-        )}
-        {c.phone && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={`tel:${c.phone}`}>
-              <Phone className="h-4 w-4" />
-              Call
-            </a>
-          </Button>
-        )}
-        <Button variant="outline" size="sm" onClick={saveToPhone}>
-          <Smartphone className="h-4 w-4" />
-          Save to phone
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={runEnrichment}
-          disabled={enriching || !canEnrich(c)}
-          title={canEnrich(c) ? undefined : "Add a company or email first"}
-        >
-          {enriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-          {enriching ? "Researching…" : "Enrich contact"}
-        </Button>
-      </div>
-
-      {suggestions && (
-        <section className="surface mb-8 space-y-3 p-4" aria-live="polite">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="flex items-center gap-2 text-sm font-bold">
-                <Sparkles className="h-4 w-4 text-brand" />
-                Suggestions
-              </h2>
-              {enrichSummary && (
-                <p className="mt-1 text-xs text-muted-foreground">{enrichSummary}</p>
-              )}
+              <button
+                type="button"
+                onClick={() => setEditing("photo")}
+                aria-label={photoUrl ? "Edit photo" : "Add photo"}
+                title={photoUrl ? "Edit photo" : "Add photo"}
+                className="absolute bottom-0 right-0 rounded-full border bg-background p-1.5 text-muted-foreground shadow hover:text-foreground"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <button
-              onClick={() => setSuggestions(null)}
-              aria-label="Close suggestions"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          {suggestions.length === 0 ? (
-            <p className="text-sm">Couldn't find anything reliable — nothing was changed.</p>
-          ) : (
-            <>
-              <ul className="divide-y">
-                {suggestions.map((s) => (
-                  <li key={s.field} className="flex flex-wrap items-center gap-3 py-2.5">
-                    <div className="min-w-0 flex-1 text-sm">
-                      <p className="text-xs font-semibold text-muted-foreground">
-                        {ENRICH_LABELS[s.field]}
-                      </p>
-                      <p className="break-words">
-                        {s.current ? (
-                          <>
-                            Replace{" "}
-                            <span className="text-muted-foreground line-through">{s.current}</span>{" "}
-                            with <span className="font-semibold">{s.value}</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-muted-foreground">Empty</span> →{" "}
-                            <span className="font-semibold">{s.value}</span>
-                          </>
-                        )}
-                      </p>
-                      {s.source && (
-                        <p className="mt-0.5 break-all text-xs text-muted-foreground">
-                          Source: {s.source}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" onClick={() => acceptSuggestions([s])}>
-                        Accept
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(s.field)}>
-                        Dismiss
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {suggestions.length > 1 && (
-                <Button size="sm" variant="outline" onClick={() => acceptSuggestions(suggestions)}>
-                  Accept all
-                </Button>
+            <PhotoEditor
+              open={editing === "photo"}
+              onOpenChange={(o) => !o && setEditing(null)}
+              title={photoUrl ? "Edit photo" : "Add a photo"}
+              sourceUrl={photoUrl}
+              shape="circle"
+              onSave={(b) => saveImage("photo", b)}
+              onRemove={photoUrl ? () => removeImage("photo") : undefined}
+            />
+            <PhotoEditor
+              open={editing === "logo"}
+              onOpenChange={(o) => !o && setEditing(null)}
+              title="Company logo"
+              sourceUrl={ownLogoUrl}
+              shape="square"
+              output="image/png"
+              onSave={(b) => saveImage("logo", b)}
+              onRemove={ownLogoUrl ? () => removeImage("logo") : undefined}
+            />
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-2xl font-extrabold tracking-tight">
+                {c.full_name}
+              </h1>
+              {(c.job_title || c.company) && (
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {c.job_title}
+                  {c.job_title && c.company ? " · " : ""}
+                  {c.company && <span className="font-semibold text-foreground">{c.company}</span>}
+                </p>
               )}
-            </>
-          )}
-        </section>
-      )}
-
-      <section className="mb-8">
-        <h2 className="mb-3 text-lg font-bold">Follow up</h2>
-        <div className="mb-3">
-          <ContactReminders
-            contactId={c.id}
-            firstName={c.full_name.trim().split(/\s+/)[0] || c.full_name}
-          />
-        </div>
-        {!followUp && (
-          <>
-            <Button variant="outline" size="sm" onClick={generateFollowUp} disabled={drafting}>
-              {drafting ? (
+              <p className="mt-2 text-xs text-white/50">
+                {eventLabel && (
+                  <span className="mb-1 flex items-center justify-center gap-1 font-semibold text-foreground">
+                    <MapPin className="h-3 w-3 text-brand" />
+                    Met at {eventLabel}
+                  </span>
+                )}
+                Captured {format(new Date(c.created_at), "MMM d, yyyy 'at' h:mm a")}
+                {cardLabel
+                  ? ` via ${cardLabel} card`
+                  : c.source === "manual"
+                    ? " · added manually"
+                    : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2 border-t border-white/10 px-5 py-4">
+            {c.email && (
+              <Button
+                size="sm"
+                className="rounded-full bg-pop-lime font-bold text-[#0E1230] hover:bg-pop-lime/90"
+                asChild
+              >
+                <a href={`mailto:${c.email}`}>
+                  <Mail className="h-4 w-4" />
+                  Email
+                </a>
+              </Button>
+            )}
+            {c.phone && (
+              <Button variant="outline" size="sm" className="rounded-full" asChild>
+                <a href={`tel:${c.phone}`}>
+                  <Phone className="h-4 w-4" />
+                  Call
+                </a>
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="rounded-full" onClick={saveToPhone}>
+              <Smartphone className="h-4 w-4" />
+              Save to phone
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={runEnrichment}
+              disabled={enriching || !canEnrich(c)}
+              title={canEnrich(c) ? undefined : "Add a company or email first"}
+            >
+              {enriching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4" />
+                <Wand2 className="h-4 w-4" />
               )}
-              {drafting ? "Drafting…" : "Draft follow-up email"}
+              {enriching ? "Researching…" : "Enrich contact"}
             </Button>
-            <AllowanceNote kind="follow_up" className="mt-2" />
-          </>
-        )}
-        {followUp && (
-          <div className="surface space-y-3 p-4">
-            <p className="text-sm font-semibold">{followUp.subject}</p>
-            <p className="whitespace-pre-wrap text-sm">{followUp.body}</p>
-            <div className="flex flex-wrap gap-2">
-              {c.email && (
-                <Button size="sm" asChild>
-                  <a
-                    href={`mailto:${c.email}?subject=${encodeURIComponent(followUp.subject)}&body=${encodeURIComponent(followUp.body)}`}
-                  >
-                    <Mail className="h-4 w-4" />
-                    Open in email
-                  </a>
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={copyFollowUp}>
-                <Copy className="h-4 w-4" />
-                Copy
-              </Button>
-              <Button variant="outline" size="sm" onClick={saveFollowUpAsNote}>
-                Save as note
-              </Button>
-              <Button variant="ghost" size="sm" onClick={generateFollowUp} disabled={drafting}>
-                {drafting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                Redraft
-              </Button>
-            </div>
           </div>
-        )}
-      </section>
-
-      <section className="mb-8">
-        <h2 className="mb-3 text-lg font-bold">Tags</h2>
-        <div className="flex flex-wrap gap-2">
-          {data.tags.map((t) => (
-            <Badge key={t.id} className="gap-1 pr-1">
-              {t.tag}
-              <button
-                onClick={() => del("contact_tags", t.id)}
-                aria-label={`Remove ${t.tag}`}
-                className="rounded-full p-0.5 hover:bg-background/20"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {SUGGESTED_TAGS.filter((s) => !data.tags.some((t) => t.tag === s)).map((s) => (
-            <button
-              key={s}
-              onClick={() => addTag(s)}
-              className="rounded-full border px-3 py-1 text-xs hover:bg-muted"
+
+        <div className="space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          {suggestions && (
+            <section
+              className="surface space-y-3 rounded-3xl border-brand/30 p-5 sm:p-6"
+              aria-live="polite"
             >
-              + {s}
-            </button>
-          ))}
-        </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            addTag(tag);
-          }}
-          className="mt-3 flex gap-2"
-        >
-          <Input
-            aria-label="Custom tag"
-            placeholder="Custom tag, e.g. Met at Web Summit"
-            value={tag}
-            onChange={(e) => setTag(e.target.value)}
-          />
-          <Button type="submit" variant="outline">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </form>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="mb-3 text-lg font-bold">Notes</h2>
-        {c.note && (
-          <div className="mb-3 rounded-xl bg-muted p-3 text-sm">
-            <p className="mb-1 text-xs font-semibold text-muted-foreground">Their message</p>
-            {c.note}
-          </div>
-        )}
-        <form onSubmit={addNote} className="space-y-2">
-          <Textarea
-            placeholder="What did you talk about?"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" size="sm" disabled={!note.trim()}>
-              Add note
-            </Button>
-            {speech.supported && (
-              <Button
-                type="button"
-                size="sm"
-                variant={speech.listening ? "destructive" : "outline"}
-                onClick={toggleDictation}
-                aria-pressed={speech.listening}
-              >
-                {speech.listening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                {speech.listening ? "Stop" : "Voice note"}
-              </Button>
-            )}
-            {speech.listening && (
-              <span
-                className="flex items-center gap-2 text-xs text-muted-foreground"
-                aria-live="polite"
-              >
-                <span className="h-2 w-2 animate-pulse rounded-full bg-destructive" />
-                Listening…
-              </span>
-            )}
-          </div>
-          {!speech.supported && (
-            <p className="text-xs text-muted-foreground">
-              Tip: use your keyboard's dictation mic in the note field to speak a note.
-            </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-bold">
+                    <Sparkles className="h-4 w-4 text-brand" />
+                    Suggestions
+                  </h2>
+                  {enrichSummary && (
+                    <p className="mt-1 text-xs text-muted-foreground">{enrichSummary}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSuggestions(null)}
+                  aria-label="Close suggestions"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {suggestions.length === 0 ? (
+                <p className="text-sm">Couldn't find anything reliable — nothing was changed.</p>
+              ) : (
+                <>
+                  <ul className="divide-y">
+                    {suggestions.map((s) => (
+                      <li key={s.field} className="flex flex-wrap items-center gap-3 py-2.5">
+                        <div className="min-w-0 flex-1 text-sm">
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            {ENRICH_LABELS[s.field]}
+                          </p>
+                          <p className="break-words">
+                            {s.current ? (
+                              <>
+                                Replace{" "}
+                                <span className="text-muted-foreground line-through">
+                                  {s.current}
+                                </span>{" "}
+                                with <span className="font-semibold">{s.value}</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-muted-foreground">Empty</span> →{" "}
+                                <span className="font-semibold">{s.value}</span>
+                              </>
+                            )}
+                          </p>
+                          {s.source && (
+                            <p className="mt-0.5 break-all text-xs text-muted-foreground">
+                              Source: {s.source}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" onClick={() => acceptSuggestions([s])}>
+                            Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => dismissSuggestion(s.field)}
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  {suggestions.length > 1 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => acceptSuggestions(suggestions)}
+                    >
+                      Accept all
+                    </Button>
+                  )}
+                </>
+              )}
+            </section>
           )}
-        </form>
-        <ul className="mt-4 space-y-2">
-          {data.notes.map((n) => (
-            <li key={n.id} className="surface flex gap-3 p-3 text-sm">
-              <div className="flex-1">
-                <p className="whitespace-pre-wrap">{n.body}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {format(new Date(n.created_at), "MMM d, yyyy · h:mm a")}
-                </p>
-                {canSummarize(n.body) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 -ml-2"
-                    onClick={() => summarize(n.id)}
-                    disabled={summarizingId !== null}
-                  >
-                    {summarizingId === n.id ? (
+
+          <section className="surface space-y-3 rounded-3xl p-5 sm:p-6">
+            <h2 className="font-display text-xl font-extrabold tracking-tight">Follow up</h2>
+            <div className="mb-3">
+              <ContactReminders
+                contactId={c.id}
+                firstName={c.full_name.trim().split(/\s+/)[0] || c.full_name}
+              />
+            </div>
+            {!followUp && (
+              <>
+                <Button variant="outline" size="sm" onClick={generateFollowUp} disabled={drafting}>
+                  {drafting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {drafting ? "Drafting…" : "Draft follow-up email"}
+                </Button>
+                <AllowanceNote kind="follow_up" className="mt-2" />
+              </>
+            )}
+            {followUp && (
+              <div className="space-y-3 rounded-2xl bg-muted/50 p-4">
+                <p className="text-sm font-semibold">{followUp.subject}</p>
+                <p className="whitespace-pre-wrap text-sm">{followUp.body}</p>
+                <div className="flex flex-wrap gap-2">
+                  {c.email && (
+                    <Button size="sm" asChild>
+                      <a
+                        href={`mailto:${c.email}?subject=${encodeURIComponent(followUp.subject)}&body=${encodeURIComponent(followUp.body)}`}
+                      >
+                        <Mail className="h-4 w-4" />
+                        Open in email
+                      </a>
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={copyFollowUp}>
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={saveFollowUpAsNote}>
+                    Save as note
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={generateFollowUp} disabled={drafting}>
+                    {drafting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    {summarizingId === n.id ? "Summarizing…" : "Summarize"}
+                    Redraft
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="surface space-y-3 rounded-3xl p-5 sm:p-6">
+            <h2 className="font-display text-xl font-extrabold tracking-tight">Tags</h2>
+            <div className="flex flex-wrap gap-2">
+              {data.tags.map((t) => (
+                <Badge key={t.id} className="gap-1 pr-1">
+                  {t.tag}
+                  <button
+                    onClick={() => del("contact_tags", t.id)}
+                    aria-label={`Remove ${t.tag}`}
+                    className="rounded-full p-0.5 hover:bg-background/20"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {SUGGESTED_TAGS.filter((s) => !data.tags.some((t) => t.tag === s)).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => addTag(s)}
+                  className="rounded-full border px-3 py-1 text-xs hover:bg-muted"
+                >
+                  + {s}
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                addTag(tag);
+              }}
+              className="mt-3 flex gap-2"
+            >
+              <Input
+                aria-label="Custom tag"
+                placeholder="Custom tag, e.g. Met at Web Summit"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+              />
+              <Button type="submit" variant="outline">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </form>
+          </section>
+
+          <section className="surface space-y-3 rounded-3xl p-5 sm:p-6">
+            <h2 className="font-display text-xl font-extrabold tracking-tight">Notes</h2>
+            {c.note && (
+              <div className="mb-3 rounded-xl bg-muted p-3 text-sm">
+                <p className="mb-1 text-xs font-semibold text-muted-foreground">Their message</p>
+                {c.note}
+              </div>
+            )}
+            <form onSubmit={addNote} className="space-y-2">
+              <Textarea
+                placeholder="What did you talk about?"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="submit" size="sm" disabled={!note.trim()}>
+                  Add note
+                </Button>
+                {speech.supported && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={speech.listening ? "destructive" : "outline"}
+                    onClick={toggleDictation}
+                    aria-pressed={speech.listening}
+                  >
+                    {speech.listening ? (
+                      <Square className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                    {speech.listening ? "Stop" : "Voice note"}
                   </Button>
                 )}
+                {speech.listening && (
+                  <span
+                    className="flex items-center gap-2 text-xs text-muted-foreground"
+                    aria-live="polite"
+                  >
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-destructive" />
+                    Listening…
+                  </span>
+                )}
               </div>
-              <button
-                onClick={() => del("contact_notes", n.id)}
-                aria-label="Delete note"
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+              {!speech.supported && (
+                <p className="text-xs text-muted-foreground">
+                  Tip: use your keyboard's dictation mic in the note field to speak a note.
+                </p>
+              )}
+            </form>
+            <ul className="mt-4 space-y-2">
+              {data.notes.map((n) => (
+                <li key={n.id} className="flex gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
+                  <div className="flex-1">
+                    <p className="whitespace-pre-wrap">{n.body}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {format(new Date(n.created_at), "MMM d, yyyy · h:mm a")}
+                    </p>
+                    {canSummarize(n.body) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 -ml-2"
+                        onClick={() => summarize(n.id)}
+                        disabled={summarizingId !== null}
+                      >
+                        {summarizingId === n.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                        {summarizingId === n.id ? "Summarizing…" : "Summarize"}
+                      </Button>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => del("contact_notes", n.id)}
+                    aria-label="Delete note"
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
 
-      <section className="mb-8 space-y-3">
-        <h2 className="text-lg font-bold">Details</h2>
-        {(
-          [
-            ["full_name", "Name"],
-            ["email", "Email"],
-            ["phone", "Phone"],
-            ["company", "Company"],
-            ["job_title", "Title"],
-            ["met_at", "Where you met"],
-            ["website", "Website"],
-            ["linkedin_url", "LinkedIn"],
-            ["address", "Address"],
-          ] as const
-        ).map(([k, l]) => (
-          <div key={k} className="space-y-1">
-            <Label htmlFor={`detail-${k}`}>{l}</Label>
-            <Input
-              id={`detail-${k}`}
-              value={form[k] ?? ""}
-              onChange={(e) => setForm({ ...form, [k]: e.target.value })}
-            />
-          </div>
-        ))}
-        <Button onClick={saveFields}>Save details</Button>
-      </section>
+        <section className="surface space-y-3 rounded-3xl p-5 sm:p-6 lg:col-start-1 lg:row-start-2">
+          <h2 className="font-display text-xl font-extrabold tracking-tight">Details</h2>
+          {(
+            [
+              ["full_name", "Name"],
+              ["email", "Email"],
+              ["phone", "Phone"],
+              ["company", "Company"],
+              ["job_title", "Title"],
+              ["met_at", "Where you met"],
+              ["website", "Website"],
+              ["linkedin_url", "LinkedIn"],
+              ["address", "Address"],
+            ] as const
+          ).map(([k, l]) => (
+            <div key={k} className="space-y-1">
+              <Label htmlFor={`detail-${k}`}>{l}</Label>
+              <Input
+                id={`detail-${k}`}
+                value={form[k] ?? ""}
+                onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+              />
+            </div>
+          ))}
+          <Button
+            onClick={saveFields}
+            className="rounded-full bg-brand px-6 font-bold text-white hover:bg-brand/90"
+          >
+            Save details
+          </Button>
+        </section>
+      </div>
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" className="text-destructive">
+          <Button variant="ghost" className="mt-6 rounded-full text-destructive">
             <Trash2 className="h-4 w-4" />
             Delete contact
           </Button>

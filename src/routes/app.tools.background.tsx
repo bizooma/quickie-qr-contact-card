@@ -231,12 +231,14 @@ function BackgroundPage() {
     <div className="mx-auto max-w-2xl lg:max-w-6xl">
       <Link
         to="/app/tools"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Tools
       </Link>
-      <h1 className="mb-1 text-2xl font-bold">Virtual background</h1>
+      <h1 className="mb-1 font-display text-3xl font-extrabold tracking-tight">
+        Virtual background
+      </h1>
       <p className="mb-6 text-sm text-muted-foreground">
         A 1920×1080 backdrop for Zoom, Meet, or Teams with your card's QR code — meetings become
         contact capture too. Drag anything on the preview to move it — your design saves

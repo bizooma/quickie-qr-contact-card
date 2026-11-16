@@ -108,18 +108,18 @@ function PrepPage() {
     <div className="mx-auto max-w-2xl">
       <Link
         to="/app/tools"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Tools
       </Link>
-      <h1 className="mb-1 text-2xl font-bold">Event prep</h1>
+      <h1 className="mb-1 font-display text-3xl font-extrabold tracking-tight">Event prep</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Your checklist, openers and goal sheet, ready the moment you need them.
       </p>
 
       {locked ? (
-        <div className="surface flex flex-col items-start gap-3 border-dashed p-5">
+        <div className="surface flex flex-col items-start gap-3 rounded-3xl border-dashed p-5 sm:p-6">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-foreground">
             <Lock className="h-3.5 w-3.5" />
             Included with any paid plan
@@ -139,7 +139,7 @@ function PrepPage() {
         </div>
       ) : !content ? (
         q.isError ? (
-          <div className="surface space-y-3 p-5">
+          <div className="surface space-y-3 rounded-3xl p-5 sm:p-6">
             <p className="text-sm">
               Event prep couldn't load. Check your connection and try again.
             </p>

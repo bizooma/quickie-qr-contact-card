@@ -11,7 +11,10 @@ import { buildSignatureHtml, SIGNATURE_STYLES, type SignatureStyle } from "@/lib
 import { publicCardUrl } from "@/components/card/QrPanel";
 import { PremiumGate } from "@/components/PremiumGate";
 
-export const Route = createFileRoute("/app/tools/signature")({ head: appHead('Email signature', 'Create an email signature from your card.'), component: SignaturePage });
+export const Route = createFileRoute("/app/tools/signature")({
+  head: appHead("Email signature", "Create an email signature from your card."),
+  component: SignaturePage,
+});
 
 const SETUP = [
   {
@@ -96,12 +99,12 @@ function SignaturePage() {
     <div className="mx-auto max-w-2xl">
       <Link
         to="/app/tools"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Tools
       </Link>
-      <h1 className="mb-1 text-2xl font-bold">Email signature</h1>
+      <h1 className="mb-1 font-display text-3xl font-extrabold tracking-tight">Email signature</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Built from your card, with a "Save my contact" button in every email. (Email clients can't
         load your private card photo, so the badge uses your initials.)
@@ -141,7 +144,7 @@ function SignaturePage() {
           </div>
         </div>
 
-        <div className="surface mb-4 overflow-x-auto bg-white p-5">
+        <div className="surface mb-4 overflow-x-auto rounded-3xl bg-white p-5">
           {html ? (
             <div dangerouslySetInnerHTML={{ __html: html }} />
           ) : (
@@ -161,9 +164,11 @@ function SignaturePage() {
         </div>
 
         <section className="space-y-2">
-          <h2 className="text-lg font-bold">Add it to your email</h2>
+          <h2 className="font-display text-xl font-extrabold tracking-tight">
+            Add it to your email
+          </h2>
           {SETUP.map((s) => (
-            <details key={s.client} className="surface p-4">
+            <details key={s.client} className="surface rounded-2xl p-4">
               <summary className="cursor-pointer text-sm font-semibold">{s.client}</summary>
               <p className="mt-2 text-sm text-muted-foreground">{s.steps}</p>
             </details>
