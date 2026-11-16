@@ -147,7 +147,7 @@ async function addLayer(
 export async function designToPdf(design: Design, assets: DesignAssets): Promise<Blob> {
   const pdf = await PDFDocument.create();
   pdf.setTitle("Virtual background");
-  pdf.setCreator("ContactKickstart");
+  pdf.setCreator("QuickieQR");
   const page = pdf.addPage([BG_WIDTH, BG_HEIGHT]);
   const fonts = {
     regular: await pdf.embedFont(StandardFonts.Helvetica),

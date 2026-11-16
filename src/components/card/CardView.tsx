@@ -32,7 +32,7 @@ export function CardView({
   bannerUrl?: string | null | undefined;
   /** Liquid Glass only: shows the verified badge. Set by the server, never the owner. */
   verified?: boolean | undefined;
-  /** Teams: leaves out the ContactKickstart badge a card without a logo
+  /** Teams: leaves out the QuickieQR badge a card without a logo
    *  would otherwise carry. Set by the server, never the owner. */
   unbranded?: boolean | undefined;
   actions?: ReactNode;
@@ -58,10 +58,10 @@ export function CardView({
   const muted = fg === "#FFFFFF" ? "rgba(255,255,255,0.65)" : "rgba(17,17,17,0.6)";
   const tile = fg === "#FFFFFF" ? "rgba(255,255,255,0.08)" : "rgba(17,17,17,0.04)";
   const t = card.template;
-  // Cards without an uploaded logo carry the ContactKickstart badge until
+  // Cards without an uploaded logo carry the QuickieQR badge until
   // the owner replaces it in the editor. A team that removed our branding
   // gets no badge at all.
-  const logo = logoUrl || (unbranded ? undefined : "/brand/logo-badge.webp");
+  const logo = logoUrl || (unbranded ? undefined : "/brand/logo-badge.png");
 
   const avatar = (size: number, ring = false) => (
     <div

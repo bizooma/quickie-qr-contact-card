@@ -1,4 +1,4 @@
-# ContactKickstart
+# QuickieQR (quickieqr.com)
 
 Build "SignatureSurge" (working title — I'll rebrand later), a personal digital business
 card + AI contacts platform. Think Blinq-style functionality but my own product.

@@ -34,7 +34,7 @@ export function ShareBack({
   ownerName: string;
   form: ExchangeForm;
   prefill?: ShareBackPrefill | null | undefined;
-  /** False on a team's unbranded cards: no ContactKickstart name or invite. */
+  /** False on a team's unbranded cards: no QuickieQR name or invite. */
   branded?: boolean | undefined;
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -221,7 +221,7 @@ export function ShareBack({
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 Only {first} receives these details, to follow up with you.{" "}
-                {branded && "Delivered by ContactKickstart. "}
+                {branded && "Delivered by QuickieQR. "}
                 <a href="/privacy" className="underline">
                   Privacy
                 </a>

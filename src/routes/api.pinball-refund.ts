@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Pinball refund webhook: the "Refund → ContactKickstart app access"
+// Pinball refund webhook: the "Refund → QuickieQR app access"
 // automation calls this when an app product is refunded. The purchase stops
 // counting: Pro from a refunded Lifetime/Year falls back to whatever else
 // the account has (another purchase, Stripe, a comp, or free), a refunded

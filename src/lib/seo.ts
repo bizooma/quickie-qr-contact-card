@@ -1,6 +1,6 @@
 /** Per-page head() for signed-in app screens: unique title + social text, never indexed. */
 export function appHead(page: string, description: string) {
-  const title = `${page} — ContactKickstart`;
+  const title = `${page} — QuickieQR`;
   return () => ({
     meta: [
       { title },

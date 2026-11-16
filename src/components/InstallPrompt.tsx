@@ -37,7 +37,7 @@ export function InstallPrompt() {
   async function install() {
     const outcome = await promptInstall();
     if (outcome === "accepted") {
-      toast.success("ContactKickstart installed — find it on your home screen");
+      toast.success("QuickieQR installed — find it on your home screen");
       setHidden(true);
     } else if (outcome === "dismissed") {
       dismiss();
@@ -56,7 +56,7 @@ export function InstallPrompt() {
         </button>
         <img src="/brand/icon-192.png" alt="" className="mt-0.5 h-10 w-10 rounded-xl" />
         <div className="min-w-0 flex-1 pr-5">
-          <p className="text-sm font-semibold">Put ContactKickstart on your home screen</p>
+          <p className="text-sm font-semibold">Put QuickieQR on your home screen</p>
           {ios && !canPrompt ? (
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               Tap <Share className="inline h-3.5 w-3.5 align-text-bottom" /> <strong>Share</strong>,
@@ -103,7 +103,7 @@ export function InstallInstructions() {
           }}
         >
           <MonitorDown className="h-4 w-4" />
-          Install ContactKickstart
+          Install QuickieQR
         </Button>
       )}
       <div className="space-y-2">

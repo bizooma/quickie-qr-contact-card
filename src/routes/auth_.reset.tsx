@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth_/reset")({
   head: () => ({
-    meta: [{ title: "Reset password — ContactKickstart" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Reset password — QuickieQR" }, { name: "robots", content: "noindex" }],
   }),
   component: ResetPage,
 });
@@ -51,8 +51,8 @@ function ResetPage() {
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <img
-          src="/brand/logo-badge.webp"
-          alt="ContactKickstart"
+          src="/brand/logo-badge.png"
+          alt="QuickieQR"
           className="mx-auto mb-10 h-24 w-24"
         />
         <h1 className="text-3xl font-bold">Set a new password</h1>

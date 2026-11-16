@@ -288,7 +288,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     });
     if (lockError) throw new Error(lockError.message);
     const { error: mailError } = await admin.auth.resetPasswordForEmail(target.user.email, {
-      redirectTo: "https://contactkickstart.com/auth/reset",
+      redirectTo: "https://quickieqr.com/auth/reset",
     });
     if (mailError) throw new Error(`Password locked, but the email failed: ${mailError.message}`);
     return { ok: true, email: target.user.email };

@@ -59,13 +59,13 @@ export const FONTS = [
 ] as const;
 
 export const ACCENT_PRESETS = [
-  "#E8553D",
+  "#4B3BFF",
   "#1F2937",
   "#2563EB",
   "#0F766E",
   "#CA8A04",
   "#BE185D",
-  "#7C3AED",
+  "#4B3BFF",
 ];
 export const BACKGROUND_PRESETS = [
   "#FFFFFF",

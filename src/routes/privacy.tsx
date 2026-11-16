@@ -3,10 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — ContactKickstart" },
-      { name: "description", content: "What data ContactKickstart collects, how it's used, and your rights to access and delete it." },
-      { property: "og:title", content: "Privacy Policy — ContactKickstart" },
-      { property: "og:description", content: "What data ContactKickstart collects, how it's used, and your rights." },
+      { title: "Privacy Policy — QuickieQR" },
+      { name: "description", content: "What data QuickieQR collects, how it's used, and your rights to access and delete it." },
+      { property: "og:title", content: "Privacy Policy — QuickieQR" },
+      { property: "og:description", content: "What data QuickieQR collects, how it's used, and your rights." },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -46,7 +46,7 @@ function Privacy() {
       <h2>Contact</h2>
       <p>
         Questions about this policy:{" "}
-        <a href="mailto:support@myaisummit.dev">support@myaisummit.dev</a>.
+        <a href="mailto:support@quickieqr.com">support@quickieqr.com</a>.
       </p>
     </LegalPage>
   );
@@ -64,7 +64,7 @@ export function LegalPage({
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-        ← ContactKickstart
+        ← QuickieQR
       </Link>
       <h1 className="mt-6 text-3xl font-extrabold">{title}</h1>
       <p className="mt-1 text-xs text-muted-foreground">Last updated {updated}</p>

@@ -60,7 +60,7 @@ export function parseQrCenter(value: string | null | undefined): QrCenterChoice 
   return value === "photo" || value === "logo" ? value : null;
 }
 
-/** Small, palette-optimized ContactKickstart badge (~10 KB) used as the
+/** Small, palette-optimized QuickieQR badge (~10 KB) used as the
  *  default QR center. */
 export const BRAND_QR_CENTER = "/brand/qr-center.png";
 
@@ -69,7 +69,7 @@ export type QrCenterSource =
   | { kind: "brand"; url: string; shape: CenterShape };
 
 /** What goes in the middle of the QR. The owner's photo or logo when the plan
- *  includes it and that image exists; otherwise the ContactKickstart badge —
+ *  includes it and that image exists; otherwise the QuickieQR badge —
  *  so every QR carries an image and a downgrade never leaves a broken one. */
 export function qrCenterSource(
   choice: QrCenterChoice | null,

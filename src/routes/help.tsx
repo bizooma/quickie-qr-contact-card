@@ -4,14 +4,14 @@ import { PRO_AI_BENEFIT, PLAN_LIMITS, PREMIUM_AI_BENEFIT } from "@/lib/plans";
 export const Route = createFileRoute("/help")({
   head: () => ({
     meta: [
-      { title: "Help Center — ContactKickstart" },
+      { title: "Help Center — QuickieQR" },
       {
         name: "description",
         content:
           "How to build and share your digital business card, capture contacts, scan paper cards, set up your team, and manage your plan.",
       },
-      { property: "og:title", content: "Help Center — ContactKickstart" },
-      { property: "og:description", content: "Guides for building, sharing and getting the most from your ContactKickstart card." },
+      { property: "og:title", content: "Help Center — QuickieQR" },
+      { property: "og:description", content: "Guides for building, sharing and getting the most from your QuickieQR card." },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -34,7 +34,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Install the app on your phone",
-        "ContactKickstart works as an app without an app store: open Settings → Install the app and follow the two-tap instructions for iPhone or Android.",
+        "QuickieQR works as an app without an app store: open Settings → Install the app and follow the two-tap instructions for iPhone or Android.",
       ],
     ],
   },
@@ -48,7 +48,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Share the link",
-        "Your card lives at contactkickstart.com/c/your-name. Put it in your email signature, social bios, or send it in a text with the Share button.",
+        "Your card lives at quickieqr.com/c/your-name. Put it in your email signature, social bios, or send it in a text with the Share button.",
       ],
       [
         "They save you in one tap",
@@ -62,15 +62,15 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "Can I add a QR widget to my phone?",
-        "Home-screen widgets need an app from the App Store or Play Store, so ContactKickstart can't add one. You can get just as close: one tap from your home screen, or your code right on your lock screen. The steps are below, and in the app under My QR → “How to get to your QR code in one tap”.",
+        "Home-screen widgets need an app from the App Store or Play Store, so QuickieQR can't add one. You can get just as close: one tap from your home screen, or your code right on your lock screen. The steps are below, and in the app under My QR → “How to get to your QR code in one tap”.",
       ],
       [
         "iPhone: one tap from your home screen",
-        "Open contactkickstart.com in Safari, tap Share, then Add to Home Screen. Then open the app, go to My QR and turn on “Open the app on my QR code” — tapping the icon now shows your code straight away.",
+        "Open quickieqr.com in Safari, tap Share, then Add to Home Screen. Then open the app, go to My QR and turn on “Open the app on my QR code” — tapping the icon now shows your code straight away.",
       ],
       [
         "Android: one tap from your home screen",
-        "In Chrome, tap ⋮ then Install app (or Add to Home screen). For a separate one-tap QR icon, touch and hold the ContactKickstart icon and drag “My QR code” to your home screen, or go to My QR, tap “Add a My QR icon”, then “Install My QR”. You can also turn on “Open the app on my QR code” in My QR.",
+        "In Chrome, tap ⋮ then Install app (or Add to Home screen). For a separate one-tap QR icon, touch and hold the QuickieQR icon and drag “My QR code” to your home screen, or go to My QR, tap “Add a My QR icon”, then “Install My QR”. You can also turn on “Open the app on my QR code” in My QR.",
       ],
       [
         "Put your QR code on your lock screen or home screen",
@@ -143,8 +143,8 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         "Admins provision cards for members, and Brand lock keeps your colors and logo on every team card — nobody drifts off-brand.",
       ],
       [
-        "Remove ContactKickstart branding",
-        "Only on Teams. On the Team page, under Brand & sharing, an owner or admin can turn on Remove ContactKickstart branding. Every member's card then shows your brand only: no ContactKickstart badge on cards without a logo, no \"Create your own card\" link under the card, and no ContactKickstart name on the share-back form or link preview. Link previews update the next time each card is saved. If the Teams plan ends, the branding comes back by itself.",
+        "Remove QuickieQR branding",
+        "Only on Teams. On the Team page, under Brand & sharing, an owner or admin can turn on Remove QuickieQR branding. Every member's card then shows your brand only: no QuickieQR badge on cards without a logo, no \"Create your own card\" link under the card, and no QuickieQR name on the share-back form or link preview. Link previews update the next time each card is saved. If the Teams plan ends, the branding comes back by itself.",
       ],
       [
         "Shared contacts & analytics",
@@ -158,7 +158,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     items: [
       [
         "What's free, forever",
-        "Free is for trying ContactKickstart: one card with QR and link, 5 share-backs, QR-code scanning, analytics and CSV export. Card scanning, follow-up drafts, unlimited share-backs and lead alerts come with Pro. No credit card to start. Every account keeps its digital cards live for life — including after a paid plan ends. On free you can edit one of them; the rest stay live but locked until you upgrade.",
+        "Free is for trying QuickieQR: one card with QR and link, 5 share-backs, QR-code scanning, analytics and CSV export. Card scanning, follow-up drafts, unlimited share-backs and lead alerts come with Pro. No credit card to start. Every account keeps its digital cards live for life — including after a paid plan ends. On free you can edit one of them; the rest stay live but locked until you upgrade.",
       ],
       [
         "What Pro adds ($8/mo, or $80/yr)",
@@ -170,7 +170,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "What Teams adds ($10/user/mo, or $100/user/yr)",
-        "A shared workspace billed per seat (3-seat minimum, owner included): every member gets full Premium features, plus brand lock, the option to remove ContactKickstart branding from every card, shared contacts and team-wide analytics. Add or remove seats anytime from Manage billing.",
+        "A shared workspace billed per seat (3-seat minimum, owner included): every member gets full Premium features, plus brand lock, the option to remove QuickieQR branding from every card, shared contacts and team-wide analytics. Add or remove seats anytime from Manage billing.",
       ],
       [
         "Auto-renewal & cancelling",
@@ -210,13 +210,13 @@ function Help() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-        ← ContactKickstart
+        ← QuickieQR
       </Link>
       <h1 className="mt-6 text-3xl font-extrabold">Help Center</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Everything in ContactKickstart, explained. Can't find it? Email{" "}
-        <a href="mailto:support@myaisummit.dev" className="underline">
-          support@myaisummit.dev
+        Everything in QuickieQR, explained. Can't find it? Email{" "}
+        <a href="mailto:support@quickieqr.com" className="underline">
+          support@quickieqr.com
         </a>
         .
       </p>
@@ -246,8 +246,8 @@ function Help() {
       ))}
       <p className="mt-12 border-t pt-6 text-sm text-muted-foreground">
         Still stuck? Email{" "}
-        <a href="mailto:support@myaisummit.dev" className="underline">
-          support@myaisummit.dev
+        <a href="mailto:support@quickieqr.com" className="underline">
+          support@quickieqr.com
         </a>{" "}
         — a human reads it.
       </p>

@@ -38,7 +38,7 @@ function JoinPage() {
       <Users className="mx-auto h-10 w-10 text-brand" />
       <h1 className="text-2xl font-bold">Join the team</h1>
       <p className="text-sm text-muted-foreground">
-        You've been invited to a ContactKickstart team. Joining lets the team admins provision
+        You've been invited to a QuickieQR team. Joining lets the team admins provision
         branded cards for you and see team-level analytics.
       </p>
       {problem && (

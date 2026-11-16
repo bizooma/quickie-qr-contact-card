@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ import {
   Trash2,
   UserX,
   Users,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardView } from "@/components/card/CardView";
@@ -60,13 +62,13 @@ import { ProfileMenu } from "@/components/ProfileMenu";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ContactKickstart — Never lose another lead to a paper card" },
+      { title: "QuickieQR — Digital business cards that capture every lead" },
       {
         name: "description",
         content:
           "A digital business card that shares your details with one QR scan — and captures theirs back automatically. Free to start, no app for them to install.",
       },
-      { property: "og:title", content: "ContactKickstart — Never lose another lead" },
+      { property: "og:title", content: "QuickieQR — Never lose another lead" },
       {
         property: "og:description",
         content: "Share your card with one QR scan and capture their details back. Free to start.",
@@ -80,8 +82,8 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "ContactKickstart",
-          url: "https://contactkickstart.com",
+          name: "QuickieQR",
+          url: "https://quickieqr.com",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:
@@ -109,22 +111,22 @@ const DEMO: CardData = {
   label: "Work",
   full_name: "Tamzyn Williams",
   job_title: "Head of Marketing",
-  company: "Contact Kickstart",
+  company: "QuickieQR",
   phones: [{ label: "Mobile", value: "+1 530-867-5309" }],
-  emails: [{ label: "Work", value: "TWilliams@ContactKickstart.com" }],
-  website: "ContactKickstart.com",
+  emails: [{ label: "Work", value: "tamzyn@quickieqr.com" }],
+  website: "QuickieQR.com",
   location: null,
   bio: null,
   headshot_path: null,
   logo_path: null,
   logo_size: "standard",
   banner_path: null,
-  accent_color: "#E8553D",
+  accent_color: "#4B3BFF",
   background_color: "#FFFFFF",
   font: "display",
   template: "glass",
   theme: {
-    mesh: "sunset",
+    mesh: "brand",
     tint: "smoke",
     strength: "regular",
     avatar: "circle",
@@ -265,11 +267,7 @@ function Landing() {
   return (
     <div className="min-h-screen overflow-x-clip">
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
-        <img
-          src="/brand/logo-wordmark.webp"
-          alt="ContactKickstart"
-          className="h-16 w-auto md:h-24"
-        />
+        <BrandLogo className="text-[1.5rem] md:text-[2.25rem]" />
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           {(
             [
@@ -316,8 +314,8 @@ function Landing() {
             data-reveal="0"
             className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand-soft px-3.5 py-1 text-xs font-semibold text-accent-foreground"
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            Digital business cards
+            <Zap className="h-3.5 w-3.5" />
+            Digital business cards, done quick
           </p>
           <h1 data-reveal="1" className="text-4xl font-extrabold leading-[1.05] md:text-6xl">
             {headline.lines[0]}
@@ -353,7 +351,7 @@ function Landing() {
               <CardView card={DEMO} headshotUrl="/demo/maya.webp" bannerUrl="/demo/banner.webp" />
             </div>
           </div>
-          {/* The conversation, kickstarted. Decorative — screen readers skip it. */}
+          {/* The conversation, started quick. Decorative — screen readers skip it. */}
           <div aria-hidden className="pointer-events-none absolute inset-0 hidden sm:block">
             <div
               className="chat-bubble bubble-pop absolute -left-2 top-10 max-w-[180px] lg:-left-12"
@@ -579,9 +577,9 @@ function Landing() {
             <div className="mt-3 h-1 w-14 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
             <p className="mt-4 text-white/70">
               Invite your team with a link, provision branded cards for every member, and lock your
-              colors and logo so no card drifts off-brand. Take the ContactKickstart name off every
-              card so people see your brand only. Opt in to shared contacts and see team-wide
-              analytics in one place.
+              colors and logo so no card drifts off-brand. Take the QuickieQR name off every card so
+              people see your brand only. Opt in to shared contacts and see team-wide analytics in
+              one place.
             </p>
           </div>
           <div className="relative mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -595,7 +593,7 @@ function Landing() {
               {
                 i: EyeOff,
                 t: "Your brand only",
-                d: "Remove ContactKickstart branding from every team card. Only on Teams.",
+                d: "Remove QuickieQR branding from every team card. Only on Teams.",
                 c: "text-white",
               },
               {
@@ -632,9 +630,9 @@ function Landing() {
               Don't take our word for it, tap one now!
             </h2>
             <p className="mt-4 text-muted-foreground">
-              The fastest way to understand ContactKickstart is to open a real card. This one is
-              live right now: save it to your phone, tap the links, try the “Share yours” button.
-              Everything you see is what the people you meet will see.
+              The fastest way to understand QuickieQR is to open a real card. This one is live right
+              now: save it to your phone, tap the links, try the “Share yours” button. Everything
+              you see is what the people you meet will see.
             </p>
             <LiveCardDialog from={variantMeta("proof", ab)}>
               <button
@@ -657,14 +655,13 @@ function Landing() {
               “
             </span>
             <p className="relative font-serif text-lg italic leading-relaxed text-foreground/85">
-              “We built ContactKickstart after one conference too many: a pocket full of other
-              people's cards, no idea who half of them were, and no clue what happened to the
-              hundred cards we'd handed out. A card should work in both directions — share who you
-              are, and keep who you meet. That's the whole product.”
+              “A business card should work in both directions: share who you are, and keep who you
+              meet. Paper does half of that, badly. QuickieQR does both in the time it takes to say
+              hello. That's the whole product.”
             </p>
             <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
               <span className="h-1 w-6 rounded-full bg-[linear-gradient(90deg,var(--brand),var(--pop-amber))]" />
-              — the ContactKickstart team
+              — the QuickieQR team
             </p>
           </div>
         </div>
@@ -870,7 +867,7 @@ function Landing() {
                 {[
                   "Everything in Premium — for every member",
                   "Brand lock: your colors & logo on every card",
-                  "Your brand only: no ContactKickstart branding",
+                  "Your brand only: no QuickieQR branding",
                   "Shared contacts: one team pipeline",
                   "Team-wide analytics",
                   "Add seats anytime as you grow",
@@ -918,7 +915,7 @@ function Landing() {
             ],
             [
               "How does capturing their info work?",
-              "Your card has a “Share yours” button. They type their name and contact details once, you get a push notification, and they land in your ContactKickstart contacts — with notes, tags and follow-up drafting ready.",
+              "Your card has a “Share yours” button. They type their name and contact details once, you get a push notification, and they land in your QuickieQR contacts — with notes, tags and follow-up drafting ready.",
             ],
             [
               "What happens to my data and my contacts?",
@@ -926,7 +923,7 @@ function Landing() {
             ],
             [
               "What does the free plan include, forever?",
-              `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try ContactKickstart before you pay. Card scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
+              `One card with QR and link, ${FREE_SHAREBACK_LIMIT} share-backs, QR-code scanning, analytics and CSV export, so you can try QuickieQR before you pay. Card scanning, follow-up drafts, enrichment, unlimited share-backs and lead alerts come with Pro. No credit card to start, and your card stays live for life.`,
             ],
             [
               "What happens if I cancel a paid plan?",
@@ -934,7 +931,7 @@ function Landing() {
             ],
             [
               "Can my whole team use it?",
-              "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove ContactKickstart branding so cards show your brand only (Teams is the only plan with this), and see shared contacts and team analytics in one view.",
+              "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove QuickieQR branding so cards show your brand only (Teams is the only plan with this), and see shared contacts and team analytics in one view.",
             ],
           ].map(([q, a]) => (
             <details
@@ -995,9 +992,10 @@ function Landing() {
       <footer className="border-t">
         <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 sm:grid-cols-3">
           <div className="text-sm text-muted-foreground">
-            <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-14 w-auto" />
+            <BrandLogo className="text-[1.75rem]" />
             <p className="mt-3 max-w-xs">
-              Digital business cards that capture every contact you meet.
+              The quickest hello in the room. Digital business cards that capture every contact you
+              meet.
             </p>
           </div>
           <div>
@@ -1059,7 +1057,7 @@ function Landing() {
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@myaisummit.dev" className="hover:text-foreground">
+                <a href="mailto:support@quickieqr.com" className="hover:text-foreground">
                   Contact support
                 </a>
               </li>
@@ -1067,7 +1065,7 @@ function Landing() {
           </div>
         </div>
         <div className="mx-auto flex max-w-6xl items-center gap-2 border-t px-6 py-5 text-xs text-muted-foreground">
-          <QrCode className="h-4 w-4" />© {new Date().getFullYear()} ContactKickstart
+          <QrCode className="h-4 w-4" />© {new Date().getFullYear()} QuickieQR
         </div>
       </footer>
     </div>

@@ -89,13 +89,13 @@ describe("vCard", () => {
 
   it("leaves out the parts the owner hid, but never the name or card link", () => {
     const full = { ...card, bio: "Hello there" };
-    const opts = { photoBase64: "AAAA", cardUrl: "https://contactkickstart.com/c/kale" };
+    const opts = { photoBase64: "AAAA", cardUrl: "https://quickieqr.com/c/kale" };
     const v = buildVCard(full, {
       ...opts,
       hide: ["phones", "emails", "company", "website", "location", "bio", "links", "photo"],
     });
     expect(v).toContain("FN:Kale Dabling");
-    expect(v).toContain("URL;TYPE=Card:https://contactkickstart.com/c/kale");
+    expect(v).toContain("URL;TYPE=Card:https://quickieqr.com/c/kale");
     for (const gone of ["ORG:", "TITLE:", "TEL;", "EMAIL;", "URL:", "LinkedIn", "ADR;", "NOTE:", "PHOTO;"])
       expect(v).not.toContain(gone);
 

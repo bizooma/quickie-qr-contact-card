@@ -165,7 +165,7 @@ function RoadmapPage() {
         <h2 className="text-lg font-bold">Request a feature</h2>
         <form onSubmit={sendRequest} className="surface space-y-3 p-4">
           <Label htmlFor="feature-request">
-            What would make ContactKickstart more useful to you?
+            What would make QuickieQR more useful to you?
           </Label>
           <Textarea
             id="feature-request"

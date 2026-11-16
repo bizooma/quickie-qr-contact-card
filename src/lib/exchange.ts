@@ -163,7 +163,7 @@ export function submissionProblem(
   return null;
 }
 
-/** A signed-in visitor's own details, taken from their ContactKickstart card. */
+/** A signed-in visitor's own details, taken from their QuickieQR card. */
 export type ShareBackPrefill = {
   name: string;
   email: string;

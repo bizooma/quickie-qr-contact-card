@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,9 @@ export const Route = createFileRoute("/for/$audience")({
     return {
       meta: a
         ? [
-            { title: `ContactKickstart for ${a.label}` },
+            { title: `QuickieQR for ${a.label}` },
             { name: "description", content: a.sub },
-            { property: "og:title", content: `ContactKickstart for ${a.label}` },
+            { property: "og:title", content: `QuickieQR for ${a.label}` },
             { property: "og:description", content: a.sub },
           ]
         : [],
@@ -38,11 +39,7 @@ function AudiencePage() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">
         <Link to="/">
-          <img
-            src="/brand/logo-wordmark.webp"
-            alt="ContactKickstart"
-            className="h-14 w-auto md:h-20"
-          />
+          <BrandLogo className="text-[1.4rem] md:text-[2.1rem]" />
         </Link>
         <div className="flex items-center gap-2">
           <Button asChild size="sm" variant="ghost">
@@ -116,7 +113,7 @@ function AudiencePage() {
       </section>
 
       <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground">
-        <span>© {new Date().getFullYear()} ContactKickstart</span>
+        <span>© {new Date().getFullYear()} QuickieQR</span>
         <nav className="flex gap-4">
           <Link to="/" className="hover:text-foreground">
             Home

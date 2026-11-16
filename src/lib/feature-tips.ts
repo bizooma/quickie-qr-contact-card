@@ -67,11 +67,11 @@ export const TIPS = {
     platformTabs: true,
     steps: [
       {
-        text: "**Add the app to your Home Screen:** open contactkickstart.com in Safari, tap **Share**, then **Add to Home Screen**.",
+        text: "**Add the app to your Home Screen:** open quickieqr.com in Safari, tap **Share**, then **Add to Home Screen**.",
         only: ["ios"],
       },
       {
-        text: "**Install the app:** tap **Add to home screen** below. If it isn't offered, open contactkickstart.com in Chrome, tap the **⋮** menu, then **Install app** (or **Add to Home screen**).",
+        text: "**Install the app:** tap **Add to home screen** below. If it isn't offered, open quickieqr.com in Chrome, tap the **⋮** menu, then **Install app** (or **Add to Home screen**).",
         only: ["android"],
       },
       {
@@ -79,7 +79,7 @@ export const TIPS = {
         only: ["ios", "android"],
       },
       {
-        text: "**Or add a My QR icon:** touch and hold the ContactKickstart icon on your home screen, then drag **My QR code** to an empty spot. Or tap **Add a My QR icon** below and tap **Install My QR**. Either way you get a separate icon that opens straight to your code, even with no signal.",
+        text: "**Or add a My QR icon:** touch and hold the QuickieQR icon on your home screen, then drag **My QR code** to an empty spot. Or tap **Add a My QR icon** below and tap **Install My QR**. Either way you get a separate icon that opens straight to your code, even with no signal.",
         only: ["android"],
       },
       {

@@ -67,9 +67,9 @@ function MyQr() {
     return (
       <main className="grid min-h-screen place-items-center bg-background px-6 text-center">
         <p className="max-w-xs text-sm text-muted-foreground">
-          Open your QR code in ContactKickstart once, then come back here.{" "}
+          Open your QR code in QuickieQR once, then come back here.{" "}
           <a href="/app/qr" className="underline">
-            Open ContactKickstart
+            Open QuickieQR
           </a>
         </p>
       </main>
@@ -106,7 +106,7 @@ function MyQr() {
           address instead, and it never opens this inside the main app. */}
       {standalone && (source === "icon" || ios) ? (
         <a href="/app" className="text-xs text-muted-foreground underline">
-          Open ContactKickstart
+          Open QuickieQR
         </a>
       ) : (
         <div className="surface w-full max-w-sm p-5 text-center">
@@ -136,7 +136,7 @@ function MyQr() {
   );
 }
 
-/** Where Chrome offers no install button. Opened inside the ContactKickstart
+/** Where Chrome offers no install button. Opened inside the QuickieQR
  *  app (no browser menu there), or before an installed app has picked up its
  *  narrower Android scope, Chrome treats this page as part of that app; the
  *  app's own "My QR" shortcut then makes the icon instead. */
@@ -148,7 +148,7 @@ function AndroidSteps({ slug, standalone }: { slug: string; standalone: boolean 
     <div className="mt-2 space-y-3 text-left text-sm text-muted-foreground">
       <p>
         <strong className="text-foreground">Quickest:</strong> on your home screen, touch and hold
-        the ContactKickstart icon, then drag <strong>My QR code</strong> to an empty spot. That icon
+        the QuickieQR icon, then drag <strong>My QR code</strong> to an empty spot. That icon
         opens straight to your code.
       </p>
       {chromeHref ? (

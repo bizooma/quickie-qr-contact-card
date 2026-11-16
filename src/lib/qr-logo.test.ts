@@ -90,7 +90,7 @@ describe("qrCenterSource", () => {
       shape: "rounded",
     });
   });
-  it("defaults to the ContactKickstart badge when nothing is chosen", () => {
+  it("defaults to the QuickieQR badge when nothing is chosen", () => {
     expect(qrCenterSource(null, paths, "pro")).toEqual(brand);
     expect(qrCenterSource(null, paths, "free")).toEqual(brand);
   });

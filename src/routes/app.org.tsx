@@ -200,7 +200,7 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
       <Users className="mx-auto h-10 w-10 text-brand" />
       <h1 className="text-2xl font-bold">Create your team</h1>
       <p className="text-sm text-muted-foreground">
-        Invite teammates with a link, provision branded cards for them, remove ContactKickstart
+        Invite teammates with a link, provision branded cards for them, remove QuickieQR
         branding so cards show your brand only, and see team analytics in one place. Creating a team requires the Teams plan ($10 per user/month, 3-seat minimum) —
         and every member you invite gets full Premium features on their seat.
       </p>
@@ -601,7 +601,7 @@ function TeamAnalytics({
 }
 
 function BrandSection({ org, onChanged }: { org: OrgRow; onChanged: () => void }) {
-  const [accent, setAccent] = useState(org.accent_color ?? "#E8553D");
+  const [accent, setAccent] = useState(org.accent_color ?? "#4B3BFF");
   const [background, setBackground] = useState(org.background_color ?? "#FFFFFF");
 
   async function save(patch: Partial<OrgRow>) {
@@ -670,17 +670,17 @@ function BrandSection({ org, onChanged }: { org: OrgRow; onChanged: () => void }
       </div>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium">Remove ContactKickstart branding</p>
+          <p className="text-sm font-medium">Remove QuickieQR branding</p>
           <p className="text-xs text-muted-foreground">
-            Every member's card shows your brand only: no ContactKickstart badge, no "Create your
-            own card" link, and no ContactKickstart name on the share-back form or link preview.
+            Every member's card shows your brand only: no QuickieQR badge, no "Create your
+            own card" link, and no QuickieQR name on the share-back form or link preview.
             Link previews update the next time each card is saved.
           </p>
         </div>
         <Switch
           checked={org.hide_branding}
           onCheckedChange={(v) => save({ hide_branding: v })}
-          aria-label="Remove ContactKickstart branding"
+          aria-label="Remove QuickieQR branding"
         />
       </div>
     </section>

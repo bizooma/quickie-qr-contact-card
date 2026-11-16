@@ -18,7 +18,7 @@ import {
 } from "@/lib/exchange";
 
 // Absolute URL so crawlers accept it from any serving domain.
-const DEFAULT_OG_IMAGE = "https://contactkickstart.com/brand/og-default.png";
+const DEFAULT_OG_IMAGE = "https://quickieqr.com/brand/og-default.png";
 
 // shareback_open is false once a free owner has collected their share-backs (0032).
 // verified is decided by get_public_card from the owner's profile (0034).
@@ -420,7 +420,7 @@ function PublicCard() {
                 .then(undefined, () => {});
             }}
           >
-            Create your own card · ContactKickstart
+            Create your own card · QuickieQR
           </a>
         </footer>
       )}

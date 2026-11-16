@@ -138,7 +138,7 @@ describe("prefillSubmission", () => {
     email: "vera@example.com",
     phone: "",
     company: "Belay",
-    cardUrl: "https://contactkickstart.com/c/vera",
+    cardUrl: "https://quickieqr.com/c/vera",
   };
   it("sends the member's details with their card address as the note", () => {
     expect(prefillSubmission(form(), mine)).toEqual({
@@ -146,7 +146,7 @@ describe("prefillSubmission", () => {
       email: "vera@example.com",
       phone: "",
       company: "Belay",
-      note: "My card: https://contactkickstart.com/c/vera",
+      note: "My card: https://quickieqr.com/c/vera",
     });
   });
   it("leaves out fields the owner switched off", () => {

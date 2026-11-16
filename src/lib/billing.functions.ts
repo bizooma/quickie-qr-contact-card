@@ -17,12 +17,12 @@ import {
 // Billing server functions. SDK and admin imports stay inside handlers —
 // this file ships to the client bundle.
 
-const FALLBACK_ORIGIN = "https://contactkickstart.com";
+const FALLBACK_ORIGIN = "https://quickieqr.com";
 
 // Stripe return URLs only ever point back at our own domains.
 const ALLOWED_ORIGINS = new Set([
-  "https://contactkickstart.com",
-  "https://www.contactkickstart.com",
+  "https://quickieqr.com",
+  "https://www.quickieqr.com",
   "https://contactkickstart.lovable.app",
   "https://id-preview--47eb069c-46a5-4b91-8359-3b044f3e0bde.lovable.app",
 ]);

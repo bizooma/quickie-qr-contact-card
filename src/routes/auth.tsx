@@ -23,10 +23,10 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in — ContactKickstart" },
-      { name: "description", content: "Sign in or create your ContactKickstart account." },
-      { property: "og:title", content: "Sign in — ContactKickstart" },
-      { property: "og:description", content: "Sign in or create your ContactKickstart account." },
+      { title: "Sign in — QuickieQR" },
+      { name: "description", content: "Sign in or create your QuickieQR account." },
+      { property: "og:title", content: "Sign in — QuickieQR" },
+      { property: "og:description", content: "Sign in or create your QuickieQR account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -116,8 +116,8 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <img
-          src="/brand/logo-badge.webp"
-          alt="ContactKickstart"
+          src="/brand/logo-badge.png"
+          alt="QuickieQR"
           className="mx-auto mb-10 h-24 w-24"
         />
         <h1 className="text-3xl font-bold">

@@ -378,13 +378,13 @@ function ContactDetail() {
   // Their company's logo, derived from the scanned card's website or work
   // email — no upload needed, it becomes the banner. Contacts without a
   // company domain (manual entries, share-backs from personal emails) get
-  // the ContactKickstart badge until an edit or enrichment adds one.
+  // the QuickieQR badge until an edit or enrichment adds one.
   const logoDomain = companyDomain({ website: c.website, email: c.email });
   const hasCompanyLogo = !!ownLogoUrl || (!!logoDomain && !logoError);
   const bannerLogo =
     ownLogoUrl ??
-    (hasCompanyLogo && logoDomain ? companyLogoUrl(logoDomain, 256) : "/brand/logo-badge.webp");
-  const bannerAlt = hasCompanyLogo ? `${c.company || logoDomain} logo` : "ContactKickstart logo";
+    (hasCompanyLogo && logoDomain ? companyLogoUrl(logoDomain, 256) : "/brand/logo-badge.png");
+  const bannerAlt = hasCompanyLogo ? `${c.company || logoDomain} logo` : "QuickieQR logo";
 
   // Photo editor results: upload, point the contact at the new file, drop the old one.
   async function saveImage(kind: "photo" | "logo", blob: Blob) {

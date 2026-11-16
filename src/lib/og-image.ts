@@ -207,7 +207,7 @@ export async function renderOgImage(
   ctx.font = `600 ${L.footer.size}px ${sans}`;
   // On glass the footer moves up to sit inside the panel.
   ctx.fillText(
-    opts.unbranded ? "Save my contact" : "Save my contact · ContactKickstart",
+    opts.unbranded ? "Save my contact" : "Save my contact · QuickieQR",
     L.footer.x,
     L.footer.y - (glass ? 36 : 0),
   );

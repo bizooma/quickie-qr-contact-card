@@ -85,14 +85,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#E8553D" },
+      { name: "theme-color", content: "#4B3BFF" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "google-site-verification", content: "Utl-fgmmUf9iKS2x8yd-LSJcZ1Z97XpSNmaBpmHKIBU" },
       {
         name: "rotate-verification",
         content: "ae9ad619c669342d4e74729536cc7054b1223defc21ae128aaa20c823dd6933a",
       },
-      { title: "ContactKickstart — Digital business cards" },
+      { title: "QuickieQR — Digital business cards" },
       { name: "description", content: "Share your digital business card and capture contacts." },
     ],
     links: [

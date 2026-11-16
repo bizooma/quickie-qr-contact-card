@@ -266,7 +266,7 @@ function Studio({
   // Read through a ref so saves fired from unmount/pagehide see the owner.
   const owner = useRef<string | null>(null);
   owner.current = canSave && user ? user.id : null;
-  const accent = card.accent_color || "#E8553D";
+  const accent = card.accent_color || "#4B3BFF";
   const presets = useMemo(
     () => backdropPresets(accent).map((b) => ({ name: b.name, fill: fillFromBackdrop(b) })),
     [accent],

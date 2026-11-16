@@ -4,10 +4,10 @@ import { LegalPage } from "./privacy";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service — ContactKickstart" },
-      { name: "description", content: "The terms that apply when you use ContactKickstart digital business cards and contact tools." },
-      { property: "og:title", content: "Terms of Service — ContactKickstart" },
-      { property: "og:description", content: "The terms that apply when you use ContactKickstart." },
+      { title: "Terms of Service — QuickieQR" },
+      { name: "description", content: "The terms that apply when you use QuickieQR digital business cards and contact tools." },
+      { property: "og:title", content: "Terms of Service — QuickieQR" },
+      { property: "og:description", content: "The terms that apply when you use QuickieQR." },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -21,7 +21,7 @@ function Terms() {
     <LegalPage title="Terms of Service" updated="October 11, 2026">
       <h2>The service</h2>
       <p>
-        ContactKickstart lets you create digital business cards, share them, and manage the contacts
+        QuickieQR lets you create digital business cards, share them, and manage the contacts
         you collect. The free plan is free; paid plans (Pro, Premium and Teams) are subscriptions
         billed monthly or annually — Teams per seat, with a 3-seat minimum.
       </p>
@@ -61,7 +61,7 @@ function Terms() {
       </p>
       <h2>Contact</h2>
       <p>
-        Questions: <a href="mailto:support@myaisummit.dev">support@myaisummit.dev</a>.
+        Questions: <a href="mailto:support@quickieqr.com">support@quickieqr.com</a>.
       </p>
     </LegalPage>
   );

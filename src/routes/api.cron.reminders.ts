@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/cron/reminders")({
             try {
               await sendPushToUser(userId, {
                 title: "Your card pile is waiting",
-                body: "Scan a few cards and let ContactKickstart draft the follow-ups for you.",
+                body: "Scan a few cards and let QuickieQR draft the follow-ups for you.",
                 url: "/app/scan",
               });
               winback += 1;

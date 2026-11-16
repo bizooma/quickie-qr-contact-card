@@ -172,7 +172,7 @@ describe("resolveTheme", () => {
 
   it("falls back to the house accent for a malformed colour", () => {
     const r = resolveTheme({ accent_color: "red;}", font: "sans", theme: null });
-    expect(r.vars["--ck-accent"]).toBe("#E8553D");
+    expect(r.vars["--ck-accent"]).toBe("#4B3BFF");
   });
 
   it("only ever emits hex colours, known names and plain numbers", () => {

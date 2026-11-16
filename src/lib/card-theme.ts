@@ -45,7 +45,7 @@ export const DEFAULT_THEME: CardTheme = {
 export const PREMIUM_AVATAR_MASKS: readonly AvatarMask[] = ["hexagon", "blob"];
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
-const FALLBACK_ACCENT = "#E8553D";
+const FALLBACK_ACCENT = "#4B3BFF";
 
 export function isHex(v: unknown): v is string {
   return typeof v === "string" && HEX.test(v);

@@ -9,7 +9,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const VAPID_SECRET_KEY = "vapid";
 // Contact address the push service may use to reach the operator (RFC 8292).
-const VAPID_SUBJECT = "mailto:support@myaisummit.dev";
+const VAPID_SUBJECT = "mailto:support@quickieqr.com";
 
 type StoredVapid = { publicJwk: JsonWebKey; privateJwk: JsonWebKey };
 

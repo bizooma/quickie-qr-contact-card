@@ -96,7 +96,7 @@ describe("homeScreenAction", () => {
 });
 
 describe("myQrIconHref", () => {
-  const base = { slug: "tamzyn", host: "contactkickstart.com" };
+  const base = { slug: "tamzyn", host: "quickieqr.com" };
   it("opens the My QR page for the card in the Android browser", () => {
     expect(myQrIconHref({ ...base, platform: "android", standalone: false })).toBe(
       "/my-qr?card=tamzyn",
@@ -104,7 +104,7 @@ describe("myQrIconHref", () => {
   });
   it("leaves the installed app for Chrome, which can install My QR", () => {
     expect(myQrIconHref({ ...base, platform: "android", standalone: true })).toBe(
-      "intent://contactkickstart.com/my-qr?card=tamzyn#Intent;scheme=https;package=com.android.chrome;end",
+      "intent://quickieqr.com/my-qr?card=tamzyn#Intent;scheme=https;package=com.android.chrome;end",
     );
   });
   it("is Android only", () => {

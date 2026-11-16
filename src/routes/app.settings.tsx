@@ -274,7 +274,7 @@ function InviteSection() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "ContactKickstart",
+          title: "QuickieQR",
           text: `Turn business cards into contacts and follow-ups. Get ${FRIEND_FIRST_PCT}% off your first month of Pro or Premium with my link:`,
           url: link,
         });
@@ -660,7 +660,7 @@ function PlanSection() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            Free is for trying ContactKickstart: one card, {FREE_SHAREBACK_LIMIT} share-backs and
+            Free is for trying QuickieQR: one card, {FREE_SHAREBACK_LIMIT} share-backs and
             QR-code scanning. Pro ({PRO_PRICE_LABEL}, or {PRO_ANNUAL_PRICE_LABEL} with{" "}
             {annualFreeMonths()} months free): {PRO_AI_BENEFIT} ({SCAN_UNIT_NOTE}.) Plus{" "}
             {PLAN_LIMITS.pro.enrich} contact enrichments a month, note summaries, unlimited
@@ -670,7 +670,7 @@ function PlanSection() {
             {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, email
             signatures, follow-up reminders, and advanced analytics. Teams ({TEAM_SEAT_PRICE_LABEL}
             /mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with everything in Premium for
-            every member, and the only plan that can remove ContactKickstart branding from cards. Plans auto-renew; cancelling stops the renewal and your plan runs to the
+            every member, and the only plan that can remove QuickieQR branding from cards. Plans auto-renew; cancelling stops the renewal and your plan runs to the
             end of the period you've paid for. Every account keeps one live digital card (link + QR)
             free for life.
           </p>

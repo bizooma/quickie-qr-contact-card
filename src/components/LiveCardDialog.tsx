@@ -65,7 +65,7 @@ export function LiveCardDialog({ from, children }: { from: string; children: Rea
         {/* Kept mounted so switching back doesn't reload the card. */}
         <iframe
           src={DEMO_CARD_PATH}
-          title="Tamzyn's live ContactKickstart card"
+          title="Tamzyn's live QuickieQR card"
           className={`h-[70vh] max-h-[640px] w-full border-0 ${view === "card" ? "" : "hidden"}`}
         />
         {view === "qr" && (

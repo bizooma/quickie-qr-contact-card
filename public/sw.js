@@ -1,9 +1,9 @@
-// ContactKickstart service worker.
+// QuickieQR service worker.
 // Strategy: hashed /assets/ files are immutable → cache-first; brand/static
 // files → stale-while-revalidate; page navigations → network-first with the
 // cached /app shell as the offline fallback. Data (Supabase) is cross-origin
 // and never intercepted, so nothing stale is ever shown as live data.
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `ck-shell-${VERSION}`;
 const ASSETS = `ck-assets-${VERSION}`;
 const STATIC = `ck-static-${VERSION}`;
@@ -13,8 +13,7 @@ const PRECACHE = [
   "/app",
   "/manifest.webmanifest",
   "/favicon.ico",
-  "/brand/logo-wordmark.webp",
-  "/brand/logo-badge.webp",
+  "/brand/logo-badge.png",
   "/brand/icon-192.png",
   "/brand/icon-512.png",
   // The My QR app opens with no signal too.
@@ -85,7 +84,7 @@ async function navigation(request) {
       if (page) return page;
     }
     return new Response(
-      "<!doctype html><title>Offline</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><body style=\"font-family:system-ui;display:grid;place-items:center;min-height:100vh;margin:0;background:#FAF8F5;color:#111827\"><div style=\"text-align:center\"><h1 style=\"font-size:1.25rem\">You're offline</h1><p style=\"color:#6b7280\">ContactKickstart needs a connection for this page.</p></div></body>",
+      "<!doctype html><title>Offline</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><body style=\"font-family:system-ui;display:grid;place-items:center;min-height:100vh;margin:0;background:#F9F9FD;color:#111827\"><div style=\"text-align:center\"><h1 style=\"font-size:1.25rem\">You're offline</h1><p style=\"color:#6b7280\">QuickieQR needs a connection for this page.</p></div></body>",
       { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } },
     );
   }

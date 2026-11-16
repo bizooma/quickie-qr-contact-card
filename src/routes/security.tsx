@@ -4,13 +4,13 @@ import { LegalPage } from "./privacy";
 export const Route = createFileRoute("/security")({
   head: () => ({
     meta: [
-      { title: "Security — ContactKickstart" },
+      { title: "Security — QuickieQR" },
       {
         name: "description",
-        content: "How ContactKickstart protects your data: encryption, isolation, GDPR rights.",
+        content: "How QuickieQR protects your data: encryption, isolation, GDPR rights.",
       },
-      { property: "og:title", content: "Security — ContactKickstart" },
-      { property: "og:description", content: "How ContactKickstart protects your data: encryption, isolation, GDPR rights." },
+      { property: "og:title", content: "Security — QuickieQR" },
+      { property: "og:description", content: "How QuickieQR protects your data: encryption, isolation, GDPR rights." },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -20,10 +20,10 @@ export const Route = createFileRoute("/security")({
 
 function Security() {
   return (
-    <LegalPage title="Security at ContactKickstart" updated="October 12, 2026">
+    <LegalPage title="Security at QuickieQR" updated="October 12, 2026">
       <h2>How your data is protected</h2>
       <p>
-        Every connection to ContactKickstart is encrypted in transit with TLS, and strict transport
+        Every connection to QuickieQR is encrypted in transit with TLS, and strict transport
         security keeps browsers from ever downgrading. Your data is stored in a managed PostgreSQL
         database that encrypts data at rest.
       </p>
@@ -54,8 +54,8 @@ function Security() {
         time (CSV or vCard from the app), and you can delete your account yourself from Settings —
         deletion removes your cards, contacts, photos and account data. For any other access,
         correction or erasure request, email{" "}
-        <a href="mailto:support@myaisummit.dev" className="underline">
-          support@myaisummit.dev
+        <a href="mailto:support@quickieqr.com" className="underline">
+          support@quickieqr.com
         </a>{" "}
         and we&apos;ll handle it promptly.
       </p>
@@ -69,19 +69,19 @@ function Security() {
       <p>
         Our security controls are modeled on the SOC&nbsp;2 Trust Services Criteria — access
         control, encryption, change management with automated checks on every change, and least
-        privilege throughout. ContactKickstart has not yet completed an independent SOC&nbsp;2
+        privilege throughout. QuickieQR has not yet completed an independent SOC&nbsp;2
         Type&nbsp;II audit; formal certification is on our roadmap as the company grows. If your
         organization needs our current security documentation for a vendor review, email{" "}
-        <a href="mailto:support@myaisummit.dev" className="underline">
-          support@myaisummit.dev
+        <a href="mailto:support@quickieqr.com" className="underline">
+          support@quickieqr.com
         </a>
         .
       </p>
       <h2>Reporting a vulnerability</h2>
       <p>
         If you believe you&apos;ve found a security issue, email{" "}
-        <a href="mailto:support@myaisummit.dev" className="underline">
-          support@myaisummit.dev
+        <a href="mailto:support@quickieqr.com" className="underline">
+          support@quickieqr.com
         </a>{" "}
         with the details. We read every report and act on them quickly.
       </p>

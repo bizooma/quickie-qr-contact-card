@@ -122,7 +122,7 @@ function loadBrandCenter(url: string): Promise<string> {
 }
 
 /** Loads the QR center image as a small inline data URL. A stored photo or
- *  logo that fails to load falls back to the ContactKickstart badge. `ready`
+ *  logo that fails to load falls back to the QuickieQR badge. `ready`
  *  turns true once the current source has resolved, so callers can tell
  *  "still loading" from "no image". */
 export function useCenterImage(source: QrCenterSource | null | undefined) {
@@ -202,7 +202,7 @@ async function svgToPng(svg: string, size: number): Promise<string> {
 }
 
 const CENTER_OPTIONS: { value: QrCenterChoice | null; label: string }[] = [
-  { value: null, label: "ContactKickstart" },
+  { value: null, label: "QuickieQR" },
   { value: "photo", label: "My photo" },
   { value: "logo", label: "Logo" },
 ];
@@ -363,7 +363,7 @@ export function QrPanel({
         </div>
         {plan && !allowed && (
           <p className="text-xs text-muted-foreground">
-            Swap the ContactKickstart logo for your face or company logo with{" "}
+            Swap the QuickieQR logo for your face or company logo with{" "}
             <Link to="/app/settings" className="font-semibold text-foreground underline">
               Pro or Premium
             </Link>

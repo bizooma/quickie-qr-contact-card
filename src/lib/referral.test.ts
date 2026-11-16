@@ -63,8 +63,8 @@ describe("referral helpers", () => {
   });
 
   it("builds a link the landing page records as a referral", () => {
-    expect(referralLink("https://contactkickstart.com", "tamzyn")).toBe(
-      "https://contactkickstart.com/?ref=invite&c=tamzyn",
+    expect(referralLink("https://quickieqr.com", "tamzyn")).toBe(
+      "https://quickieqr.com/?ref=invite&c=tamzyn",
     );
   });
 });

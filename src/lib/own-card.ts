@@ -74,7 +74,7 @@ export function deriveCardColors(
     return { accent_color: accent, background_color: bg };
   }
   const preset =
-    ACCENT_PRESETS.find((c) => contrastRatio(c, bg) >= MIN_ACCENT_CONTRAST) ?? "#E8553D";
+    ACCENT_PRESETS.find((c) => contrastRatio(c, bg) >= MIN_ACCENT_CONTRAST) ?? "#4B3BFF";
   return { accent_color: preset, background_color: bg };
 }
 

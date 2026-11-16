@@ -32,13 +32,13 @@ const now = new Date("2026-10-24T12:00:00Z");
 
 describe("attributionFromUrl", () => {
   it("is null for a plain visit", () => {
-    expect(attributionFromUrl(new URL("https://contactkickstart.com/"), "", now)).toBeNull();
+    expect(attributionFromUrl(new URL("https://quickieqr.com/"), "", now)).toBeNull();
   });
 
   it("keeps UTM codes, the Facebook click id and the landing page", () => {
     const a = attributionFromUrl(
       new URL(
-        "https://contactkickstart.com/for/realtors?utm_source=meta&utm_campaign=tier1&fbclid=abc",
+        "https://quickieqr.com/for/realtors?utm_source=meta&utm_campaign=tier1&fbclid=abc",
       ),
       "https://l.facebook.com/",
       now,

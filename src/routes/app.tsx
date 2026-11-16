@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -33,9 +34,9 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Dashboard — ContactKickstart" },
+      { title: "Dashboard — QuickieQR" },
       { name: "description", content: "Manage your cards, contacts and analytics." },
-      { property: "og:title", content: "Dashboard — ContactKickstart" },
+      { property: "og:title", content: "Dashboard — QuickieQR" },
       { property: "og:description", content: "Manage your cards, contacts and analytics." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -186,8 +187,8 @@ function AppLayout() {
           <p className="text-sm text-muted-foreground">
             Your account has been suspended and app features are unavailable. If you believe this is
             a mistake, email{" "}
-            <a href="mailto:support@myaisummit.dev" className="font-semibold underline">
-              support@myaisummit.dev
+            <a href="mailto:support@quickieqr.com" className="font-semibold underline">
+              support@quickieqr.com
             </a>{" "}
             and we&apos;ll take a look.
           </p>
@@ -225,7 +226,7 @@ function AppLayout() {
     >
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
         <Link to="/app" className="mb-8 px-2">
-          <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-10 w-auto" />
+          <BrandLogo className="text-[1.65rem]" />
         </Link>
         <nav aria-label="Main" className="flex flex-1 flex-col gap-7">
           <NavGroup label="Workspace" items={WORKSPACE} active={active} badge={badge} />
@@ -304,7 +305,7 @@ function TopBar({ title }: { title: string }) {
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-5 md:px-10">
         <Link to="/app" className="md:hidden">
-          <img src="/brand/logo-wordmark.webp" alt="ContactKickstart" className="h-8 w-auto" />
+          <BrandLogo className="text-[1.35rem]" />
         </Link>
         <p className="hidden truncate text-sm font-medium text-muted-foreground md:block">
           {title}

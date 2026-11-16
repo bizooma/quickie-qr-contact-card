@@ -212,7 +212,7 @@ function QuickQr() {
     // They installed from the QR screen, so the new icon should open on the code.
     setOpenOnQr(true);
     setOpenOnQrState(true);
-    toast.success("Added. Tap the ContactKickstart icon on your home screen to show this code");
+    toast.success("Added. Tap the QuickieQR icon on your home screen to show this code");
   }
 
   async function saveWallpaper(kind: WallpaperKind) {
