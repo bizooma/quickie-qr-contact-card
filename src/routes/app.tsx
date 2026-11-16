@@ -224,9 +224,24 @@ function AppLayout() {
         }
       }}
     >
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 md:flex">
-        <Link to="/app" className="mb-8 px-2">
+      {/* Dark ink rail, like the landing hero. `dark` swaps in the dark tokens
+          for just this column, whatever theme the rest of the app is in. */}
+      <aside className="dark fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#0B0D1C] px-4 py-6 text-foreground md:flex">
+        <Link to="/app" className="mb-7 px-2">
           <BrandLogo className="text-[1.65rem]" />
+        </Link>
+        {/* The one thing people open the app to do, one click from anywhere. */}
+        <Link
+          to="/app/qr"
+          className="group mb-8 flex items-center gap-3 rounded-2xl bg-pop-lime px-4 py-3 text-[#0E1230] shadow-[0_10px_30px_-10px] shadow-pop-lime/60 transition-transform hover:-translate-y-0.5"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E1230] text-pop-lime">
+            <QrCode className="h-5 w-5" />
+          </span>
+          <span className="leading-tight">
+            <span className="block font-display text-sm font-extrabold">Show my QR</span>
+            <span className="block text-[11px] font-medium opacity-70">Ready to scan</span>
+          </span>
         </Link>
         <nav aria-label="Main" className="flex flex-1 flex-col gap-7">
           <NavGroup label="Workspace" items={WORKSPACE} active={active} badge={badge} />
@@ -234,14 +249,14 @@ function AppLayout() {
         </nav>
         <Link
           to="/help"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/50 transition-colors hover:text-white"
         >
           <CircleHelp className="h-4 w-4" />
           Help
         </Link>
       </aside>
       <TopBar title={title} />
-      <main className="mx-auto max-w-5xl px-5 pb-28 pt-6 md:px-10 md:pb-14 md:pt-8">
+      <main className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pb-14 md:pt-8">
         <FeatureTips />
         <Outlet />
       </main>
@@ -254,26 +269,40 @@ function AppLayout() {
         data-tabbar
         className="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background/90 backdrop-blur md:hidden"
       >
-        {TABS.map((n) => (
-          <Link
-            key={n.to}
-            to={n.to}
-            className={cn(
-              "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-muted-foreground",
-              active(n.to, n.exact) && "text-brand",
-            )}
-          >
-            <span className="relative flex h-6 items-center">
-              <n.icon className="h-5 w-5" />
-              {badge(n.to) && (
-                <span className="absolute -right-2.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white">
-                  {badge(n.to)}
-                </span>
+        {TABS.map((n) => {
+          const on = active(n.to, n.exact);
+          const scan = n.to === "/app/scan";
+          return (
+            <Link
+              key={n.to}
+              to={n.to}
+              className={cn(
+                "relative flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-muted-foreground",
+                on && "font-bold text-brand",
               )}
-            </span>
-            {n.label}
-          </Link>
-        ))}
+            >
+              {on && !scan && (
+                <span className="absolute inset-x-4 top-0 h-[3px] rounded-b-full bg-brand" />
+              )}
+              <span
+                className={cn(
+                  "relative flex h-6 items-center",
+                  scan &&
+                    "-mt-1 h-7 w-11 justify-center rounded-full bg-brand text-white shadow-soft",
+                  scan && on && "bg-pop-lime text-[#0E1230]",
+                )}
+              >
+                <n.icon className="h-5 w-5" />
+                {badge(n.to) && (
+                  <span className="absolute -right-2.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pop-rose px-1 text-[9px] font-bold text-white">
+                    {badge(n.to)}
+                  </span>
+                )}
+              </span>
+              {n.label}
+            </Link>
+          );
+        })}
         <div className="flex justify-center">
           <ProfileMenu
             side="top"
@@ -303,11 +332,11 @@ function TopBar({ title }: { title: string }) {
   const { plan } = usePlan();
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-5 md:px-10">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 md:px-10">
         <Link to="/app" className="md:hidden">
           <BrandLogo className="text-[1.35rem]" />
         </Link>
-        <p className="hidden truncate text-sm font-medium text-muted-foreground md:block">
+        <p className="hidden truncate font-display text-lg font-extrabold tracking-tight md:block">
           {title}
         </p>
         <div className="flex items-center gap-3">
@@ -315,7 +344,7 @@ function TopBar({ title }: { title: string }) {
             <Link
               to="/app/settings"
               hash="plan"
-              className="hidden items-center gap-1.5 rounded-full border border-brand/30 px-3 py-1.5 text-xs font-semibold text-accent-foreground transition-colors hover:bg-brand-soft sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow-soft transition-transform hover:-translate-y-0.5 sm:inline-flex"
             >
               <Sparkles className="h-3.5 w-3.5" />
               Upgrade
@@ -341,7 +370,7 @@ function NavGroup({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/35">
         {label}
       </p>
       {items.map((n) => {
@@ -352,15 +381,14 @@ function NavGroup({
             to={n.to}
             aria-current={on ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
-              on &&
-                "bg-brand-soft text-accent-foreground hover:bg-brand-soft hover:text-accent-foreground",
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white",
+              on && "bg-white/10 font-semibold text-white hover:bg-white/10",
             )}
           >
-            <n.icon className="h-4 w-4" />
+            <n.icon className={cn("h-4 w-4", on && "text-pop-lime")} />
             {n.label}
             {badge(n.to) && (
-              <span className="ml-auto rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white">
+              <span className="ml-auto rounded-full bg-pop-rose px-2 py-0.5 text-[10px] font-bold text-white">
                 {badge(n.to)}
               </span>
             )}
