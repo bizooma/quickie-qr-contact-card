@@ -3,13 +3,30 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { format, subDays, startOfDay } from "date-fns";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { listCards } from "@/lib/cards-api";
 import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
 
-export const Route = createFileRoute("/app/analytics")({ head: appHead('Analytics', 'Views, saves and share-backs for each of your cards.'), component: Analytics });
+export const Route = createFileRoute("/app/analytics")({
+  head: appHead("Analytics", "Views, saves and share-backs for each of your cards."),
+  component: Analytics,
+});
 
 const sinceIso = (days: number) => startOfDay(subDays(new Date(), days - 1)).toISOString();
 
@@ -98,19 +115,40 @@ function Analytics() {
   }, [series_, days]);
 
   const tiles = [
-    { k: "view", label: "Views" },
-    { k: "save", label: "Contact saves" },
-    { k: "shareback", label: "Share-backs" },
-    { k: "click", label: "Link clicks" },
+    { k: "view", label: "Views", hint: "opened your card", color: "var(--series-view)" },
+    { k: "save", label: "Saves", hint: "added you to contacts", color: "var(--series-save)" },
+    {
+      k: "shareback",
+      label: "Share-backs",
+      hint: "sent you their details",
+      color: "var(--series-shareback)",
+    },
+    { k: "click", label: "Link clicks", hint: "tapped a link", color: null },
   ];
+  const SERIES = tiles.filter((t) => t.color) as { k: string; label: string; color: string }[];
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const toggle = (k: string) =>
+    setHidden((h) => {
+      const n = new Set(h);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+  const cardName =
+    cardId === "all" ? "all cards" : (cards.find((c) => c.id === cardId)?.label ?? "");
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-3xl font-bold">Analytics</h1>
-        <div className="flex gap-2">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">Analytics</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Last {days} days · {cardName}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={cardId} onValueChange={setCardId}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-36 rounded-full" aria-label="Card">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -122,43 +160,90 @@ function Analytics() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">7 days</SelectItem>
-              <SelectItem value="30">30 days</SelectItem>
-              <SelectItem value="90">90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <div role="radiogroup" aria-label="Time range" className="flex rounded-full bg-muted p-1">
+            {[7, 30, 90].map((d) => (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={days === d}
+                onClick={() => setDays(d)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                  days === d
+                    ? "bg-surface text-foreground shadow-soft"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((t) => (
-          <div key={t.k} className="surface p-4">
-            <p className="text-xs font-medium text-muted-foreground">{t.label}</p>
-            <p className="mt-1 font-display text-3xl font-bold">{totals[t.k] ?? 0}</p>
+
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {tiles.map((t, i) => (
+          <div
+            key={t.k}
+            className={
+              i === 0
+                ? "dark relative overflow-hidden rounded-3xl bg-[#0B0D1C] p-5 text-foreground"
+                : "surface rounded-3xl p-5"
+            }
+          >
+            {i === 0 && (
+              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand/40 blur-2xl" />
+            )}
+            <p className="relative flex items-center gap-2 text-xs font-bold text-muted-foreground">
+              {t.color && (
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: t.color }} />
+              )}
+              {t.label}
+            </p>
+            <p className="relative mt-2 font-display text-4xl font-extrabold tabular-nums tracking-tight">
+              {(totals[t.k] ?? 0).toLocaleString()}
+            </p>
+            <p className="relative mt-0.5 text-xs text-muted-foreground">{t.hint}</p>
           </div>
         ))}
-        {isPremium && (
-          <>
-            <div className="surface p-4">
-              <p className="text-xs font-medium text-muted-foreground">Unique visitors</p>
-              <p className="mt-1 font-display text-3xl font-bold">{depth.unique}</p>
-            </div>
-            <div className="surface p-4">
-              <p className="text-xs font-medium text-muted-foreground">View → capture</p>
-              <p className="mt-1 font-display text-3xl font-bold">{depth.conversion}%</p>
-            </div>
-          </>
-        )}
       </div>
-      <div className="surface p-4">
+
+      <section className="surface rounded-3xl p-5 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-extrabold">Activity</h2>
+          {/* Legend doubles as a series toggle. */}
+          <div className="flex flex-wrap gap-2">
+            {SERIES.map((sr) => {
+              const off = hidden.has(sr.k);
+              return (
+                <button
+                  key={sr.k}
+                  type="button"
+                  aria-pressed={!off}
+                  onClick={() => toggle(sr.k)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold transition-opacity ${
+                    off ? "opacity-45" : ""
+                  }`}
+                >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: sr.color }} />
+                  {sr.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={series} margin={{ left: -20, right: 8, top: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <defs>
+                {SERIES.map((sr) => (
+                  <linearGradient key={sr.k} id={`fill-${sr.k}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={sr.color} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={sr.color} stopOpacity={0} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid stroke="var(--border)" strokeOpacity={0.6} vertical={false} />
               <XAxis
                 dataKey="day"
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
@@ -174,106 +259,106 @@ function Analytics() {
                 axisLine={false}
               />
               <Tooltip
+                cursor={{ stroke: "var(--muted-foreground)", strokeOpacity: 0.4 }}
                 contentStyle={{
                   background: "var(--popover)",
+                  color: "var(--popover-foreground)",
                   border: "1px solid var(--border)",
-                  borderRadius: 12,
+                  borderRadius: 14,
                   fontSize: 12,
+                  boxShadow: "var(--shadow-float)",
                 }}
+                itemStyle={{ color: "var(--popover-foreground)", padding: 0 }}
+                labelStyle={{ fontWeight: 700, marginBottom: 2 }}
               />
-              <Area
-                type="monotone"
-                dataKey="view"
-                name="Views"
-                stroke="var(--chart-1)"
-                fill="var(--chart-1)"
-                fillOpacity={0.15}
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="save"
-                name="Saves"
-                stroke="var(--chart-3)"
-                fill="var(--chart-3)"
-                fillOpacity={0.1}
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="shareback"
-                name="Share-backs"
-                stroke="var(--chart-2)"
-                fill="var(--chart-2)"
-                fillOpacity={0.05}
-                strokeWidth={2}
-              />
+              {SERIES.filter((sr) => !hidden.has(sr.k)).map((sr) => (
+                <Area
+                  key={sr.k}
+                  type="monotone"
+                  dataKey={sr.k}
+                  name={sr.label}
+                  stroke={sr.color}
+                  fill={`url(#fill-${sr.k})`}
+                  strokeWidth={2}
+                  activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+                />
+              ))}
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
+
       {!isPremium && (
         <div className="mt-6">
           <PremiumUpsell feature="Advanced analytics — unique visitors, view-to-capture conversion, devices, referrers and most-tapped links —" />
         </div>
       )}
-      {isPremium && topClicks.length > 0 && (
-        <div className="surface mt-6 p-4">
-          <p className="mb-3 text-xs font-medium text-muted-foreground">Most-tapped links</p>
-          <ul className="space-y-2">
-            {topClicks.map(([label, count]) => (
-              <li key={label} className="flex items-center gap-3 text-sm">
-                <span className="min-w-0 flex-1 truncate font-medium">{label}</span>
-                <span
-                  className="h-1.5 rounded-full bg-brand/70"
-                  style={{ width: `${Math.max(8, (count / (topClicks[0]?.[1] ?? 1)) * 160)}px` }}
-                />
-                <span className="w-8 text-right tabular-nums text-muted-foreground">{count}</span>
-              </li>
-            ))}
-          </ul>
+      {isPremium && (
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="surface rounded-3xl p-5">
+            <p className="text-xs font-bold text-muted-foreground">Unique visitors</p>
+            <p className="mt-2 font-display text-4xl font-extrabold tabular-nums tracking-tight">
+              {depth.unique.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-3xl bg-pop-lime p-5 text-[#0E1230]">
+            <p className="text-xs font-bold opacity-70">View → capture</p>
+            <p className="mt-2 font-display text-4xl font-extrabold tabular-nums tracking-tight">
+              {depth.conversion}%
+            </p>
+            <p className="mt-0.5 text-xs opacity-70">of views became a save or share-back</p>
+          </div>
         </div>
+      )}
+      {isPremium && topClicks.length > 0 && (
+        <BarList className="mt-6" title="Most-tapped links" rows={topClicks} />
       )}
       {isPremium && (depth.devices.length > 0 || depth.referrers.length > 0) && (
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {depth.devices.length > 0 && (
-            <div className="surface p-4">
-              <p className="mb-3 text-xs font-medium text-muted-foreground">Devices</p>
-              <ul className="space-y-2">
-                {depth.devices.map(([device, count]) => (
-                  <li key={device} className="flex items-center gap-3 text-sm">
-                    <span className="min-w-0 flex-1 truncate font-medium capitalize">{device}</span>
-                    <span
-                      className="h-1.5 rounded-full bg-brand/70"
-                      style={{
-                        width: `${Math.max(8, (count / (depth.devices[0]?.[1] ?? 1)) * 120)}px`,
-                      }}
-                    />
-                    <span className="w-8 text-right tabular-nums text-muted-foreground">
-                      {count}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {depth.referrers.length > 0 && (
-            <div className="surface p-4">
-              <p className="mb-3 text-xs font-medium text-muted-foreground">Top referrers</p>
-              <ul className="space-y-2">
-                {depth.referrers.map(([ref, count]) => (
-                  <li key={ref} className="flex items-center gap-3 text-sm">
-                    <span className="min-w-0 flex-1 truncate font-medium">{ref}</span>
-                    <span className="w-8 text-right tabular-nums text-muted-foreground">
-                      {count}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {depth.devices.length > 0 && <BarList title="Devices" rows={depth.devices} capitalize />}
+          {depth.referrers.length > 0 && <BarList title="Top referrers" rows={depth.referrers} />}
         </div>
       )}
     </div>
+  );
+}
+
+/** Ranked list with a proportional bar behind each row's label. */
+function BarList({
+  title,
+  rows,
+  capitalize,
+  className = "",
+}: {
+  title: string;
+  rows: [string, number][];
+  capitalize?: boolean;
+  className?: string;
+}) {
+  const max = rows[0]?.[1] || 1;
+  return (
+    <section className={`surface rounded-3xl p-5 ${className}`}>
+      <h2 className="mb-3 font-display text-base font-extrabold">{title}</h2>
+      <ul className="space-y-1.5">
+        {rows.map(([label, count]) => (
+          <li
+            key={label}
+            className="relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2 text-sm"
+          >
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 rounded-xl bg-brand-soft"
+              style={{ width: `${Math.max(4, (count / max) * 100)}%` }}
+            />
+            <span
+              className={`relative min-w-0 flex-1 truncate font-medium ${capitalize ? "capitalize" : ""}`}
+            >
+              {label}
+            </span>
+            <span className="relative tabular-nums font-semibold">{count.toLocaleString()}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

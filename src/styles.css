@@ -394,3 +394,16 @@
     transition-delay: calc(var(--reveal-delay, 0) * 90ms);
   }
 }
+
+/* Analytics series. Validated as a categorical set (lightness band, CVD
+   separation, contrast) against the light and dark chart surfaces. */
+:root {
+  --series-view: #4036f8;
+  --series-save: #e72395;
+  --series-shareback: #0096c5;
+}
+.dark {
+  --series-view: #6b76ff;
+  --series-save: #ef45a0;
+  --series-shareback: #009fcb;
+}
