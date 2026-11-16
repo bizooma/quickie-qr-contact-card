@@ -67,13 +67,28 @@ export const Route = createFileRoute("/")({
         content:
           "A digital business card that shares your details with one QR scan — and captures theirs back automatically. Free to start, no app for them to install.",
       },
-      { property: "og:title", content: "QuickieQR — Never lose another lead" },
+      {
+        property: "og:title",
+        content: "QuickieQR — Digital business cards that capture every lead",
+      },
       {
         property: "og:description",
-        content: "Share your card with one QR scan and capture their details back. Free to start.",
+        content:
+          "One scan and you're in their contacts. One more tap and they're in yours. Free to start, nothing for them to install.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://quickieqr.com/" },
+      // Set explicitly: without it Lovable fills in an auto-screenshot of the page.
+      { property: "og:image", content: "https://quickieqr.com/brand/og-card.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content:
+          "QuickieQR: Scan. Saved. Done. A QR card scanned into a phone that shows the saved contact.",
+      },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://quickieqr.com/brand/og-card.png" },
     ],
     scripts: [
       {
