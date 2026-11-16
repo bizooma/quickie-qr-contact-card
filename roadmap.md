@@ -1,4 +1,6 @@
 # Roadmap
+## Before launch — REQUIRED
+- [ ] Add the 11 missing secrets through the secure form (Anthropic key, 8 Stripe price IDs, Stripe secret key, Stripe webhook secret). Do not launch or publish until these are filled in — AI features and payments fail without them.
 ## Share-back visitor-counter fix
 - [x] Forward request-scoped visitor identity; keep missing-header requests on the per-card ceiling only.
 - [x] Apply and verify a narrow database helper change and regression tests.
