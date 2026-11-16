@@ -38,7 +38,7 @@ import {
   getUserActivity,
   listFeatureRequests,
   listSignupGrants,
-  OWNER_EMAIL,
+  getOwnerStatus,
   resetUserPassword,
   setUserPlan,
   setFeatureRequestStatus,
@@ -125,9 +125,14 @@ function AdminPage() {
     enabled: !!me?.is_admin,
     queryFn: () => getAdminAnalytics(),
   });
-  // Owner-only tools: the client check only hides the UI — every destructive
-  // server function re-verifies the JWT email against OWNER_EMAIL.
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
+  // Owner-only tools: this only hides the UI — every destructive server
+  // function re-verifies the JWT email against the OWNER_EMAIL secret.
+  const { data: owner } = useQuery({
+    queryKey: ["admin-owner", user?.id],
+    enabled: !!me?.is_admin,
+    queryFn: () => getOwnerStatus(),
+  });
+  const isOwner = owner?.isOwner ?? false;
   const { data: grants } = useQuery({
     queryKey: ["signup-grants"],
     enabled: !!me?.is_admin && isOwner,

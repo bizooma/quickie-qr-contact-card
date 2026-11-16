@@ -1,9 +1,8 @@
-// Meta pixel for the marketing site and the app — the same pixel as the
-// Pinball funnel, so ad audiences and conversions line up in one account.
-// Never loaded on public cards (/c/…): their visitors are our customers'
-// contacts, not our prospects.
+// Meta pixel for the marketing site and the app. Off until a pixel ID is set
+// here (pixel IDs are public, so it can live in code). Never loaded on public
+// cards (/c/…): their visitors are our customers' contacts, not our prospects.
 
-export const META_PIXEL_ID = "1668595114664637";
+export const META_PIXEL_ID = "";
 
 type Fbq = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
@@ -21,7 +20,8 @@ declare global {
 }
 
 export function initMetaPixel(pathname: string): void {
-  if (!import.meta.env.PROD || typeof window === "undefined" || window.fbq) return;
+  if (!META_PIXEL_ID || !import.meta.env.PROD || typeof window === "undefined" || window.fbq)
+    return;
   if (pathname.startsWith("/c/")) return;
   // Meta's bootstrap, minus the IIFE: queue calls until fbevents.js loads.
   const fbq: Fbq = (...args: unknown[]) => {

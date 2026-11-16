@@ -22,13 +22,30 @@ function adminFailure(action: string, error: { message?: string }): Error {
   return new Error(`Couldn't ${action}. Please try again.`);
 }
 
-// Comping plans is owner-only (not every admin): the JWT email must match.
-export const OWNER_EMAIL = "kale@myaisummit.dev";
+// Comping plans is owner-only (not every admin): the JWT email must match the
+// OWNER_EMAIL secret. Kept out of the code (the repo is public); unset means
+// nobody is the owner, so the comp tools stay locked.
+function ownerEmail(): string {
+  return (process.env["OWNER_EMAIL"] ?? "").trim().toLowerCase();
+}
+
+function isOwnerClaims(claims: Record<string, unknown>): boolean {
+  const email = typeof claims["email"] === "string" ? claims["email"].toLowerCase() : "";
+  const owner = ownerEmail();
+  return !!owner && email === owner;
+}
 
 function assertOwner(claims: Record<string, unknown>) {
-  const email = typeof claims["email"] === "string" ? claims["email"].toLowerCase() : "";
-  if (email !== OWNER_EMAIL) throw new Error("Not available.");
+  if (!isOwnerClaims(claims)) throw new Error("Not available.");
 }
+
+/** Lets the admin screen show the owner-only tools; the actions re-check. */
+export const getOwnerStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertPlatformAdmin(context.userId);
+    return { isOwner: isOwnerClaims(context.claims) };
+  });
 
 export type AdminUserRow = {
   id: string;
