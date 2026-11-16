@@ -278,7 +278,17 @@ function Editor({
 
   async function upload(kind: "headshot_path" | "logo_path", file?: File) {
     if (!file || !user) return;
-    try { set(kind, await uploadCardImage(user.id, file)); } catch (err) { toast.error(err instanceof Error ? err.message : "Upload failed"); }
+    try {
+      // Photos and logos used to go up full size (a 2 MB phone photo for a
+      // 112px circle), which made cards load slowly right after a scan.
+      const small =
+        kind === "headshot_path"
+          ? await shrinkImage(file, 800)
+          : await shrinkImage(file, 1000, { keepTransparency: true });
+      set(kind, await uploadCardImage(user.id, small));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
   }
 
   // Premium: the banner photo shows on the Banner layout, so picking one

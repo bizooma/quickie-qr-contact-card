@@ -1,5 +1,5 @@
 import { Globe, Mail, MapPin, Phone } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   cardLogoBox,
   contrastText,
@@ -63,25 +63,35 @@ export function CardView({
   // gets no badge at all.
   const logo = logoUrl || (unbranded ? undefined : "/brand/logo-badge.png");
 
-  const avatar = (size: number, ring = false) => (
-    <div
-      className="shrink-0 overflow-hidden rounded-full flex items-center justify-center font-semibold"
-      style={{
-        width: size,
-        height: size,
-        background: accent,
-        color: onAccent,
-        fontSize: size / 3,
-        boxShadow: ring ? `0 0 0 5px ${bg}` : undefined,
-      }}
-    >
-      {headshotUrl ? (
-        <img src={headshotUrl} alt={card.full_name} className="h-full w-full object-cover" />
-      ) : (
-        initials(card.full_name || "?")
-      )}
-    </div>
-  );
+  const avatar = (size: number, ring = false) => {
+    const photo = (
+      <div
+        className="shrink-0 overflow-hidden rounded-full flex items-center justify-center font-semibold"
+        style={{
+          width: size,
+          height: size,
+          background: accent,
+          color: onAccent,
+          fontSize: size / 3,
+        }}
+      >
+        {headshotUrl ? (
+          <img src={headshotUrl} alt={card.full_name} className="h-full w-full object-cover" />
+        ) : (
+          initials(card.full_name || "?")
+        )}
+      </div>
+    );
+    // The ring is a padded circle, not a box-shadow: iOS Safari sometimes
+    // painted the shadow as a square while a large photo was decoding.
+    return ring ? (
+      <div className="-m-[5px] shrink-0 rounded-full p-[5px]" style={{ background: bg }}>
+        {photo}
+      </div>
+    ) : (
+      photo
+    );
+  };
 
   const rows: { icon: ReactNode; text: string; href: string; sub?: string; kind: string }[] = [
     ...card.phones
@@ -177,9 +187,7 @@ export function CardView({
           }`}
           style={{ background: accent }}
         >
-          {bannerUrl && (
-            <img src={bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          )}
+          {bannerUrl && <BannerImg src={bannerUrl} />}
           {!logoUrl && !bannerUrl && logo && (
             <img
               src={logo}
@@ -277,7 +285,8 @@ export function CardView({
                     onClick={() => onLinkClick?.(l.label || l.icon)}
                     className="flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-opacity hover:opacity-80"
                     style={{
-                      borderColor: fg === "#FFFFFF" ? "rgba(255,255,255,0.14)" : "rgba(17,17,17,0.1)",
+                      borderColor:
+                        fg === "#FFFFFF" ? "rgba(255,255,255,0.14)" : "rgba(17,17,17,0.1)",
                     }}
                   >
                     <LinkIcon icon={l.icon} className="h-4 w-4" />
@@ -289,5 +298,27 @@ export function CardView({
         )}
       </div>
     </div>
+  );
+}
+
+/** Banner photo that fades in once fully downloaded, so a half-loaded image
+ *  (top strip drawn, the rest showing the accent color) never shows on a
+ *  slow phone connection. The ref callback catches images that finished
+ *  loading before hydration, when onLoad has already fired. */
+function BannerImg({ src }: { src: string }) {
+  const [ready, setReady] = useState(false);
+  return (
+    <img
+      src={src}
+      alt=""
+      decoding="async"
+      ref={(el) => {
+        if (el?.complete && el.naturalWidth > 0 && !ready) setReady(true);
+      }}
+      onLoad={() => setReady(true)}
+      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+        ready ? "opacity-100" : "opacity-0"
+      }`}
+    />
   );
 }

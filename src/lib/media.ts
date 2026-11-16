@@ -29,18 +29,37 @@ export async function uploadContactImage(userId: string, blob: Blob): Promise<st
 
 /** Downscales a large photo (e.g. a phone camera banner) to at most
  *  `maxWidth` px wide as a JPEG, so it fits the upload limit and loads fast. */
-export async function shrinkImage(file: File, maxWidth = 1600): Promise<File> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+/** Downscales an upload before it goes to storage so cards load fast on a
+ *  phone right after a scan. JPEG by default; `keepTransparency` keeps
+ *  PNG/WebP logos as PNG. SVGs, GIFs and anything the browser can't decode
+ *  go up untouched. */
+export async function shrinkImage(
+  file: File,
+  maxWidth = 1600,
+  opts: { keepTransparency?: boolean } = {},
+): Promise<File> {
+  if (file.type === "image/svg+xml" || file.type === "image/gif") return file;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    return file;
+  }
   try {
     const scale = Math.min(1, maxWidth / bitmap.width);
+    const png = opts.keepTransparency && /image\/(png|webp)/.test(file.type);
+    // Already small enough and already the right format: leave it alone.
+    if (scale === 1 && (png ? file.type === "image/png" : file.type === "image/jpeg")) return file;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return file;
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
-    return blob ? new File([blob], "banner.jpg", { type: "image/jpeg" }) : file;
+    const type = png ? "image/png" : "image/jpeg";
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, type, 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], png ? "image.png" : "image.jpg", { type });
   } finally {
     bitmap.close();
   }
