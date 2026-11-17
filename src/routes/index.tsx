@@ -607,6 +607,11 @@ function Landing() {
                 ],
                 ["Realtors", "Your card on every yard sign and open-house table.", "realtors"],
                 [
+                  "Nonprofits",
+                  "A Donate button, volunteer sign-ups, and a low-profile mode for people who can't be public.",
+                  "nonprofits",
+                ],
+                [
                   "Recruiters",
                   "Candidates share their details back before they leave the booth.",
                   "recruiters",

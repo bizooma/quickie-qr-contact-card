@@ -10,10 +10,28 @@ export type CardRow = Tables<"cards">;
 
 export function rowToCard(row: CardRow, links: CardLink[]): CardData {
   return {
-    slug: row.slug, label: row.label, full_name: row.full_name, job_title: row.job_title, company: row.company,
-    phones: (row.phones as LabeledValue[]) ?? [], emails: (row.emails as LabeledValue[]) ?? [],
-    website: row.website, location: row.location, bio: row.bio, headshot_path: row.headshot_path, logo_path: row.logo_path, logo_size: row.logo_size, banner_path: row.banner_path,
-    accent_color: row.accent_color, background_color: row.background_color, font: row.font, template: row.template, theme: row.theme ? parseTheme(row.theme) : null, exchange: parseExchange(row.exchange), practice: parsePractice(row.practice), links,
+    slug: row.slug,
+    label: row.label,
+    full_name: row.full_name,
+    job_title: row.job_title,
+    company: row.company,
+    phones: (row.phones as LabeledValue[]) ?? [],
+    emails: (row.emails as LabeledValue[]) ?? [],
+    website: row.website,
+    location: row.location,
+    bio: row.bio,
+    headshot_path: row.headshot_path,
+    logo_path: row.logo_path,
+    logo_size: row.logo_size,
+    banner_path: row.banner_path,
+    accent_color: row.accent_color,
+    background_color: row.background_color,
+    font: row.font,
+    template: row.template,
+    theme: row.theme ? parseTheme(row.theme) : null,
+    exchange: parseExchange(row.exchange),
+    practice: parsePractice(row.practice),
+    links,
   };
 }
 
@@ -30,7 +48,10 @@ export async function getCard(id: string) {
   ]);
   if (error) throw error;
   if (lerr) throw lerr;
-  return { card, links: (links ?? []).map((l) => ({ id: l.id, label: l.label, url: l.url, icon: l.icon })) };
+  return {
+    card,
+    links: (links ?? []).map((l) => ({ id: l.id, label: l.label, url: l.url, icon: l.icon })),
+  };
 }
 
 /** Create a card with a unique slug, retrying with a numeric suffix on collision.
@@ -53,7 +74,8 @@ export async function createCard(
 ) {
   const base = slugify(input.full_name || input.label);
   for (let attempt = 0; attempt < 6; attempt++) {
-    const slug = attempt === 0 ? base : `${base.slice(0, 40)}-${Math.random().toString(36).slice(2, 6)}`;
+    const slug =
+      attempt === 0 ? base : `${base.slice(0, 40)}-${Math.random().toString(36).slice(2, 6)}`;
     const { data, error } = await supabase
       .from("cards")
       .insert({
@@ -79,12 +101,18 @@ export async function createCard(
 
 /** Creates a fully filled card from a scan of the user's own business card
  *  (see ScanMyCard). The plan's card limit still applies via createCard. */
-export async function createCardFromScan(userId: string, label: string, fields: ScannedCardFields) {
+export async function createCardFromScan(
+  userId: string,
+  label: string,
+  fields: ScannedCardFields,
+  practice?: CardPractice | undefined,
+) {
   const card = await createCard(userId, {
     label,
     full_name: fields.full_name,
     job_title: fields.job_title ?? undefined,
     company: fields.company ?? undefined,
+    practice,
   });
   const { links, full_name: _n, job_title: _j, company: _c, ...rest } = fields;
   const { error } = await supabase.from("cards").update(rest).eq("id", card.id);
@@ -95,7 +123,15 @@ export async function createCardFromScan(userId: string, label: string, fields: 
 
 /** Replace a card's links with the given ordered list (idempotent). */
 export async function saveLinks(userId: string, cardId: string, links: CardLink[]) {
-  const rows = links.map((l, i) => ({ id: l.id ?? crypto.randomUUID(), card_id: cardId, user_id: userId, label: l.label, url: l.url, icon: l.icon, position: i }));
+  const rows = links.map((l, i) => ({
+    id: l.id ?? crypto.randomUUID(),
+    card_id: cardId,
+    user_id: userId,
+    label: l.label,
+    url: l.url,
+    icon: l.icon,
+    position: i,
+  }));
   if (rows.length) {
     const { error } = await supabase.from("card_links").upsert(rows);
     if (error) throw error;

@@ -14,7 +14,7 @@ import {
   type ExchangeForm,
   type ShareBackPrefill,
 } from "@/lib/exchange";
-import { consentLabel } from "@/lib/practice";
+import { INTERESTS, consentLabel, type Interest } from "@/lib/practice";
 
 const SEND_FAILED = "Couldn't send your details. Please try again.";
 
@@ -27,6 +27,8 @@ export function ShareBack({
   ownerName,
   form,
   consent = false,
+  interests = false,
+  addressAs,
   prefill,
   branded = true,
   open,
@@ -39,6 +41,10 @@ export function ShareBack({
   /** Attorney cards: the visitor must tick an acknowledgment first. The
    *  server refuses the share-back without it. */
   consent?: boolean | undefined;
+  /** Nonprofit cards: "I'm interested in…" checkboxes, saved as tags. */
+  interests?: boolean | undefined;
+  /** What to call the owner ("Jane", or "The PLACE" on a low-profile card). */
+  addressAs?: string | undefined;
   prefill?: ShareBackPrefill | null | undefined;
   /** False on a team's unbranded cards: no QuickieQR name or invite. */
   branded?: boolean | undefined;
@@ -49,9 +55,10 @@ export function ShareBack({
   const [f, setF] = useState({ name: "", email: "", phone: "", company: "", note: "" });
   const [answers, setAnswers] = useState<string[]>([]);
   const [agreed, setAgreed] = useState(false);
+  const [picked, setPicked] = useState<Interest[]>([]);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  const first = ownerName.trim().split(/\s+/)[0] || "them";
+  const first = addressAs || ownerName.trim().split(/\s+/)[0] || "them";
 
   // A signed-in visitor's own card arrives a moment after the page: fill the
   // form with it, once, unless they have already started typing.
@@ -74,6 +81,7 @@ export function ShareBack({
     setF({ name: "", email: "", phone: "", company: "", note: "" });
     setAnswers([]);
     setAgreed(false);
+    setPicked([]);
   }, [open, done, prefill]);
 
   const needEmail = form.require === "email" || form.require === "both";
@@ -103,6 +111,7 @@ export function ShareBack({
           note: form.note ? f.note : "",
           answers: form.questions.map((_, i) => answers[i] ?? ""),
           ...(consent ? { consent: agreed } : {}),
+          ...(interests && picked.length ? { interests: picked } : {}),
         },
       });
       setDone(true);
@@ -227,6 +236,29 @@ export function ShareBack({
                     onChange={(e) => setF({ ...f, note: e.target.value })}
                   />
                 </div>
+              )}
+              {interests && (
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-medium">I'm interested in</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {INTERESTS.map((i) => (
+                      <label
+                        key={i}
+                        className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+                      >
+                        <Checkbox
+                          checked={picked.includes(i)}
+                          onCheckedChange={(v) =>
+                            setPicked((cur) =>
+                              v === true ? [...cur, i] : cur.filter((x) => x !== i),
+                            )
+                          }
+                        />
+                        {i}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
               )}
               {form.require === "either" && (
                 <p className="text-xs text-muted-foreground">

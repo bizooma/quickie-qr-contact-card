@@ -11,8 +11,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { createCard, createCardFromScan } from "@/lib/cards-api";
 import { ScanMyCard } from "@/components/card/ScanMyCard";
 import type { ScannedCardFields } from "@/lib/own-card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { newAttorneyPractice } from "@/lib/practice";
+import { PRACTICE_KINDS, PROFESSIONS, newPractice, type PracticeKind } from "@/lib/practice";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/onboarding")({ head: appHead('Get started', 'Create your first digital business card.'), component: Onboarding });
 
@@ -23,14 +23,19 @@ function Onboarding() {
   const meta = user?.user_metadata ?? {};
   const [f, setF] = useState({ full_name: (meta["full_name"] as string) ?? (meta["name"] as string) ?? "", job_title: "", company: "", label: "Work" });
   const [busy, setBusy] = useState(false);
-  // Arriving from the lawyers' page (/for/lawyers) starts this ticked.
-  const [attorney, setAttorney] = useState(() => {
+  // Arriving from a profession page (/for/lawyers, /for/nonprofits) starts
+  // with that profession picked.
+  const [profession, setProfession] = useState<PracticeKind | "general">(() => {
     try {
-      return localStorage.getItem("ck-profession") === "attorney";
+      const saved = localStorage.getItem("ck-profession");
+      return (PRACTICE_KINDS as readonly string[]).includes(saved ?? "")
+        ? (saved as PracticeKind)
+        : "general";
     } catch {
-      return false;
+      return "general";
     }
   });
+  const practice = profession === "general" ? undefined : newPractice(profession);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +45,7 @@ function Onboarding() {
       const card = await createCard(user.id, {
         ...f,
         email: user.email ?? undefined,
-        ...(attorney ? { practice: newAttorneyPractice() } : {}),
+        ...(practice ? { practice } : {}),
       });
       await supabase.from("profiles").update({ onboarded: true, display_name: f.full_name }).eq("id", user.id);
       await qc.invalidateQueries({ queryKey: ["cards"] });
@@ -53,7 +58,7 @@ function Onboarding() {
 
   async function fromScan(fields: ScannedCardFields) {
     if (!user) return;
-    const card = await createCardFromScan(user.id, f.label.trim() || "Work", fields);
+    const card = await createCardFromScan(user.id, f.label.trim() || "Work", fields, practice);
     await supabase.from("profiles").update({ onboarded: true, display_name: fields.full_name || f.full_name }).eq("id", user.id);
     await qc.invalidateQueries({ queryKey: ["cards"] });
     toast.success("Your card is ready — check the details and make it yours");
@@ -65,6 +70,30 @@ function Onboarding() {
       <p className="text-xs font-semibold uppercase tracking-wider text-brand">Step 1 of 1</p>
       <h1 className="mt-2 text-3xl font-bold">Let's make your first card</h1>
       <p className="mt-2 text-sm text-muted-foreground">Just the basics — you can add photos, links and style next.</p>
+      <div className="mt-6">
+        <p className="text-sm font-semibold">What best describes you?</p>
+        <div role="radiogroup" className="mt-2 flex flex-wrap gap-2">
+          {PROFESSIONS.map((pr) => (
+            <button
+              key={pr.id}
+              type="button"
+              role="radio"
+              aria-checked={profession === pr.id}
+              onClick={() => setProfession(pr.id)}
+              className={cn(
+                "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                profession === pr.id ? "border-brand bg-brand text-white" : "hover:bg-accent",
+              )}
+            >
+              {pr.name}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {PROFESSIONS.find((pr) => pr.id === profession)?.hint}. You can change this later on the
+          card's Profession tab.
+        </p>
+      </div>
       <div className="surface mt-6 space-y-3 p-5">
         <p className="text-sm font-semibold">Have a paper business card?</p>
         <p className="text-sm text-muted-foreground">Snap it and we'll build your digital card from it — logo, colors, photo, phone, email, address and links.</p>
@@ -78,12 +107,6 @@ function Onboarding() {
             <Input id={k} required={req} className="h-11" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
           </div>
         ))}
-        <div className="flex items-start gap-2.5">
-          <Checkbox id="attorney" checked={attorney} onCheckedChange={(v) => setAttorney(v === true)} className="mt-0.5" />
-          <Label htmlFor="attorney" className="font-normal leading-snug">
-            I'm an attorney <span className="text-muted-foreground">— add bar admissions, practice areas and a disclaimer</span>
-          </Label>
-        </div>
         <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Creating…" : "Create my card"}</Button>
       </form>
     </div>

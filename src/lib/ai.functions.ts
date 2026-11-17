@@ -218,7 +218,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
         if (met) sender = met;
       }
       const { parsePractice } = await import("./practice");
-      const attorney = parsePractice(sender?.practice)?.kind === "attorney";
+      const pack = parsePractice(sender?.practice)?.kind;
       const facts = [
         `Name: ${contact.full_name}`,
         contact.job_title && `Title: ${contact.job_title}`,
@@ -244,13 +244,19 @@ export const draftFollowUp = createServerFn({ method: "POST" })
           "one clear, low-pressure next step; no flattery, no buzzwords, no exclamation marks; " +
           "plain text only; never fabricate details — if something is unknown, leave it out " +
           "rather than using a placeholder. Sign off with the sender's first name." +
-          (attorney
+          (pack === "attorney"
             ? " The sender is an attorney, so lawyer advertising and ethics rules apply: never " +
               "promise or predict results, never describe past case outcomes, never call the " +
               "sender an expert or specialist, give no legal advice about the person's situation, " +
               "and don't pressure them to hire the sender. If they mentioned a legal matter, " +
               "suggest a consultation instead of discussing it by email."
-            : ""),
+            : pack === "nonprofit"
+              ? " The sender represents a nonprofit. Lead with genuine thanks and one concrete " +
+                "line about the mission. If the person's note says what they're interested in " +
+                "(volunteering, donating, partnering, event updates), make the next step fit " +
+                "that one thing. Never pressure them to give, never name or suggest an amount, " +
+                "and give no tax advice: don't say a gift is deductible."
+              : ""),
         messages: [
           {
             role: "user",

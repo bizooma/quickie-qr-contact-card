@@ -153,6 +153,32 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
     ],
   },
   {
+    id: "professions",
+    title: "Professions",
+    items: [
+      [
+        "What a profession adds",
+        "Open a card, then the Profession tab, and pick what kind of card it is. A profession adds the details, buttons and safeguards that work needs, on every plan. It only changes that one card, so a lawyer can keep a personal card that stays general.",
+      ],
+      [
+        "Attorney cards",
+        "Bar admissions with bar numbers, practice areas, an editable disclaimer, and a \"Schedule a consultation\" button for your booking link. People who share their details confirm it doesn't make you their lawyer and that they won't send confidential information; that acknowledgment is saved on the contact. You stay responsible for your bar's advertising rules.",
+      ],
+      [
+        "Nonprofit cards",
+        "A Donate button for your giving page, your 501(c)(3) status and EIN, the standard deductibility line, and a state solicitation disclosure (Florida's wording is one tap away, with your registration number). \"Share yours\" can ask what people are interested in (volunteering, donating, partnering, event updates), and each answer becomes a tag on the contact.",
+      ],
+      [
+        "Low-profile cards",
+        "For nonprofits whose people shouldn't be publicly identifiable. The card shows your organization's name instead of yours, with no photo, no job title and no preview image, and asks search engines not to list it. Your name and photo never leave our servers for that card. Check that your bio, email address and links don't name you either.",
+      ],
+      [
+        "Nonprofit pricing",
+        "Registered 501(c)(3)s get 50% off the Office plan. Email support@quickieqr.com with your organization's name and EIN, and we'll send you a code to use at checkout.",
+      ],
+    ],
+  },
+  {
     id: "billing",
     title: "Plans & billing",
     items: [

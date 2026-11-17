@@ -1,6 +1,15 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Check, Download, Pencil, QrCode, Send, Share2 } from "lucide-react";
+import {
+  CalendarCheck,
+  Check,
+  Download,
+  HeartHandshake,
+  Pencil,
+  QrCode,
+  Send,
+  Share2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
@@ -17,7 +26,14 @@ import {
   vcardHidden,
   type ShareBackPrefill,
 } from "@/lib/exchange";
-import { needsConsent, parsePractice } from "@/lib/practice";
+import {
+  addressAs,
+  asksInterests,
+  isLowProfile,
+  needsConsent,
+  packCta,
+  parsePractice,
+} from "@/lib/practice";
 
 // Absolute URL so crawlers accept it from any serving domain.
 const DEFAULT_OG_IMAGE = "https://quickieqr.com/brand/og-default.png";
@@ -26,7 +42,9 @@ const DEFAULT_OG_IMAGE = "https://quickieqr.com/brand/og-default.png";
 // verified is decided by get_public_card from the owner's profile (0034).
 // exchange arrives without the owner's form when they are on the free plan (0035).
 // hide_branding is true for a seated member of a team that turned branding off (0036).
-// practice is the attorney pack, returned for every plan (0037).
+// practice is the profession pack, returned for every plan (0037). A
+// low-profile nonprofit card arrives with the organization standing in for
+// the person: no personal name, title, headshot or preview image (0038).
 type PublicCardData = CardData & {
   og_path?: string | null;
   shareback_open?: boolean;
@@ -61,8 +79,11 @@ export const Route = createFileRoute("/c/$slug")({
   staleTime: 0,
   head: ({ loaderData }) => {
     const c = loaderData?.card;
+    const low = isLowProfile(parsePractice(c?.practice));
     const title = c
-      ? `${c.full_name}${c.company ? ` · ${c.company}` : ""}`
+      ? low
+        ? c.full_name
+        : `${c.full_name}${c.company ? ` · ${c.company}` : ""}`
       : "Digital business card";
     const desc = c
       ? [c.job_title, c.company].filter(Boolean).join(" at ") || "Save my contact details"
@@ -79,6 +100,8 @@ export const Route = createFileRoute("/c/$slug")({
       { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: image },
+      // Low profile: keep the card out of search engines.
+      ...(low ? [{ name: "robots", content: "noindex, nofollow" }] : []),
     ];
     const scripts = c
       ? [
@@ -87,12 +110,16 @@ export const Route = createFileRoute("/c/$slug")({
             children: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "ProfilePage",
-              mainEntity: {
-                "@type": "Person",
-                name: c.full_name,
-                ...(c.job_title ? { jobTitle: c.job_title } : {}),
-                ...(c.company ? { worksFor: { "@type": "Organization", name: c.company } } : {}),
-              },
+              mainEntity: low
+                ? { "@type": "Organization", name: c.full_name }
+                : {
+                    "@type": "Person",
+                    name: c.full_name,
+                    ...(c.job_title ? { jobTitle: c.job_title } : {}),
+                    ...(c.company
+                      ? { worksFor: { "@type": "Organization", name: c.company } }
+                      : {}),
+                  },
             }).replace(/</g, "\\u003c"),
           },
         ]
@@ -183,7 +210,9 @@ function PublicCard() {
   const form = useMemo(() => formFor(exchange), [exchange]);
   const practice = useMemo(() => parsePractice(card.practice), [card.practice]);
   const consent = needsConsent(practice);
-  const first = card.full_name.trim().split(/\s+/)[0] || "them";
+  const interests = asksInterests(practice);
+  const cta = packCta(practice);
+  const first = addressAs(card, parsePractice(card.practice));
   const accentText = contrastText(card.accent_color);
   // Liquid Glass paints its own backdrop: the page takes the mesh's base
   // colour, and text inside the card sits on glass, so it uses the glass text
@@ -370,10 +399,11 @@ function PublicCard() {
             </div>
           ) : (
             <div className="space-y-2">
-              {/* An attorney's booking link leads; saving and sharing step back. */}
-              {practice?.consultUrl && (
+              {/* A pack's main link (book a consultation, donate) leads; saving
+                and sharing step back. */}
+              {cta && (
                 <a
-                  href={practice.consultUrl}
+                  href={cta.url}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => {
@@ -381,15 +411,19 @@ function PublicCard() {
                       .rpc("log_card_event", {
                         _slug: slug,
                         _event: "click",
-                        _meta: "Schedule a consultation",
+                        _meta: cta.label,
                       })
                       .then(undefined, () => {});
                   }}
                   className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
                   style={{ background: card.accent_color, color: accentText }}
                 >
-                  <CalendarCheck className="h-4 w-4" />
-                  Schedule a consultation
+                  {cta.kind === "donate" ? (
+                    <HeartHandshake className="h-4 w-4" />
+                  ) : (
+                    <CalendarCheck className="h-4 w-4" />
+                  )}
+                  {cta.label}
                 </a>
               )}
               <div
@@ -397,9 +431,9 @@ function PublicCard() {
               >
                 <button
                   onClick={saveContact}
-                  className={`flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90 ${practice?.consultUrl ? "border" : ""}`}
+                  className={`flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90 ${cta ? "border" : ""}`}
                   style={
-                    practice?.consultUrl
+                    cta
                       ? { borderColor: card.accent_color, color: inCardFg }
                       : { background: card.accent_color, color: accentText }
                   }
@@ -490,8 +524,10 @@ function PublicCard() {
       <ShareBack
         slug={slug}
         ownerName={card.full_name}
+        addressAs={first}
         form={form}
         consent={consent}
+        interests={interests}
         prefill={mine}
         branded={!unbranded}
         open={open}

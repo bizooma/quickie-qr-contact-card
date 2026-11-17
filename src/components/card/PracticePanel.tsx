@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Plus, Scale, X } from "lucide-react";
+import { AlertTriangle, HeartHandshake, IdCard, Plus, Scale, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,81 +11,74 @@ import {
   AREAS_MAX,
   AREA_MAX,
   BAR_NUMBER_MAX,
-  CONSULT_URL_MAX,
   DEFAULT_DISCLAIMER,
   DISCLAIMER_MAX,
+  DISCLOSURE_MAX,
+  DEDUCTIBLE_LINE,
+  FLORIDA_DISCLOSURE,
+  INTERESTS,
+  LINK_URL_MAX,
+  PROFESSIONS,
+  STATE_REG_MAX,
   SUGGESTED_AREAS,
-  cleanConsultUrl,
-  newAttorneyPractice,
+  cleanEin,
+  cleanPackUrl,
+  parsePractice,
   practiceWarnings,
+  switchPractice,
   type Admission,
   type CardPractice,
 } from "@/lib/practice";
 import { cn } from "@/lib/utils";
 
-/** The attorney pack in the editor's Details tab. Holds the owner's raw
- *  typing (the editor cleans it with parsePractice on save), so fields never
- *  fight the cursor. Cards without a pack see only the one-line opt-in. */
+/** The editor's Profession tab: pick what kind of card this is, then fill in
+ *  that pack. Holds the owner's raw typing (the editor cleans it with
+ *  parsePractice on save), so fields never fight the cursor. Adding a pack is
+ *  one more PROFESSIONS entry and one more fields component. */
 export function PracticePanel({
   practice,
   location,
+  company,
   onChange,
 }: {
   practice: CardPractice | null | undefined;
   location: string | null;
+  company: string | null;
   onChange: (p: CardPractice | null) => void;
 }) {
-  const [areaDraft, setAreaDraft] = useState("");
-
-  if (practice?.kind !== "attorney") {
-    return (
-      <div className="surface flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <Scale className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-          <div>
-            <p className="text-sm font-semibold">Are you an attorney?</p>
-            <p className="text-sm text-muted-foreground">
-              Add bar admissions, practice areas, a disclaimer and a consultation link.
-            </p>
-          </div>
-        </div>
-        <Button variant="outline" onClick={() => onChange(newAttorneyPractice())}>
-          Add attorney details
-        </Button>
-      </div>
-    );
-  }
-
-  const p = practice;
-  const set = (patch: Partial<CardPractice>) => onChange({ ...p, ...patch });
-  const admissions = p.admissions ?? [];
-  const areas = p.areas ?? [];
-  const warnings = practiceWarnings(
-    { ...p, admissions: admissions.filter((a) => a.state.trim()) },
-    { location },
-  );
-  const urlBad = !!p.consultUrl?.trim() && !cleanConsultUrl(p.consultUrl);
-
-  const setAdmission = (i: number, patch: Partial<Admission>) =>
-    set({ admissions: admissions.map((a, j) => (j === i ? { ...a, ...patch } : a)) });
-  const addArea = (raw: string) => {
-    const area = raw.trim().slice(0, AREA_MAX);
-    if (!area || areas.length >= AREAS_MAX) return;
-    if (areas.some((a) => a.toLowerCase() === area.toLowerCase())) return;
-    set({ areas: [...areas, area] });
-    setAreaDraft("");
-  };
-
+  const current = practice?.kind ?? "general";
+  const warnings = practiceWarnings(parsePractice(practice), { location, company });
   return (
-    <section className="surface space-y-5 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Scale className="h-5 w-5 text-brand" />
-          <h3 className="text-sm font-semibold">Attorney details</h3>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold">What kind of card is this?</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A profession adds the details, buttons and safeguards that work needs. It only changes
+          this card.
+        </p>
+        <div role="radiogroup" className="mt-3 grid gap-2 sm:grid-cols-3">
+          {PROFESSIONS.map((pr) => {
+            const Icon = PROFESSION_ICONS[pr.id];
+            const on = current === pr.id;
+            return (
+              <button
+                key={pr.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => onChange(switchPractice(practice, pr.id))}
+                className={cn(
+                  "flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-colors",
+                  on ? "border-brand bg-brand/5 ring-1 ring-brand" : "hover:bg-accent",
+                )}
+              >
+                <Icon className={cn("h-5 w-5", on ? "text-brand" : "text-muted-foreground")} />
+                <span className="text-sm font-semibold">{pr.name}</span>
+                <span className="text-xs text-muted-foreground">{pr.hint}</span>
+              </button>
+            );
+          })}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => onChange(null)}>
-          Remove
-        </Button>
       </div>
 
       {warnings.length > 0 && (
@@ -99,6 +92,41 @@ export function PracticePanel({
         </ul>
       )}
 
+      {practice?.kind === "attorney" && <AttorneyFields practice={practice} onChange={onChange} />}
+      {practice?.kind === "nonprofit" && (
+        <NonprofitFields practice={practice} onChange={onChange} />
+      )}
+    </div>
+  );
+}
+
+const PROFESSION_ICONS = { general: IdCard, attorney: Scale, nonprofit: HeartHandshake };
+
+function AttorneyFields({
+  practice: p,
+  onChange,
+}: {
+  practice: CardPractice;
+  onChange: (p: CardPractice) => void;
+}) {
+  const [areaDraft, setAreaDraft] = useState("");
+  const set = (patch: Partial<CardPractice>) => onChange({ ...p, ...patch });
+  const admissions = p.admissions ?? [];
+  const areas = p.areas ?? [];
+  const urlBad = !!p.consultUrl?.trim() && !cleanPackUrl(p.consultUrl);
+
+  const setAdmission = (i: number, patch: Partial<Admission>) =>
+    set({ admissions: admissions.map((a, j) => (j === i ? { ...a, ...patch } : a)) });
+  const addArea = (raw: string) => {
+    const area = raw.trim().slice(0, AREA_MAX);
+    if (!area || areas.length >= AREAS_MAX) return;
+    if (areas.some((a) => a.toLowerCase() === area.toLowerCase())) return;
+    set({ areas: [...areas, area] });
+    setAreaDraft("");
+  };
+
+  return (
+    <section className="space-y-5">
       <div className="space-y-2">
         <Label>Bar admissions</Label>
         {admissions.map((a, i) => (
@@ -201,7 +229,7 @@ export function PracticePanel({
         <Input
           id="pa-consult"
           placeholder="calendly.com/your-name"
-          maxLength={CONSULT_URL_MAX}
+          maxLength={LINK_URL_MAX}
           value={p.consultUrl ?? ""}
           className={cn(urlBad && "border-destructive")}
           onChange={(e) => set({ consultUrl: e.target.value })}
@@ -252,5 +280,144 @@ export function PracticePanel({
         />
       </div>
     </section>
+  );
+}
+
+function NonprofitFields({
+  practice: p,
+  onChange,
+}: {
+  practice: CardPractice;
+  onChange: (p: CardPractice) => void;
+}) {
+  const set = (patch: Partial<CardPractice>) => onChange({ ...p, ...patch });
+  const urlBad = !!p.donateUrl?.trim() && !cleanPackUrl(p.donateUrl);
+  const einBad = !!p.ein?.trim() && !cleanEin(p.ein);
+
+  return (
+    <section className="space-y-5">
+      <ToggleRow
+        id="np-exempt"
+        label="We're a registered 501(c)(3)"
+        hint={`Shows "501(c)(3) nonprofit" and the standard line: ${DEDUCTIBLE_LINE}`}
+        checked={p.exempt === true}
+        onChange={(v) => set({ exempt: v })}
+      />
+
+      <div className="space-y-1.5">
+        <Label htmlFor="np-ein">EIN</Label>
+        <Input
+          id="np-ein"
+          placeholder="12-3456789"
+          inputMode="numeric"
+          maxLength={10}
+          value={p.ein ?? ""}
+          className={cn("w-44", einBad && "border-destructive")}
+          onChange={(e) => set({ ein: e.target.value })}
+        />
+        <p className={cn("text-xs", einBad ? "text-destructive" : "text-muted-foreground")}>
+          {einBad
+            ? "An EIN is 9 digits, like 12-3456789."
+            : "Optional. Donors and grant makers look for it."}
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="np-donate">Donation link</Label>
+        <Input
+          id="np-donate"
+          placeholder="givebutter.com/your-org"
+          maxLength={LINK_URL_MAX}
+          value={p.donateUrl ?? ""}
+          className={cn(urlBad && "border-destructive")}
+          onChange={(e) => set({ donateUrl: e.target.value })}
+        />
+        <p className={cn("text-xs", urlBad ? "text-destructive" : "text-muted-foreground")}>
+          {urlBad
+            ? "Use a secure (https) web address, like givebutter.com/your-org."
+            : "Makes “Donate” the main button on your card. Givebutter, Donorbox, PayPal Giving, or your own page."}
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="np-disclosure">State solicitation disclosure</Label>
+          {p.disclosure !== FLORIDA_DISCLOSURE && (
+            <button
+              type="button"
+              className="text-xs text-brand underline"
+              onClick={() => set({ disclosure: FLORIDA_DISCLOSURE })}
+            >
+              Use Florida's wording
+            </button>
+          )}
+        </div>
+        <Textarea
+          id="np-disclosure"
+          rows={4}
+          maxLength={DISCLOSURE_MAX}
+          value={p.disclosure ?? ""}
+          onChange={(e) => set({ disclosure: e.target.value })}
+        />
+        <div className="flex items-center gap-2">
+          <Label htmlFor="np-reg" className="shrink-0 text-xs font-normal">
+            State registration no.
+          </Label>
+          <Input
+            id="np-reg"
+            placeholder="CH12345"
+            maxLength={STATE_REG_MAX}
+            className="h-8 w-36"
+            value={p.stateReg ?? ""}
+            onChange={(e) => set({ stateReg: e.target.value })}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Florida requires this disclosure and your registration number anywhere you ask for
+          donations, and a card with a Donate button counts. Other states have their own rules.
+          You're responsible for your organization's compliance.
+        </p>
+      </div>
+
+      <ToggleRow
+        id="np-interests"
+        label="Ask what people are interested in"
+        hint={`Adds checkboxes to "Share yours": ${INTERESTS.join(", ")}. Each one becomes a tag on the contact, so you can filter everyone who wants to volunteer.`}
+        checked={p.interests === true}
+        onChange={(v) => set({ interests: v })}
+      />
+
+      <ToggleRow
+        id="np-low"
+        label="Low-profile card"
+        hint="For organizations whose people shouldn't be publicly identifiable. Your card shows the organization's name instead of yours, with no photo, no job title, and no listing in search engines. Fill in Company on the Details tab, and check that your bio, email address and links don't name you either."
+        checked={p.lowProfile === true}
+        onChange={(v) => set({ lowProfile: v })}
+      />
+    </section>
+  );
+}
+
+function ToggleRow({
+  id,
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  hint: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <Label htmlFor={id}>{label}</Label>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
+    </div>
   );
 }

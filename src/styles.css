@@ -146,6 +146,9 @@
   }
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Manrope's standard ligatures turn "(c)" into "©", which mangles
+       "501(c)(3)" in our copy and in anything people type on their cards. */
+    font-variant-ligatures: no-common-ligatures;
   }
   body {
     background-color: var(--color-background);

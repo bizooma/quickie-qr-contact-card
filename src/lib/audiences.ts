@@ -137,6 +137,48 @@ export const AUDIENCES: Record<string, Audience> = {
     closing:
       "Built with bar advertising rules in mind. You stay in charge of your own compliance, and the card makes it easier.",
   },
+  nonprofits: {
+    slug: "nonprofits",
+    label: "Nonprofits",
+    eyebrow: "For nonprofits",
+    headline: ["Turn every handshake into ", "a donor or a volunteer."],
+    sub: "A card with a Donate button, your 501(c)(3) status, and a form that asks people how they want to help, so the gala ends with a list you can actually follow up.",
+    pains: [
+      {
+        t: "Goodwill that evaporates",
+        d: "Someone at the gala says they'd love to volunteer. By Monday nobody remembers who. The card captures them on the spot, already tagged.",
+      },
+      {
+        t: "Fundraising rules nobody mentions",
+        d: "Florida requires a state disclosure anywhere you ask for donations, and a card with a Donate button counts. We pre-fill it for you.",
+      },
+      {
+        t: "People who can't be public",
+        d: "Some missions put staff at risk. A low-profile card shows the organization, not the person: no name, no photo, kept out of search engines.",
+      },
+    ],
+    features: [
+      {
+        t: "Donate button",
+        d: "Link Givebutter, Donorbox, PayPal Giving or your own page, and it becomes the main button on your card.",
+      },
+      {
+        t: "Volunteer and donor sign-ups",
+        d: "Visitors tick what they're interested in (volunteering, donating, partnering, event updates), and each one becomes a tag you can filter.",
+      },
+      {
+        t: "501(c)(3) status and disclosures",
+        d: "Your status and EIN under your name, the standard deductibility line, and Florida's solicitation disclosure with your registration number.",
+      },
+      {
+        t: "Thank-you follow-ups",
+        d: "AI follow-up drafts that lead with thanks, match what each person signed up for, and never pressure anyone to give.",
+      },
+    ],
+    cta: "Create your nonprofit card",
+    closing:
+      "Registered 501(c)(3)s get 50% off the Office plan for the whole team. Email support@quickieqr.com with your EIN after you sign up.",
+  },
   recruiters: {
     slug: "recruiters",
     label: "Recruiters",

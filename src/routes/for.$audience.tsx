@@ -31,16 +31,19 @@ export const Route = createFileRoute("/for/$audience")({
   component: AudiencePage,
 });
 
+const PROFESSION_PAGES: Record<string, string> = { lawyers: "attorney", nonprofits: "nonprofit" };
+
 function AudiencePage() {
   const { audience: a } = Route.useLoaderData();
   const { user } = useAuth();
   const to = user ? "/app" : "/auth";
   const from = `for-${a.slug}`;
-  // Someone who signs up from the attorneys' page starts with that box ticked.
+  // Someone who signs up from a profession page starts with it picked.
   useEffect(() => {
-    if (a.slug !== "lawyers") return;
+    const profession = PROFESSION_PAGES[a.slug];
+    if (!profession) return;
     try {
-      localStorage.setItem("ck-profession", "attorney");
+      localStorage.setItem("ck-profession", profession);
     } catch {
       // Storage blocked: they can tick it themselves during signup.
     }

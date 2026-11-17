@@ -3,12 +3,20 @@ import {
   AREAS_MAX,
   CONSENT_NOTE,
   admissionsLine,
-  cleanConsultUrl,
+  cleanPackUrl,
   needsConsent,
-  newAttorneyPractice,
   parsePractice,
   practiceWarnings,
   withConsentNote,
+  FLORIDA_DISCLOSURE,
+  cleanEin,
+  cleanInterests,
+  lowProfileView,
+  newPractice,
+  nonprofitStatusLine,
+  packCta,
+  switchPractice,
+  withInterestsNote,
 } from "./practice";
 
 describe("parsePractice", () => {
@@ -57,21 +65,21 @@ describe("parsePractice", () => {
   });
 
   it("round-trips a new attorney pack", () => {
-    const p = newAttorneyPractice();
+    const p = newPractice("attorney");
     expect(parsePractice(p)).toEqual({ kind: "attorney", disclaimer: p.disclaimer, consent: true });
   });
 });
 
-describe("cleanConsultUrl", () => {
+describe("cleanPackUrl", () => {
   it("accepts https and adds it to bare domains", () => {
-    expect(cleanConsultUrl("calendly.com/jane")).toBe("https://calendly.com/jane");
-    expect(cleanConsultUrl("https://app.clio.com/book")).toBe("https://app.clio.com/book");
+    expect(cleanPackUrl("calendly.com/jane")).toBe("https://calendly.com/jane");
+    expect(cleanPackUrl("https://app.clio.com/book")).toBe("https://app.clio.com/book");
   });
   it("refuses anything that isn't an https web page", () => {
-    expect(cleanConsultUrl("javascript:alert(1)")).toBeUndefined();
-    expect(cleanConsultUrl("http://example.com")).toBeUndefined();
-    expect(cleanConsultUrl("not a url")).toBeUndefined();
-    expect(cleanConsultUrl("")).toBeUndefined();
+    expect(cleanPackUrl("javascript:alert(1)")).toBeUndefined();
+    expect(cleanPackUrl("http://example.com")).toBeUndefined();
+    expect(cleanPackUrl("not a url")).toBeUndefined();
+    expect(cleanPackUrl("")).toBeUndefined();
   });
 });
 
@@ -108,5 +116,103 @@ describe("consent", () => {
     const long = withConsentNote("x".repeat(2000), 1000);
     expect(long).toHaveLength(1000);
     expect(long.startsWith(CONSENT_NOTE)).toBe(true);
+  });
+});
+
+describe("nonprofit pack", () => {
+  it("keeps only nonprofit keys and normalizes the EIN", () => {
+    expect(
+      parsePractice({
+        kind: "nonprofit",
+        exempt: true,
+        ein: "123456789",
+        donateUrl: "givebutter.com/theplace",
+        disclosure: " FL text ",
+        stateReg: "CH12345",
+        interests: true,
+        lowProfile: true,
+        consultUrl: "https://calendly.com/x",
+        areas: ["Probate"],
+      }),
+    ).toEqual({
+      kind: "nonprofit",
+      exempt: true,
+      ein: "12-3456789",
+      donateUrl: "https://givebutter.com/theplace",
+      disclosure: "FL text",
+      stateReg: "CH12345",
+      interests: true,
+      lowProfile: true,
+    });
+  });
+
+  it("drops a malformed EIN and unsafe donate links", () => {
+    expect(cleanEin("12-345")).toBeUndefined();
+    expect(cleanEin("12-3456789")).toBe("12-3456789");
+    expect(parsePractice({ kind: "nonprofit", donateUrl: "javascript:x" })).toEqual({
+      kind: "nonprofit",
+    });
+  });
+
+  it("an attorney pack never carries nonprofit keys", () => {
+    expect(parsePractice({ kind: "attorney", lowProfile: true, ein: "123456789" })).toEqual({
+      kind: "attorney",
+    });
+  });
+
+  it("status line, main button and warnings", () => {
+    const p = {
+      kind: "nonprofit" as const,
+      exempt: true,
+      ein: "12-3456789",
+      donateUrl: "https://a.org/give",
+    };
+    expect(nonprofitStatusLine(p)).toBe("501(c)(3) nonprofit · EIN 12-3456789");
+    expect(packCta(p)).toEqual({ label: "Donate", url: "https://a.org/give", kind: "donate" });
+    expect(practiceWarnings(p, { location: null })).toHaveLength(1);
+    expect(practiceWarnings({ ...p, disclosure: FLORIDA_DISCLOSURE }, { location: null })).toEqual(
+      [],
+    );
+    expect(packCta({ kind: "attorney", consultUrl: "https://c.com/x" })?.label).toBe(
+      "Schedule a consultation",
+    );
+    expect(packCta(null)).toBeNull();
+  });
+
+  it("low-profile shows the organization, not the person", () => {
+    const card = {
+      full_name: "Jane Doe",
+      job_title: "Director",
+      company: "The PLACE",
+      headshot_path: "u/h.jpg",
+      practice: { kind: "nonprofit" as const, lowProfile: true },
+    };
+    expect(lowProfileView(card)).toMatchObject({
+      full_name: "The PLACE",
+      company: null,
+      job_title: null,
+      headshot_path: null,
+    });
+    expect(lowProfileView({ ...card, company: null }).full_name).toBe("Jane Doe");
+    const normal = { ...card, practice: { kind: "nonprofit" as const } };
+    expect(lowProfileView(normal)).toBe(normal);
+  });
+
+  it("interests: known ones only, recorded ahead of the note", () => {
+    expect(cleanInterests(["Donating", "Hacking", "Volunteering", "Donating"])).toEqual([
+      "Volunteering",
+      "Donating",
+    ]);
+    expect(withInterestsNote(["Volunteering"], "Met at the gala", 1000)).toBe(
+      "Interested in: Volunteering\n\nMet at the gala",
+    );
+    expect(withInterestsNote([], "hi", 1000)).toBe("hi");
+  });
+
+  it("switching profession", () => {
+    const att = { kind: "attorney" as const, areas: ["Probate"] };
+    expect(switchPractice(att, "attorney")).toBe(att);
+    expect(switchPractice(att, "nonprofit")).toEqual(newPractice("nonprofit"));
+    expect(switchPractice(att, "general")).toBeNull();
   });
 });

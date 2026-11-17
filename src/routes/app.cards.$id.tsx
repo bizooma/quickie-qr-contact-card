@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { BrandPanel } from "@/components/card/BrandPanel";
 import { ExchangePanel } from "@/components/card/ExchangePanel";
 import { PracticePanel } from "@/components/card/PracticePanel";
-import { parsePractice } from "@/lib/practice";
+import { lowProfileView, packCta, parsePractice } from "@/lib/practice";
 import { CardView } from "@/components/card/CardView";
 import { ICON_LABELS, LinkIcon } from "@/components/card/LinkIcon";
 import { QrPanel } from "@/components/card/QrPanel";
@@ -319,10 +319,19 @@ function Editor({
     navigate({ to: "/app" });
   }
 
+  // The preview shows the card as visitors will see it: the cleaned pack, and
+  // the organization instead of the person on a low-profile card.
+  const shown = lowProfileView({ ...card, practice: parsePractice(card.practice) });
+  const cta = packCta(shown.practice);
   const preview = (
     <div className="phone-frame mx-auto"><div className="h-full overflow-y-auto rounded-[38px]">
-      <CardView card={card} headshotUrl={card.headshot_path ? urls[card.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true} unbranded={unbranded === true}
-        actions={<div className="h-12 rounded-full text-center text-sm font-semibold leading-[3rem]" style={{ background: card.accent_color, color: "#fff" }}>Save contact</div>} />
+      <CardView card={shown} headshotUrl={shown.headshot_path ? urls[shown.headshot_path] : null} logoUrl={card.logo_path ? urls[card.logo_path] : null} bannerUrl={card.banner_path ? urls[card.banner_path] : null} verified={verified === true} unbranded={unbranded === true}
+        actions={
+          <div className="space-y-2">
+            {cta && <div className="h-12 rounded-full text-center text-sm font-semibold leading-[3rem]" style={{ background: card.accent_color, color: "#fff" }}>{cta.label}</div>}
+            <div className={`h-12 rounded-full text-center text-sm font-semibold leading-[3rem] ${cta ? "border" : ""}`} style={cta ? { borderColor: card.accent_color } : { background: card.accent_color, color: "#fff" }}>Save contact</div>
+          </div>
+        } />
     </div></div>
   );
 
@@ -393,8 +402,9 @@ function Editor({
 
       <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <Tabs defaultValue="details">
-          <TabsList className="mb-6 grid w-full grid-cols-4">
+          <TabsList className="mb-6 grid w-full grid-cols-5 [&>button]:px-1 [&>button]:text-xs sm:[&>button]:text-sm">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="profession">Profession</TabsTrigger>
             <TabsTrigger value="links">Links</TabsTrigger>
             <TabsTrigger value="style">Style</TabsTrigger>
             <TabsTrigger value="share">Share</TabsTrigger>
@@ -492,11 +502,6 @@ function Editor({
                 onChange={(e) => set("bio", e.target.value || null)}
               />
             </Field>
-            <PracticePanel
-              practice={card.practice}
-              location={card.location}
-              onChange={(p) => set("practice", p)}
-            />
             <Field label="Card address">
               <div className="flex gap-2">
                 <div className="flex flex-1 items-center rounded-md border bg-background pl-3 text-sm text-muted-foreground">
@@ -537,6 +542,15 @@ function Editor({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </TabsContent>
+
+          <TabsContent value="profession">
+            <PracticePanel
+              practice={card.practice}
+              location={card.location}
+              company={card.company}
+              onChange={(p) => set("practice", p)}
+            />
           </TabsContent>
 
           <TabsContent value="links" className="space-y-3">

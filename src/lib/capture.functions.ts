@@ -10,7 +10,17 @@ import {
   submissionProblem,
 } from "./exchange";
 import type { PlanId } from "./plans";
-import { needsConsent, parsePractice, withConsentNote } from "./practice";
+import {
+  INTERESTS,
+  addressAs,
+  asksInterests,
+  cleanInterests,
+  isLowProfile,
+  needsConsent,
+  parsePractice,
+  withConsentNote,
+  withInterestsNote,
+} from "./practice";
 
 // Server functions around capturing contacts: the public share-back submit
 // (which also notifies the card owner) and post-capture fan-out for the
@@ -28,6 +38,8 @@ const SharebackInputSchema = z.object({
   answers: z.array(z.string().max(ANSWER_MAX)).max(QUESTIONS_MAX).optional(),
   /** The attorney-card acknowledgment, ticked by the visitor. */
   consent: z.boolean().optional(),
+  /** Nonprofit cards: what the visitor ticked under "I'm interested in". */
+  interests: z.array(z.string().max(40)).max(INTERESTS.length).optional(),
 });
 
 /** Public (unauthenticated): saves a share-back, then pings the card owner. */
@@ -60,9 +72,10 @@ export const submitShareback = createServerFn({ method: "POST" })
     // are folded into the note, so the RPC and its limits stay as they were.
     const { data: card } = await supabaseAdmin
       .from("cards")
-      .select("user_id, label, full_name, exchange, practice")
+      .select("id, user_id, label, full_name, company, exchange, practice")
       .eq("slug", data.slug.toLowerCase())
       .maybeSingle();
+    const practice = card ? parsePractice(card.practice) : null;
     let plan: PlanId | null = null;
     let company = data.company;
     let note = data.note;
@@ -72,7 +85,8 @@ export const submitShareback = createServerFn({ method: "POST" })
       plan = await getPlan(card.user_id);
       if (plan !== "free") {
         const answers = data.answers ?? [];
-        const first = card.full_name.trim().split(/\s+/)[0] || "they";
+        // A low-profile card is addressed by its organization, never the person.
+        const first = addressAs(card, practice, "they");
         const problem = submissionProblem(
           form,
           { name: data.name, email: data.email, phone: data.phone, answers },
@@ -85,7 +99,10 @@ export const submitShareback = createServerFn({ method: "POST" })
     }
     // Attorney cards that ask for an acknowledgment (every plan): refuse
     // without it, and record it on the contact so the firm has it on file.
-    if (card && needsConsent(parsePractice(card.practice))) {
+    // Nonprofit cards: the visitor's interests lead the note and become tags.
+    const interests = asksInterests(practice) ? cleanInterests(data.interests) : [];
+    note = withInterestsNote(interests, note, NOTE_MAX);
+    if (card && needsConsent(practice)) {
       if (data.consent !== true)
         throw new Error("Please tick the acknowledgment to send your details.");
       note = withConsentNote(note, NOTE_MAX);
@@ -105,6 +122,31 @@ export const submitShareback = createServerFn({ method: "POST" })
       })
       .setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
     if (error) throw new Error(sharebackErrorMessage(error.message));
+
+    // Tag the new contact with each interest. submit_shareback doesn't return
+    // the row, so find it: this card's newest share-back from this name, made
+    // in the last minute. Best-effort: the interests are in the note either way.
+    if (card && interests.length) {
+      try {
+        const { data: made } = await supabaseAdmin
+          .from("contacts")
+          .select("id")
+          .eq("card_id", card.id)
+          .eq("source", "shareback")
+          .eq("full_name", data.name.trim())
+          .gte("created_at", new Date(Date.now() - 60_000).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (made)
+          await supabaseAdmin.from("contact_tags").upsert(
+            interests.map((tag) => ({ contact_id: made.id, user_id: card.user_id, tag })),
+            { onConflict: "contact_id,tag", ignoreDuplicates: true },
+          );
+      } catch {
+        // The contact is saved with the interests in its note.
+      }
+    }
 
     // Notify the owner: web push now, webhook if configured. Both best-effort,
     // and both paid-only (instant lead alerts are a Pro feature).
@@ -189,7 +231,7 @@ export const signPublicCardMedia = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: card } = await supabaseAdmin
       .from("cards")
-      .select("user_id, headshot_path, logo_path, og_path, banner_path")
+      .select("user_id, headshot_path, logo_path, og_path, banner_path, practice")
       .eq("slug", data.slug.toLowerCase())
       .maybeSingle();
     if (!card) return {};
@@ -199,9 +241,14 @@ export const signPublicCardMedia = createServerFn({ method: "POST" })
       const { getPlan } = await import("./usage.server");
       if ((await getPlan(card.user_id)) === "premium") banner = card.banner_path;
     }
-    const paths = [card.headshot_path, card.logo_path, card.og_path, banner].filter(
-      (p): p is string => !!p && !p.split("/").includes("contact-photos"),
-    );
+    // Low profile: the person's photo and preview image are never signed.
+    const low = isLowProfile(parsePractice(card.practice));
+    const paths = [
+      low ? null : card.headshot_path,
+      card.logo_path,
+      low ? null : card.og_path,
+      banner,
+    ].filter((p): p is string => !!p && !p.split("/").includes("contact-photos"));
     if (!paths.length) return {};
     const { data: signed } = await supabaseAdmin.storage
       .from("card-media")
