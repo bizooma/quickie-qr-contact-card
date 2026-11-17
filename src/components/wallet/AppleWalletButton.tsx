@@ -59,6 +59,21 @@ function useAppleWallet(card: WalletCard | null | undefined) {
 
 const SUB = "Your code a double-press away, right from the lock screen.";
 
+/** Apple's own "Add to Apple Wallet" badge (artwork from Apple's Wallet
+ *  guidelines, unaltered; don't restyle or recreate it). */
+function AppleBadge({ busy, className }: { busy: boolean; className: string }) {
+  return (
+    <span className="relative inline-flex shrink-0">
+      <img
+        src="/brand/add-to-apple-wallet.svg"
+        alt="Add to Apple Wallet"
+        className={`${className} ${busy ? "opacity-40" : ""}`}
+      />
+      {busy && <Loader2 className="absolute inset-0 m-auto h-4 w-4 animate-spin text-foreground" />}
+    </span>
+  );
+}
+
 /** A row for the QR screen's "Get here in one tap" list. */
 export function AppleWalletRow({
   card,
@@ -71,32 +86,31 @@ export function AppleWalletRow({
 }) {
   const { show, paid, busy, add } = useAppleWallet(card);
   if (!show) return null;
-  const body = (
-    <>
-      <span className={chipClass}>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold">Add to Apple Wallet</span>
-        <span className="block text-xs text-muted-foreground">
-          {paid ? SUB : "Comes with Pro. " + SUB}
+  if (!paid)
+    return (
+      <Link to="/app/settings" hash="plan" className={rowClass}>
+        <span className={chipClass}>
+          <Wallet className="h-4 w-4" />
         </span>
-      </span>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-    </>
-  );
-  return paid ? (
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">Apple Wallet pass</span>
+          <span className="block text-xs text-muted-foreground">Comes with Pro. {SUB}</span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+    );
+  return (
     <button type="button" className={rowClass} onClick={() => void add()} disabled={busy}>
-      {body}
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold">Your code in Wallet</span>
+        <span className="block text-xs text-muted-foreground">{SUB}</span>
+      </span>
+      <AppleBadge busy={busy} className="h-10 w-auto" />
     </button>
-  ) : (
-    <Link to="/app/settings" hash="plan" className={rowClass}>
-      {body}
-    </Link>
   );
 }
 
-/** The card editor's Share tab: a short section with the button. */
+/** The card editor's Share tab: a short section with the badge. */
 export function AppleWalletPanel({ card }: { card: WalletCard }) {
   const { show, paid, busy, add } = useAppleWallet(card);
   if (!show) return null;
@@ -113,10 +127,9 @@ export function AppleWalletPanel({ card }: { card: WalletCard }) {
           type="button"
           onClick={() => void add()}
           disabled={busy}
-          className="inline-flex h-11 items-center gap-2 rounded-xl bg-black px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="rounded-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-          Add to Apple Wallet
+          <AppleBadge busy={busy} className="h-11 w-auto" />
         </button>
       ) : (
         <p className="text-sm">
