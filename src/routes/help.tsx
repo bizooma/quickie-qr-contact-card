@@ -132,11 +132,11 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
   },
   {
     id: "teams",
-    title: "Teams",
+    title: "Office (teams)",
     items: [
       [
         "Create a team",
-        "On the Teams plan ($10 per user/month, 3-seat minimum), open Team and name your team. Invite members with a single-use link (14-day expiry) as members or admins — every member gets full Premium features, and the owner uses one seat.",
+        "On the Office plan ($39/month flat, for up to 8 people including you), open Team and name your team. Invite members with a single-use link (14-day expiry) as members or admins. Every member gets full Premium features. More than 8 people? Email support@quickieqr.com.",
       ],
       [
         "Branded cards for everyone",
@@ -144,7 +144,7 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
       ],
       [
         "Remove QuickieQR branding",
-        "Only on Teams. On the Team page, under Brand & sharing, an owner or admin can turn on Remove QuickieQR branding. Every member's card then shows your brand only: no QuickieQR badge on cards without a logo, no \"Create your own card\" link under the card, and no QuickieQR name on the share-back form or link preview. Link previews update the next time each card is saved. If the Teams plan ends, the branding comes back by itself.",
+        "Only on Office. On the Team page, under Brand & sharing, an owner or admin can turn on Remove QuickieQR branding. Every member's card then shows your brand only: no QuickieQR badge on cards without a logo, no \"Create your own card\" link under the card, and no QuickieQR name on the share-back form or link preview. Link previews update the next time each card is saved. If the Office plan ends, the branding comes back by itself.",
       ],
       [
         "Shared contacts & analytics",
@@ -169,8 +169,8 @@ const SECTIONS: { id: string; title: string; items: [string, string][] }[] = [
         `Everything in Pro, with ${PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards, the email signature builder, and advanced analytics. Need more in a busy month? Add a top-up pack in Settings.`,
       ],
       [
-        "What Teams adds ($10/user/mo, or $100/user/yr)",
-        "A shared workspace billed per seat (3-seat minimum, owner included): every member gets full Premium features, plus brand lock, the option to remove QuickieQR branding from every card, shared contacts and team-wide analytics. Add or remove seats anytime from Manage billing.",
+        "What Office adds ($39/mo, or $390/yr)",
+        "A shared workspace for up to 8 people, owner included, at one flat price: every member gets full Premium features, plus brand lock, the option to remove QuickieQR branding from every card, shared contacts and team-wide analytics. More than 8 people? Email support@quickieqr.com and we'll set you up.",
       ],
       [
         "Auto-renewal & cancelling",

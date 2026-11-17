@@ -30,7 +30,12 @@ import {
 } from "@/lib/org-model";
 import { createCard } from "@/lib/cards-api";
 import { createCheckout, getBillingState } from "@/lib/billing.functions";
-import { TEAM_MIN_SEATS, TEAM_SEAT_PRICE_LABEL } from "@/lib/plans";
+import {
+  OFFICE_LARGER_LINE,
+  OFFICE_PRICE_LABEL,
+  OFFICE_SEATS,
+  TEAM_MIN_SEATS,
+} from "@/lib/plans";
 import { initials } from "@/lib/card-model";
 import { liveLinkProps } from "@/hooks/use-pwa-install";
 
@@ -112,7 +117,7 @@ function OrgPage() {
             {overLimit === 1
               ? "the newest member doesn't"
               : `the ${overLimit} newest members don't`}{" "}
-            get Premium. Add seats in Settings → Manage billing, or remove someone.
+            get Premium. Remove someone, or email support@quickieqr.com for more seats.
           </span>
         </p>
       )}
@@ -163,7 +168,7 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
     setBusy(true);
     try {
       const { url } = await createCheckout({
-        data: { plan: "team", interval: "month", seats: TEAM_MIN_SEATS },
+        data: { plan: "team", interval: "month" },
       });
       window.location.href = url;
     } catch (err) {
@@ -201,8 +206,9 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
       <h1 className="text-2xl font-bold">Create your team</h1>
       <p className="text-sm text-muted-foreground">
         Invite teammates with a link, provision branded cards for them, remove QuickieQR
-        branding so cards show your brand only, and see team analytics in one place. Creating a team requires the Teams plan ($10 per user/month, 3-seat minimum) —
-        and every member you invite gets full Premium features on their seat.
+        branding so cards show your brand only, and see team analytics in one place. Creating a
+        team requires the Office plan ({OFFICE_PRICE_LABEL} for up to {OFFICE_SEATS} people),
+        and every member you invite gets full Premium features.
       </p>
       <div className="space-y-2 text-left">
         <Label htmlFor="team-name">Team name</Label>
@@ -227,14 +233,15 @@ function CreateTeam({ onCreated }: { onCreated: () => void }) {
             onClick={buyTeams}
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-            Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo, {TEAM_MIN_SEATS} seats
+            Get Office — {OFFICE_PRICE_LABEL}, up to {OFFICE_SEATS} people
           </Button>
           <p className="text-xs text-muted-foreground">
             {billing && !billing.teamConfigured
-              ? "Teams isn't available yet (billing is still being set up)."
+              ? "Office isn't available yet (billing is still being set up)."
               : billing?.hasSubscription
-                ? "Your current subscription ends when the Teams plan starts."
-                : "Billed through Stripe; cancel anytime. Then come back here to name your team."}
+                ? "Your current subscription ends when the Office plan starts."
+                : "Billed through Stripe; cancel anytime. Then come back here to name your team."}{" "}
+            {OFFICE_LARGER_LINE}
           </p>
         </>
       )}
@@ -416,8 +423,8 @@ function InvitesSection({
       </p>
       {seatsFull && (
         <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-          All seats are in use, so nobody can join with a link until you add a seat in Settings →
-          Manage billing.
+          All seats are in use, so nobody can join with a link until you free one up. Need more?
+          Email support@quickieqr.com.
         </p>
       )}
     </section>

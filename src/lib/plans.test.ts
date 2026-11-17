@@ -22,11 +22,13 @@ import {
   PREMIUM_MONTHLY_USD,
   PREMIUM_PRICE_LABEL,
   premiumAnnualFreeMonths,
+  OFFICE_ANNUAL_PRICE_LABEL,
+  OFFICE_MONTHLY_USD,
+  OFFICE_PRICE_LABEL,
+  OFFICE_SEATS,
   TEAM_MIN_SEATS,
-  TEAM_SEAT_ANNUAL_PRICE_LABEL,
-  TEAM_SEAT_MONTHLY_USD,
-  TEAM_SEAT_PRICE_LABEL,
-  teamAnnualFreeMonths,
+  officeAnnualFreeMonths,
+  officeSeats,
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   remaining,
@@ -190,18 +192,31 @@ describe("annual pricing", () => {
   it("the '2 months free' claims match the actual prices", () => {
     expect(annualFreeMonths()).toBe(2);
     expect(premiumAnnualFreeMonths()).toBe(2);
-    expect(teamAnnualFreeMonths()).toBe(2);
+    expect(officeAnnualFreeMonths()).toBe(2);
   });
-  it("the smallest team never undercuts solo Premium", () => {
-    expect(TEAM_MIN_SEATS * TEAM_SEAT_MONTHLY_USD).toBeGreaterThan(PREMIUM_MONTHLY_USD);
+  it("Office never undercuts solo Premium, and is a funded team", () => {
+    expect(OFFICE_MONTHLY_USD).toBeGreaterThan(PREMIUM_MONTHLY_USD * 3);
+    expect(OFFICE_SEATS).toBeGreaterThanOrEqual(TEAM_MIN_SEATS);
   });
   it("labels derive from the numeric prices", () => {
     expect(PRO_PRICE_LABEL).toBe("$8/mo");
     expect(PRO_ANNUAL_PRICE_LABEL).toBe("$80/yr");
     expect(PREMIUM_PRICE_LABEL).toBe("$12/mo");
     expect(PREMIUM_ANNUAL_PRICE_LABEL).toBe("$120/yr");
-    expect(TEAM_SEAT_PRICE_LABEL).toBe("$10/user");
-    expect(TEAM_SEAT_ANNUAL_PRICE_LABEL).toBe("$100/user/yr");
+    expect(OFFICE_PRICE_LABEL).toBe("$39/mo");
+    expect(OFFICE_ANNUAL_PRICE_LABEL).toBe("$390/yr");
+  });
+});
+
+describe("officeSeats", () => {
+  it("grants the standard seats unless a custom deal sets more", () => {
+    expect(officeSeats(undefined)).toBe(OFFICE_SEATS);
+    expect(officeSeats("")).toBe(OFFICE_SEATS);
+    expect(officeSeats("3")).toBe(OFFICE_SEATS);
+    expect(officeSeats("junk")).toBe(OFFICE_SEATS);
+    expect(officeSeats("12")).toBe(12);
+    expect(officeSeats("12.7")).toBe(12);
+    expect(officeSeats("100000")).toBe(500);
   });
 });
 

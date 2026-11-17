@@ -56,17 +56,31 @@ export const PREMIUM_ANNUAL_USD = 120;
 export const PREMIUM_PRICE_LABEL = `$${PREMIUM_MONTHLY_USD}/mo`;
 export const PREMIUM_ANNUAL_PRICE_LABEL = `$${PREMIUM_ANNUAL_USD}/yr`;
 
-// Teams: per-seat billing on the org owner; every member gets Premium-level
-// features. The 3-seat floor keeps a "team" from undercutting solo Premium.
-export const TEAM_SEAT_MONTHLY_USD = 10;
-export const TEAM_SEAT_ANNUAL_USD = 100;
+// Office: one flat price for a team of up to OFFICE_SEATS people, billed to
+// the owner; every member gets Premium-level features. Internally it is still
+// the "team" plan (ck_plan "team", profiles.team_seats). Bigger firms are a
+// custom deal: set ck_seats on their Stripe subscription and the webhook
+// grants that many seats (officeSeats).
+export const OFFICE_MONTHLY_USD = 39;
+export const OFFICE_ANNUAL_USD = 390;
+export const OFFICE_SEATS = 8;
+export const OFFICE_PRICE_LABEL = `$${OFFICE_MONTHLY_USD}/mo`;
+export const OFFICE_ANNUAL_PRICE_LABEL = `$${OFFICE_ANNUAL_USD}/yr`;
+export const OFFICE_LARGER_LINE = `More than ${OFFICE_SEATS} people? Email support@quickieqr.com and we'll set you up.`;
+/** A funded team has at least this many seats (has_team_seat and
+ *  enforce_org_plan in the database use the same floor). */
 export const TEAM_MIN_SEATS = 3;
-export const TEAM_SEAT_PRICE_LABEL = `$${TEAM_SEAT_MONTHLY_USD}/user`;
-export const TEAM_SEAT_ANNUAL_PRICE_LABEL = `$${TEAM_SEAT_ANNUAL_USD}/user/yr`;
 
-/** And the same derived "2 months free" claim for Teams annual seats. */
-export function teamAnnualFreeMonths(): number {
-  return Math.floor((12 * TEAM_SEAT_MONTHLY_USD - TEAM_SEAT_ANNUAL_USD) / TEAM_SEAT_MONTHLY_USD);
+/** Seats an Office subscription grants: the standard OFFICE_SEATS, or more
+ *  when a custom deal put a larger ck_seats on the subscription. */
+export function officeSeats(ckSeats: unknown): number {
+  const n = Math.floor(Number(ckSeats));
+  return Number.isFinite(n) && n > OFFICE_SEATS ? Math.min(n, 500) : OFFICE_SEATS;
+}
+
+/** The derived "2 months free" claim for Office annual. */
+export function officeAnnualFreeMonths(): number {
+  return Math.floor((12 * OFFICE_MONTHLY_USD - OFFICE_ANNUAL_USD) / OFFICE_MONTHLY_USD);
 }
 
 /** Whole months of Pro the annual discount covers — the "2 months free" claim.

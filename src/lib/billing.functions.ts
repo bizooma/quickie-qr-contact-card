@@ -12,6 +12,7 @@ import {
   type UsageKind,
   TOPUP_PACKS,
   type TopupPack,
+  OFFICE_SEATS,
 } from "./plans";
 
 // Billing server functions. SDK and admin imports stay inside handlers —
@@ -153,13 +154,12 @@ const CheckoutSchema = z.object({
   plan: z.enum(["pro", "premium", "team", "topup"]).default("pro"),
   pack: z.enum(["small", "large"]).default("small"), // top-up only
   interval: z.enum(["month", "year"]).default("month"),
-  seats: z.number().int().min(3).max(500).optional(), // team plan only
 });
 
-/** Starts a Stripe Checkout — Pro or Premium (monthly/annual, one seat),
- *  Teams (per-seat quantity, 3-seat minimum), or a one-off scan top-up.
- *  Returns the URL. A Pro/Premium subscriber can buy Teams: the webhook
- *  cancels their old subscription once the Teams one is paid. */
+/** Starts a Stripe Checkout — Pro or Premium (monthly/annual), Office (one
+ *  flat price for up to OFFICE_SEATS people), or a one-off scan top-up.
+ *  Returns the URL. A Pro/Premium subscriber can buy Office: the webhook
+ *  cancels their old subscription once the Office one is paid. */
 export const createCheckout = createServerFn({ method: "POST" })
   .middleware([requireActiveAuth])
   .validator(CheckoutSchema)
@@ -238,13 +238,13 @@ export const createCheckout = createServerFn({ method: "POST" })
     if (!price) {
       const name =
         data.plan === "team"
-          ? `STRIPE_PRICE_ID_TEAM${data.interval === "year" ? "_ANNUAL" : ""}`
+          ? `STRIPE_PRICE_ID_OFFICE${data.interval === "year" ? "_ANNUAL" : ""}`
           : data.plan === "premium"
             ? `STRIPE_PRICE_ID_PREMIUM${data.interval === "year" ? "_ANNUAL" : ""}`
             : "STRIPE_PRICE_ID_ANNUAL";
       throw new Error(`That plan isn't configured yet — add ${name} first.`);
     }
-    const seats = data.plan === "team" ? Math.max(3, data.seats ?? 3) : 1;
+    const seats = data.plan === "team" ? OFFICE_SEATS : 1;
 
     // Referral discount (referral.ts) on Pro/Premium: the friend's own 20% plus
     // any referrer rewards, as one first-payment coupon. Stripe allows either a
@@ -266,7 +266,8 @@ export const createCheckout = createServerFn({ method: "POST" })
 
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price, quantity: seats }],
+      // Office is a flat price: always one unit, however many seats it grants.
+      line_items: [{ price, quantity: 1 }],
       client_reference_id: context.userId,
       // The webhook reads the tier from metadata (session + subscription).
       metadata: { ck_plan: data.plan, ck_seats: String(seats), ...replaceSub, ...refMeta },

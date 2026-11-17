@@ -39,12 +39,11 @@ import {
   PRO_ANNUAL_PRICE_LABEL,
   PRO_ANNUAL_USD,
   PRO_PRICE_LABEL,
-  TEAM_MIN_SEATS,
-  TEAM_SEAT_ANNUAL_PRICE_LABEL,
-  TEAM_SEAT_ANNUAL_USD,
-  TEAM_SEAT_MONTHLY_USD,
-  TEAM_SEAT_PRICE_LABEL,
-  teamAnnualFreeMonths,
+  OFFICE_ANNUAL_PRICE_LABEL,
+  OFFICE_LARGER_LINE,
+  OFFICE_PRICE_LABEL,
+  OFFICE_SEATS,
+  officeAnnualFreeMonths,
   TOPUP_PACKS,
 } from "@/lib/plans";
 import {
@@ -652,7 +651,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* 6 · Teams: full-bleed dark band */}
+      {/* 6 · Office (teams): full-bleed dark band */}
       <section
         id="teams"
         className="dark relative scroll-mt-6 overflow-hidden bg-background px-6 py-24 text-foreground lg:px-10"
@@ -665,15 +664,16 @@ function Landing() {
         <div className="relative mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
           <div>
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-pop-lime">
-              QuickieQR for Teams
+              QuickieQR Office
             </p>
             <h2 className="text-4xl font-extrabold leading-[1.02] text-white md:text-6xl">
-              Your whole team, on-brand.
+              Your whole office, one flat price.
             </h2>
             <p className="mt-6 max-w-lg text-lg text-white/70">
-              Invite your team with a link, provision branded cards for every member, and lock your
-              colors and logo so no card drifts off-brand. Take the QuickieQR name off every card,
-              share contacts if you choose, and see team-wide analytics in one place.
+              {OFFICE_PRICE_LABEL} covers up to {OFFICE_SEATS} people. No per-seat math. Invite your
+              team with a link, give everyone a branded card, and lock your colors and logo so no
+              card drifts off-brand. Take the QuickieQR name off every card, share contacts if you
+              choose, and see team-wide analytics in one place.
             </p>
             <div className="mt-9">
               <Button
@@ -696,7 +696,7 @@ function Landing() {
               {
                 i: EyeOff,
                 t: "Your brand only",
-                d: "Remove QuickieQR branding from every team card. Only on Teams.",
+                d: "Remove QuickieQR branding from every team card. Only on Office.",
               },
               {
                 i: Users,
@@ -931,20 +931,17 @@ function Landing() {
               </div>
             </div>
             <div data-reveal="3" className="surface card-lift border border-pop-teal/60 p-7">
-              <h3 className="text-lg font-bold">Teams</h3>
+              <h3 className="text-lg font-bold">Office</h3>
               <p className="mt-1 font-display text-4xl font-extrabold">
-                {period === "annual" ? TEAM_SEAT_ANNUAL_PRICE_LABEL : `${TEAM_SEAT_PRICE_LABEL}/mo`}
+                {period === "annual" ? OFFICE_ANNUAL_PRICE_LABEL : OFFICE_PRICE_LABEL}
               </p>
               <p className="text-xs text-muted-foreground">
-                {TEAM_MIN_SEATS}-seat minimum — from{" "}
-                {period === "annual"
-                  ? `$${TEAM_MIN_SEATS * TEAM_SEAT_ANNUAL_USD}/yr`
-                  : `$${TEAM_MIN_SEATS * TEAM_SEAT_MONTHLY_USD}/mo`}
+                Flat price, up to {OFFICE_SEATS} people
                 {period === "annual" && (
                   <>
                     {" — "}
                     <span className="font-semibold text-brand">
-                      {teamAnnualFreeMonths()} months free
+                      {officeAnnualFreeMonths()} months free
                     </span>
                   </>
                 )}
@@ -957,7 +954,7 @@ function Landing() {
                   "Your brand only: no QuickieQR branding",
                   "Shared contacts: one team pipeline",
                   "Team-wide analytics",
-                  "Add seats anytime as you grow",
+                  `More than ${OFFICE_SEATS}? We'll set you up`,
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
@@ -968,7 +965,7 @@ function Landing() {
               <div className="mt-6">
                 <Cta
                   label="Start free, add your team in-app"
-                  from="pricing-teams"
+                  from="pricing-office"
                   ab={ab}
                   size="default"
                 />
@@ -979,9 +976,9 @@ function Landing() {
             Paid plans renew automatically — monthly plans each month, annual plans each year.
             Cancel anytime from Settings: you keep full access until the end of the month or year
             you've paid for, and you're simply not billed again. Annual plans aren't refunded
-            mid-term; they just don't renew. Teams are billed per seat ({TEAM_SEAT_PRICE_LABEL}
-            /mo or {TEAM_SEAT_ANNUAL_PRICE_LABEL}, minimum {TEAM_MIN_SEATS} seats; the owner uses
-            one) and seats can be added or reduced anytime from billing.
+            mid-term; they just don't renew. Office is one flat price ({OFFICE_PRICE_LABEL} or{" "}
+            {OFFICE_ANNUAL_PRICE_LABEL}) for up to {OFFICE_SEATS} people, owner included.{" "}
+            {OFFICE_LARGER_LINE}
           </p>
         </div>
       </section>
@@ -1028,7 +1025,7 @@ function Landing() {
               ],
               [
                 "Can my whole team use it?",
-                "Yes. The Teams plan ($10 per user/month, 3-seat minimum) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove QuickieQR branding so cards show your brand only (Teams is the only plan with this), and see shared contacts and team analytics in one view.",
+                `Yes. The Office plan (${OFFICE_PRICE_LABEL} flat, for up to ${OFFICE_SEATS} people) gives every member full Premium features plus a shared workspace: invite members with a link, provision branded cards for each of them, lock your brand colors, remove QuickieQR branding so cards show your brand only (Office is the only plan with this), and see shared contacts and team analytics in one view. More than ${OFFICE_SEATS} people? Email support@quickieqr.com.`,
               ],
             ].map(([q, a]) => (
               <details key={q} className="group py-5">

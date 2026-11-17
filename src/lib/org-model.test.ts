@@ -88,7 +88,7 @@ describe("seats", () => {
 describe("inviteProblemMessage", () => {
   it("says clearly when the team is full", () => {
     expect(inviteProblemMessage("seats_full", "Acme Realty")).toBe(
-      "Acme Realty has no free seats right now. Ask the team owner to add a seat (Settings → Manage billing), then open this link again.",
+      "Acme Realty has no free seats right now. Ask the team owner to free one up or email support@quickieqr.com for more, then open this link again.",
     );
   });
   it("covers every refusal reason", () => {

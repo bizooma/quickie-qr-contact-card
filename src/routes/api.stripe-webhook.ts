@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type Stripe from "stripe";
+import { officeSeats } from "@/lib/plans";
 
 // Stripe webhook: the single source of truth for who is on Pro. Signature
 // verification uses WebCrypto (constructEventAsync) so it runs on Workers.
@@ -77,14 +78,12 @@ type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseA
 type Env = ReturnType<(typeof import("@/lib/stripe.server"))["stripeEnv"]>;
 
 // Which paid tier a session/subscription buys; set by createCheckout.
-// A Teams purchase grants the OWNER premium features plus N seats.
+// An Office purchase ("team") grants the OWNER premium features plus seats:
+// OFFICE_SEATS, or a custom deal's larger ck_seats.
 const tierOf = (meta: Stripe.Metadata | null | undefined) =>
   meta?.["ck_plan"] === "premium" || meta?.["ck_plan"] === "team" ? "premium" : "pro";
-const seatsOf = (meta: Stripe.Metadata | null | undefined, quantity?: number | null) => {
-  if (meta?.["ck_plan"] !== "team") return 0;
-  const q = quantity ?? Number(meta?.["ck_seats"] ?? 0);
-  return Number.isFinite(q) && q > 0 ? q : 0;
-};
+const seatsOf = (meta: Stripe.Metadata | null | undefined) =>
+  meta?.["ck_plan"] === "team" ? officeSeats(meta?.["ck_seats"]) : 0;
 
 async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): Promise<void> {
   if (event.type === "checkout.session.completed") {
@@ -114,7 +113,7 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
       return;
     }
     if (userId && session.mode === "subscription" && paid) {
-      // A subscriber moving to Teams: end the old subscription now that the
+      // A subscriber moving to Office: end the old subscription now that the
       // new one is paid. Its later "deleted" event matches no row (the id
       // below replaces it) and is skipped.
       const old = session.metadata?.["ck_replace_sub"];
@@ -193,8 +192,9 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
         .update({
           plan: ckPlan === "premium" || ckPlan === "team" ? "premium" : "pro",
           plan_expires_at: null,
-          // Seat changes (portal quantity updates) land here.
-          team_seats: ckPlan === "team" && item?.quantity && item.quantity > 0 ? item.quantity : 0,
+          // Office is flat: its seats come from the subscription's ck_seats
+          // (a custom deal edits it in Stripe), never the quantity.
+          team_seats: ckPlan === "team" ? officeSeats(sub.metadata?.["ck_seats"]) : 0,
         })
         .eq("stripe_subscription_id", sub.id),
       "subscription update",
@@ -227,7 +227,7 @@ async function applyEvent(event: Stripe.Event, supabaseAdmin: Admin, env: Env): 
 
 /** A renewal invoice is a draft for about an hour: put the referrer's discount
  *  on it (20% for each friend's first payment, 10% per paying friend, capped
- *  at 100%). Teams bills are left alone. */
+ *  at 100%). Office bills are left alone. */
 async function applyReferralToRenewal(
   invoice: Stripe.Invoice,
   supabaseAdmin: Admin,

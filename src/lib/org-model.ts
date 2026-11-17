@@ -56,7 +56,7 @@ export function seatOrder<T extends SeatMember>(members: readonly T[]): T[] {
 }
 
 /** Members without a seat: everyone past the limit, or the whole team when
- *  it's under the 3-seat minimum (e.g. the Teams plan was cancelled). */
+ *  it's under the 3-seat minimum (e.g. the Office plan was cancelled). */
 export function uncoveredMembers<T extends SeatMember>(members: readonly T[], seats: number): T[] {
   const ordered = seatOrder(members);
   return seats < TEAM_MIN_SEATS ? ordered : ordered.slice(seats);
@@ -74,7 +74,7 @@ export function inviteProblemMessage(
   const team = teamName?.trim() || "This team";
   switch (code) {
     case "seats_full":
-      return `${team} has no free seats right now. Ask the team owner to add a seat (Settings → Manage billing), then open this link again.`;
+      return `${team} has no free seats right now. Ask the team owner to free one up or email support@quickieqr.com for more, then open this link again.`;
     case "used":
       return "This invite link was already used. Ask the team owner for a new one.";
     case "expired":

@@ -18,12 +18,12 @@ export const Route = createFileRoute("/terms")({
 
 function Terms() {
   return (
-    <LegalPage title="Terms of Service" updated="October 11, 2026">
+    <LegalPage title="Terms of Service" updated="November 17, 2026">
       <h2>The service</h2>
       <p>
         QuickieQR lets you create digital business cards, share them, and manage the contacts
-        you collect. The free plan is free; paid plans (Pro, Premium and Teams) are subscriptions
-        billed monthly or annually — Teams per seat, with a 3-seat minimum.
+        you collect. The free plan is free; paid plans (Pro, Premium and Office) are subscriptions
+        billed monthly or annually. Office is a flat price for a team of up to 8 people.
       </p>
       <h2>Billing, renewal & cancellation</h2>
       <p>

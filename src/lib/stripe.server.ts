@@ -12,8 +12,9 @@ export function stripeEnv() {
     annualPriceId: process.env["STRIPE_PRICE_ID_ANNUAL"] ?? "",
     premiumPriceId: process.env["STRIPE_PRICE_ID_PREMIUM"] ?? "",
     premiumAnnualPriceId: process.env["STRIPE_PRICE_ID_PREMIUM_ANNUAL"] ?? "",
-    teamPriceId: process.env["STRIPE_PRICE_ID_TEAM"] ?? "",
-    teamAnnualPriceId: process.env["STRIPE_PRICE_ID_TEAM_ANNUAL"] ?? "",
+    // The Office plan (internally "team"): one flat price, quantity 1.
+    teamPriceId: process.env["STRIPE_PRICE_ID_OFFICE"] ?? "",
+    teamAnnualPriceId: process.env["STRIPE_PRICE_ID_OFFICE_ANNUAL"] ?? "",
     // One-off top-up packs (plans.ts TOPUP_PACKS); STRIPE_PRICE_ID_TOPUP is the
     // older name for the small pack.
     topupPriceIds: {

@@ -69,10 +69,12 @@ import {
   PRO_ANNUAL_PRICE_LABEL,
   PRO_PRICE_LABEL,
   SCAN_UNIT_NOTE,
+  OFFICE_ANNUAL_PRICE_LABEL,
+  OFFICE_LARGER_LINE,
+  OFFICE_PRICE_LABEL,
+  OFFICE_SEATS,
   TEAM_MIN_SEATS,
-  TEAM_SEAT_ANNUAL_PRICE_LABEL,
-  TEAM_SEAT_PRICE_LABEL,
-  teamAnnualFreeMonths,
+  officeAnnualFreeMonths,
   topupLabel,
   type TopupPack,
   USAGE_KINDS,
@@ -394,8 +396,8 @@ function InviteSection() {
             </div>
           </dl>
           <p className="text-xs text-muted-foreground">
-            Discounts apply to your own Pro or Premium subscription (Teams bills aren't discounted).
-            No subscription yet? They're applied when you start one.
+            Discounts apply to your own Pro or Premium subscription (Office plans aren't
+            discounted). No subscription yet? They're applied when you start one.
           </p>
         </div>
       ) : (
@@ -464,7 +466,6 @@ function PlanSection() {
     isError: billingFailed,
     refetch: refetchBilling,
   } = useQuery({ queryKey: ["billing"], queryFn: () => getBillingState() });
-  const [seats, setSeats] = useState(TEAM_MIN_SEATS);
 
   // The avatar menu links here as #plan and #top-ups; both render only once
   // billing has loaded, so scroll after that.
@@ -494,13 +495,12 @@ function PlanSection() {
   async function upgrade(
     plan: "pro" | "premium" | "team" | "topup",
     interval: "month" | "year" = "month",
-    seats?: number,
     pack?: TopupPack,
   ) {
     setBusy(true);
     try {
       const { url } = await createCheckout({
-        data: { plan, interval, ...(seats ? { seats } : {}), ...(pack ? { pack } : {}) },
+        data: { plan, interval, ...(pack ? { pack } : {}) },
       });
       window.location.href = url;
     } catch (err) {
@@ -625,12 +625,8 @@ function PlanSection() {
             </Button>
           )}
           {billing.teamConfigured && billing.teamSeats < TEAM_MIN_SEATS && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => upgrade("team", "month", seats)}
-            >
-              Get Teams — {TEAM_SEAT_PRICE_LABEL}/mo
+            <Button variant="outline" disabled={busy} onClick={() => upgrade("team", "month")}>
+              Get Office — {OFFICE_PRICE_LABEL}, up to {OFFICE_SEATS} people
             </Button>
           )}
           {billing.topupPacks.map((pack) => (
@@ -638,7 +634,7 @@ function PlanSection() {
               key={pack}
               variant="outline"
               disabled={busy}
-              onClick={() => upgrade("topup", "month", undefined, pack)}
+              onClick={() => upgrade("topup", "month", pack)}
             >
               Add {topupLabel(pack)}
             </Button>
@@ -672,7 +668,7 @@ function PlanSection() {
                   key={pack}
                   variant="outline"
                   disabled={busy}
-                  onClick={() => upgrade("topup", "month", undefined, pack)}
+                  onClick={() => upgrade("topup", "month", pack)}
                 >
                   Add {topupLabel(pack)}
                 </Button>
@@ -681,50 +677,21 @@ function PlanSection() {
           )}
           {billing.teamConfigured && billing.teamSeats < TEAM_MIN_SEATS && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <div className="flex items-center gap-1 rounded-xl border px-2 py-1">
-                <button
-                  type="button"
-                  className="px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-                  onClick={() => setSeats((n) => Math.max(TEAM_MIN_SEATS, n - 1))}
-                  aria-label="Fewer seats"
-                >
-                  −
-                </button>
-                <span className="w-14 text-center text-sm font-semibold tabular-nums">
-                  {seats} seats
-                </span>
-                <button
-                  type="button"
-                  className="px-2 text-sm font-bold text-muted-foreground hover:text-foreground"
-                  onClick={() => setSeats((n) => Math.min(500, n + 1))}
-                  aria-label="More seats"
-                >
-                  +
-                </button>
-              </div>
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => upgrade("team", "month", seats)}
-              >
-                {billing.hasSubscription ? "Switch to Teams" : "Get Teams"} —{" "}
-                {TEAM_SEAT_PRICE_LABEL}
-                /mo
+              <Button variant="outline" disabled={busy} onClick={() => upgrade("team", "month")}>
+                {billing.hasSubscription ? "Switch to Office" : "Get Office"} — {OFFICE_PRICE_LABEL}
+                , up to {OFFICE_SEATS} people
               </Button>
               {billing.teamAnnualConfigured && (
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => upgrade("team", "year", seats)}
-                >
-                  {TEAM_SEAT_ANNUAL_PRICE_LABEL} — {teamAnnualFreeMonths()} months free
+                <Button variant="outline" disabled={busy} onClick={() => upgrade("team", "year")}>
+                  {OFFICE_ANNUAL_PRICE_LABEL} — {officeAnnualFreeMonths()} months free
                 </Button>
               )}
+              <p className="w-full text-xs text-muted-foreground">{OFFICE_LARGER_LINE}</p>
             </div>
           )}
           {billing.teamSeats >= TEAM_MIN_SEATS && (
             <p className="text-xs font-medium text-brand">
-              Teams plan active: {billing.teamSeats} seats. Manage seats from Manage billing.
+              Office plan active: {billing.teamSeats} seats. {OFFICE_LARGER_LINE}
             </p>
           )}
           <p className="text-xs text-muted-foreground">
@@ -735,12 +702,12 @@ function PlanSection() {
             Zapier webhook, event mode, and up to 3 cards. Premium ({PREMIUM_PRICE_LABEL}, or{" "}
             {PREMIUM_ANNUAL_PRICE_LABEL} with {premiumAnnualFreeMonths()} months free): everything
             in Pro, with {PREMIUM_AI_BENEFIT.replace(/\.$/, "")}, plus unlimited personal cards,
-            email signatures, follow-up reminders, and advanced analytics. Teams (
-            {TEAM_SEAT_PRICE_LABEL}
-            /mo, {TEAM_MIN_SEATS}-seat minimum): a team workspace with everything in Premium for
-            every member, and the only plan that can remove QuickieQR branding from cards. Plans
-            auto-renew; cancelling stops the renewal and your plan runs to the end of the period
-            you've paid for. Every account keeps one live digital card (link + QR) free for life.
+            email signatures, follow-up reminders, and advanced analytics. Office (
+            {OFFICE_PRICE_LABEL} for up to {OFFICE_SEATS} people): a team workspace with everything
+            in Premium for every member, and the only plan that can remove QuickieQR branding from
+            cards. Plans auto-renew; cancelling stops the renewal and your plan runs to the end of
+            the period you've paid for. Every account keeps one live digital card (link + QR) free
+            for life.
           </p>
           {!billing.stripeConfigured && (
             <p className="text-xs text-muted-foreground">

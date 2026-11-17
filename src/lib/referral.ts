@@ -6,7 +6,7 @@
 // - When they pay, you get 20% off your next payment, then 10% off every
 //   payment after that for as long as they keep paying.
 // - Each paying friend adds their share; the total is capped at 100%.
-// Teams subscriptions are not discounted (a per-seat bill would multiply it).
+// Office (team) subscriptions are not discounted.
 
 export const FRIEND_FIRST_PCT = 20;
 export const REFERRER_FIRST_PCT = 20;
