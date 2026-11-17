@@ -3,12 +3,14 @@ import { z } from "zod/v4";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   ANSWER_MAX,
+  NOTE_MAX,
   QUESTIONS_MAX,
   composeNote,
   parseExchange,
   submissionProblem,
 } from "./exchange";
 import type { PlanId } from "./plans";
+import { needsConsent, parsePractice, withConsentNote } from "./practice";
 
 // Server functions around capturing contacts: the public share-back submit
 // (which also notifies the card owner) and post-capture fan-out for the
@@ -24,6 +26,8 @@ const SharebackInputSchema = z.object({
   note: z.string().max(1000),
   /** Answers to the owner's own questions, in the order the card lists them. */
   answers: z.array(z.string().max(ANSWER_MAX)).max(QUESTIONS_MAX).optional(),
+  /** The attorney-card acknowledgment, ticked by the visitor. */
+  consent: z.boolean().optional(),
 });
 
 /** Public (unauthenticated): saves a share-back, then pings the card owner. */
@@ -56,7 +60,7 @@ export const submitShareback = createServerFn({ method: "POST" })
     // are folded into the note, so the RPC and its limits stay as they were.
     const { data: card } = await supabaseAdmin
       .from("cards")
-      .select("user_id, label, full_name, exchange")
+      .select("user_id, label, full_name, exchange, practice")
       .eq("slug", data.slug.toLowerCase())
       .maybeSingle();
     let plan: PlanId | null = null;
@@ -78,6 +82,13 @@ export const submitShareback = createServerFn({ method: "POST" })
         if (!form.company) company = "";
         note = composeNote(form, data.note, answers);
       }
+    }
+    // Attorney cards that ask for an acknowledgment (every plan): refuse
+    // without it, and record it on the contact so the firm has it on file.
+    if (card && needsConsent(parsePractice(card.practice))) {
+      if (data.consent !== true)
+        throw new Error("Please tick the acknowledgment to send your details.");
+      note = withConsentNote(note, NOTE_MAX);
     }
 
     // The SECURITY DEFINER RPC revalidates lengths and requires email-or-phone.

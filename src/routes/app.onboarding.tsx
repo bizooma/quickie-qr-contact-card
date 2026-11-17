@@ -11,6 +11,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { createCard, createCardFromScan } from "@/lib/cards-api";
 import { ScanMyCard } from "@/components/card/ScanMyCard";
 import type { ScannedCardFields } from "@/lib/own-card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { newAttorneyPractice } from "@/lib/practice";
 
 export const Route = createFileRoute("/app/onboarding")({ head: appHead('Get started', 'Create your first digital business card.'), component: Onboarding });
 
@@ -21,13 +23,25 @@ function Onboarding() {
   const meta = user?.user_metadata ?? {};
   const [f, setF] = useState({ full_name: (meta["full_name"] as string) ?? (meta["name"] as string) ?? "", job_title: "", company: "", label: "Work" });
   const [busy, setBusy] = useState(false);
+  // Arriving from the lawyers' page (/for/lawyers) starts this ticked.
+  const [attorney, setAttorney] = useState(() => {
+    try {
+      return localStorage.getItem("ck-profession") === "attorney";
+    } catch {
+      return false;
+    }
+  });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
     setBusy(true);
     try {
-      const card = await createCard(user.id, { ...f, email: user.email ?? undefined });
+      const card = await createCard(user.id, {
+        ...f,
+        email: user.email ?? undefined,
+        ...(attorney ? { practice: newAttorneyPractice() } : {}),
+      });
       await supabase.from("profiles").update({ onboarded: true, display_name: f.full_name }).eq("id", user.id);
       await qc.invalidateQueries({ queryKey: ["cards"] });
       navigate({ to: "/app/cards/$id", params: { id: card.id } });
@@ -64,6 +78,12 @@ function Onboarding() {
             <Input id={k} required={req} className="h-11" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
           </div>
         ))}
+        <div className="flex items-start gap-2.5">
+          <Checkbox id="attorney" checked={attorney} onCheckedChange={(v) => setAttorney(v === true)} className="mt-0.5" />
+          <Label htmlFor="attorney" className="font-normal leading-snug">
+            I'm an attorney <span className="text-muted-foreground">— add bar admissions, practice areas and a disclaimer</span>
+          </Label>
+        </div>
         <Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Creating…" : "Create my card"}</Button>
       </form>
     </div>

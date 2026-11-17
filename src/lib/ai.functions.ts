@@ -197,7 +197,7 @@ export const draftFollowUp = createServerFn({ method: "POST" })
         supabase.from("contact_tags").select("tag").eq("contact_id", data.contactId),
         supabase
           .from("cards")
-          .select("full_name, job_title, company")
+          .select("full_name, job_title, company, practice")
           .order("created_at")
           .limit(1)
           .maybeSingle(),
@@ -206,7 +206,19 @@ export const draftFollowUp = createServerFn({ method: "POST" })
       if (!c.data) throw new Error("Contact not found");
 
       const contact = c.data;
-      const sender = card.data;
+      // Write as the card they met, when we know it (an attorney card and a
+      // side-business card call for different emails).
+      let sender = card.data;
+      if (contact.card_id) {
+        const { data: met } = await supabase
+          .from("cards")
+          .select("full_name, job_title, company, practice")
+          .eq("id", contact.card_id)
+          .maybeSingle();
+        if (met) sender = met;
+      }
+      const { parsePractice } = await import("./practice");
+      const attorney = parsePractice(sender?.practice)?.kind === "attorney";
       const facts = [
         `Name: ${contact.full_name}`,
         contact.job_title && `Title: ${contact.job_title}`,
@@ -231,7 +243,14 @@ export const draftFollowUp = createServerFn({ method: "POST" })
           "Rules: under 120 words; reference where we met and what we discussed when known; " +
           "one clear, low-pressure next step; no flattery, no buzzwords, no exclamation marks; " +
           "plain text only; never fabricate details — if something is unknown, leave it out " +
-          "rather than using a placeholder. Sign off with the sender's first name.",
+          "rather than using a placeholder. Sign off with the sender's first name." +
+          (attorney
+            ? " The sender is an attorney, so lawyer advertising and ethics rules apply: never " +
+              "promise or predict results, never describe past case outcomes, never call the " +
+              "sender an expert or specialist, give no legal advice about the person's situation, " +
+              "and don't pressure them to hire the sender. If they mentioned a legal matter, " +
+              "suggest a consultation instead of discussing it by email."
+            : ""),
         messages: [
           {
             role: "user",

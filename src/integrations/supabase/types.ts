@@ -257,6 +257,7 @@ export type Database = {
           created_at: string
           emails: Json
           exchange: Json | null
+          practice: Json | null
           font: string
           full_name: string
           headshot_path: string | null
@@ -286,6 +287,7 @@ export type Database = {
           created_at?: string
           emails?: Json
           exchange?: Json | null
+          practice?: Json | null
           font?: string
           full_name?: string
           headshot_path?: string | null
@@ -315,6 +317,7 @@ export type Database = {
           created_at?: string
           emails?: Json
           exchange?: Json | null
+          practice?: Json | null
           font?: string
           full_name?: string
           headshot_path?: string | null
@@ -1190,6 +1193,7 @@ export type Database = {
       team_seat_count: { Args: { p_org: string }; Returns: number }
       theme_needs_premium: { Args: { t: Json }; Returns: boolean }
       valid_card_exchange: { Args: { x: Json }; Returns: boolean }
+      valid_card_practice: { Args: { p: Json }; Returns: boolean }
       valid_card_theme: { Args: { t: Json }; Returns: boolean }
       winback_candidates: { Args: { p_limit?: number }; Returns: string[] }
     }

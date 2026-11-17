@@ -3,6 +3,7 @@
 
 import type { CardTheme } from "./card-theme";
 import type { CardExchange, VCardPart } from "./exchange";
+import type { CardPractice } from "./practice";
 import {
   guessPlatform,
   isBareEmail,
@@ -41,6 +42,8 @@ export type CardData = {
   theme?: CardTheme | null | undefined;
   /** Save-contact and share-back settings; null or absent means the defaults. */
   exchange?: CardExchange | null | undefined;
+  /** Profession pack (attorney details); null or absent means none. */
+  practice?: CardPractice | null | undefined;
   links: CardLink[];
 };
 
@@ -65,7 +68,6 @@ export const ACCENT_PRESETS = [
   "#0F766E",
   "#CA8A04",
   "#BE185D",
-  "#4B3BFF",
 ];
 export const BACKGROUND_PRESETS = [
   "#FFFFFF",

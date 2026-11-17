@@ -1,6 +1,7 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { LiveCardButton, LiveCardDialog } from "@/components/LiveCardDialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +36,15 @@ function AudiencePage() {
   const { user } = useAuth();
   const to = user ? "/app" : "/auth";
   const from = `for-${a.slug}`;
+  // Someone who signs up from the attorneys' page starts with that box ticked.
+  useEffect(() => {
+    if (a.slug !== "lawyers") return;
+    try {
+      localStorage.setItem("ck-profession", "attorney");
+    } catch {
+      // Storage blocked: they can tick it themselves during signup.
+    }
+  }, [a.slug]);
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">

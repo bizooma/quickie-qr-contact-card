@@ -5,6 +5,7 @@ import { resolveTheme } from "@/lib/card-theme";
 import { displayUrl, linkHost, linkKind } from "@/lib/link-catalog";
 import { GlassMesh } from "./GlassMesh";
 import { ICON_LABELS, LinkIcon } from "./LinkIcon";
+import { PracticeDisclaimer, PracticeSummary } from "./PracticeDetails";
 
 type Row = { kind: string; verb: string; icon: ReactNode; text: string; sub: string; href: string };
 
@@ -146,6 +147,11 @@ export function GlassCard({
             </p>
           )}
           {card.bio && <p className="ck-bio">{card.bio}</p>}
+          <PracticeSummary
+            practice={card.practice}
+            muted="var(--ck-muted)"
+            chip="color-mix(in srgb, var(--ck-fg) 10%, transparent)"
+          />
           {logo && (
             <img
               className="ck-logo"
@@ -253,6 +259,7 @@ export function GlassCard({
             )}
           </section>
         )}
+        <PracticeDisclaimer practice={card.practice} muted="var(--ck-muted)" />
       </div>
     </div>
   );

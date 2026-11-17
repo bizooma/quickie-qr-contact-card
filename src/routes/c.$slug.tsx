@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, Download, Pencil, QrCode, Send, Share2 } from "lucide-react";
+import { CalendarCheck, Check, Download, Pencil, QrCode, Send, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
@@ -17,6 +17,7 @@ import {
   vcardHidden,
   type ShareBackPrefill,
 } from "@/lib/exchange";
+import { needsConsent, parsePractice } from "@/lib/practice";
 
 // Absolute URL so crawlers accept it from any serving domain.
 const DEFAULT_OG_IMAGE = "https://quickieqr.com/brand/og-default.png";
@@ -25,6 +26,7 @@ const DEFAULT_OG_IMAGE = "https://quickieqr.com/brand/og-default.png";
 // verified is decided by get_public_card from the owner's profile (0034).
 // exchange arrives without the owner's form when they are on the free plan (0035).
 // hide_branding is true for a seated member of a team that turned branding off (0036).
+// practice is the attorney pack, returned for every plan (0037).
 type PublicCardData = CardData & {
   og_path?: string | null;
   shareback_open?: boolean;
@@ -179,6 +181,8 @@ function PublicCard() {
   const unbranded = card.hide_branding === true;
   const exchange = useMemo(() => parseExchange(card.exchange), [card.exchange]);
   const form = useMemo(() => formFor(exchange), [exchange]);
+  const practice = useMemo(() => parsePractice(card.practice), [card.practice]);
+  const consent = needsConsent(practice);
   const first = card.full_name.trim().split(/\s+/)[0] || "them";
   const accentText = contrastText(card.accent_color);
   // Liquid Glass paints its own backdrop: the page takes the mesh's base
@@ -285,7 +289,8 @@ function PublicCard() {
   async function sendMine() {
     if (!mine || sending || sentMine) return;
     const details = prefillSubmission(form, mine);
-    if (submissionProblem(form, { ...details, answers: [] }, first)) {
+    // An acknowledgment has to be ticked by the person, never sent for them.
+    if (consent || submissionProblem(form, { ...details, answers: [] }, first)) {
       setOpen(true);
       return;
     }
@@ -325,7 +330,7 @@ function PublicCard() {
   return (
     <div className="min-h-screen" style={{ background: pageBg }}>
       <CardView
-        card={card}
+        card={{ ...card, practice }}
         headshotUrl={headshotUrl}
         logoUrl={logoUrl}
         bannerUrl={bannerUrl}
@@ -364,28 +369,62 @@ function PublicCard() {
               </div>
             </div>
           ) : (
-            <div
-              className={`grid gap-2 ${card.shareback_open === false ? "grid-cols-1" : "grid-cols-2"}`}
-            >
-              <button
-                onClick={saveContact}
-                className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
-                style={{ background: card.accent_color, color: accentText }}
-              >
-                <Download className="h-4 w-4" />
-                Save contact
-              </button>
-              {card.shareback_open !== false && (
-                <button
-                  onClick={mine ? sendMine : () => setOpen(true)}
-                  disabled={sending || sentMine}
-                  className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-70"
-                  style={{ borderColor: card.accent_color, color: inCardFg }}
+            <div className="space-y-2">
+              {/* An attorney's booking link leads; saving and sharing step back. */}
+              {practice?.consultUrl && (
+                <a
+                  href={practice.consultUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    supabase
+                      .rpc("log_card_event", {
+                        _slug: slug,
+                        _event: "click",
+                        _meta: "Schedule a consultation",
+                      })
+                      .then(undefined, () => {});
+                  }}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
+                  style={{ background: card.accent_color, color: accentText }}
                 >
-                  {sentMine ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-                  {sentMine ? "Sent" : sending ? "Sending…" : mine ? "Send my card" : "Share yours"}
-                </button>
+                  <CalendarCheck className="h-4 w-4" />
+                  Schedule a consultation
+                </a>
               )}
+              <div
+                className={`grid gap-2 ${card.shareback_open === false ? "grid-cols-1" : "grid-cols-2"}`}
+              >
+                <button
+                  onClick={saveContact}
+                  className={`flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-90 ${practice?.consultUrl ? "border" : ""}`}
+                  style={
+                    practice?.consultUrl
+                      ? { borderColor: card.accent_color, color: inCardFg }
+                      : { background: card.accent_color, color: accentText }
+                  }
+                >
+                  <Download className="h-4 w-4" />
+                  Save contact
+                </button>
+                {card.shareback_open !== false && (
+                  <button
+                    onClick={mine ? sendMine : () => setOpen(true)}
+                    disabled={sending || sentMine}
+                    className="flex h-12 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-70"
+                    style={{ borderColor: card.accent_color, color: inCardFg }}
+                  >
+                    {sentMine ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                    {sentMine
+                      ? "Sent"
+                      : sending
+                        ? "Sending…"
+                        : mine
+                          ? "Send my card"
+                          : "Share yours"}
+                  </button>
+                )}
+              </div>
             </div>
           )
         }
@@ -452,6 +491,7 @@ function PublicCard() {
         slug={slug}
         ownerName={card.full_name}
         form={form}
+        consent={consent}
         prefill={mine}
         branded={!unbranded}
         open={open}

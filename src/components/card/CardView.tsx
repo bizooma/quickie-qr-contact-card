@@ -12,6 +12,7 @@ import {
 import { displayUrl } from "@/lib/link-catalog";
 import { GlassCard } from "./GlassCard";
 import { LinkIcon } from "./LinkIcon";
+import { PracticeDisclaimer, PracticeSummary } from "./PracticeDetails";
 
 // Card colors are user-chosen data, so they are applied as inline styles
 // rather than design tokens.
@@ -154,6 +155,12 @@ export function CardView({
           {card.bio}
         </p>
       )}
+      <PracticeSummary
+        practice={card.practice}
+        align={t === "minimal" ? "left" : "center"}
+        muted={muted}
+        chip={tile}
+      />
     </div>
   );
 
@@ -296,6 +303,7 @@ export function CardView({
               })}
           </div>
         )}
+        <PracticeDisclaimer practice={card.practice} muted={muted} />
       </div>
     </div>
   );

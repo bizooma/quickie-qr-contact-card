@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { BrandPanel } from "@/components/card/BrandPanel";
 import { ExchangePanel } from "@/components/card/ExchangePanel";
+import { PracticePanel } from "@/components/card/PracticePanel";
+import { parsePractice } from "@/lib/practice";
 import { CardView } from "@/components/card/CardView";
 import { ICON_LABELS, LinkIcon } from "@/components/card/LinkIcon";
 import { QrPanel } from "@/components/card/QrPanel";
@@ -184,10 +186,15 @@ function Editor({
         timer.current = null;
       }
       try {
-        const { links, slug: _s, theme, exchange, ...fields } = c;
+        const { links, slug: _s, theme, exchange, practice, ...fields } = c;
         const { error } = await supabase
           .from("cards")
-          .update({ ...fields, theme: theme ?? null, exchange: exchange ?? null })
+          .update({
+            ...fields,
+            theme: theme ?? null,
+            exchange: exchange ?? null,
+            practice: parsePractice(practice),
+          })
           .eq("id", cardId);
         if (error) throw error;
         const lj = JSON.stringify(links);
@@ -485,6 +492,11 @@ function Editor({
                 onChange={(e) => set("bio", e.target.value || null)}
               />
             </Field>
+            <PracticePanel
+              practice={card.practice}
+              location={card.location}
+              onChange={(p) => set("practice", p)}
+            />
             <Field label="Card address">
               <div className="flex gap-2">
                 <div className="flex flex-1 items-center rounded-md border bg-background pl-3 text-sm text-muted-foreground">

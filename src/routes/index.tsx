@@ -599,7 +599,7 @@ function Landing() {
                 [
                   "Lawyers & law firms",
                   "Bar luncheons, CLEs, the courthouse hallway. They save you in a tap, and their details come back for your follow-up.",
-                  null,
+                  "lawyers",
                 ],
                 [
                   "Sales teams",

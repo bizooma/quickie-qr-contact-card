@@ -95,6 +95,48 @@ export const AUDIENCES: Record<string, Audience> = {
     cta: "Create your realtor card",
     closing: "The next buyer who scans your sign should never have to type your name.",
   },
+  lawyers: {
+    slug: "lawyers",
+    label: "Attorneys",
+    eyebrow: "For attorneys",
+    headline: ["A business card that books ", "the consultation."],
+    sub: "Your bar admissions, practice areas and disclaimer on a card that opens on any phone, with a button that goes straight to your booking page.",
+    pains: [
+      {
+        t: "Cards that say nothing",
+        d: "A paper card can't list your practice areas, take a booking, or stay current when you change firms.",
+      },
+      {
+        t: "Leads that overshare",
+        d: "People tell a lawyer they just met everything about their case. Our share-back form asks them not to, and has them acknowledge you're not their lawyer yet.",
+      },
+      {
+        t: "Follow-ups that never go out",
+        d: "Twenty cards from a bar luncheon sit in a drawer. Capture them on the spot and draft each follow-up in a tap.",
+      },
+    ],
+    features: [
+      {
+        t: "Attorney details",
+        d: "Bar admissions with bar numbers, practice areas, and your office location, laid out on every card design.",
+      },
+      {
+        t: "Disclaimer and acknowledgment",
+        d: "A standard no-attorney-client-relationship disclaimer you can edit, plus an acknowledgment visitors tick that's saved with their contact.",
+      },
+      {
+        t: "Schedule a consultation",
+        d: "Link Calendly, Clio Grow or your intake page, and it becomes the main button on your card.",
+      },
+      {
+        t: "Follow-ups that know the rules",
+        d: "AI follow-up drafts written for lawyers: no promised results, no legal advice by email, no pressure.",
+      },
+    ],
+    cta: "Create your attorney card",
+    closing:
+      "Built with bar advertising rules in mind. You stay in charge of your own compliance, and the card makes it easier.",
+  },
   recruiters: {
     slug: "recruiters",
     label: "Recruiters",

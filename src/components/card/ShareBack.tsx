@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import {
   type ExchangeForm,
   type ShareBackPrefill,
 } from "@/lib/exchange";
+import { consentLabel } from "@/lib/practice";
 
 const SEND_FAILED = "Couldn't send your details. Please try again.";
 
@@ -24,6 +26,7 @@ export function ShareBack({
   slug,
   ownerName,
   form,
+  consent = false,
   prefill,
   branded = true,
   open,
@@ -33,6 +36,9 @@ export function ShareBack({
   slug: string;
   ownerName: string;
   form: ExchangeForm;
+  /** Attorney cards: the visitor must tick an acknowledgment first. The
+   *  server refuses the share-back without it. */
+  consent?: boolean | undefined;
   prefill?: ShareBackPrefill | null | undefined;
   /** False on a team's unbranded cards: no QuickieQR name or invite. */
   branded?: boolean | undefined;
@@ -42,6 +48,7 @@ export function ShareBack({
 }) {
   const [f, setF] = useState({ name: "", email: "", phone: "", company: "", note: "" });
   const [answers, setAnswers] = useState<string[]>([]);
+  const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const first = ownerName.trim().split(/\s+/)[0] || "them";
@@ -66,6 +73,7 @@ export function ShareBack({
     setDone(false);
     setF({ name: "", email: "", phone: "", company: "", note: "" });
     setAnswers([]);
+    setAgreed(false);
   }, [open, done, prefill]);
 
   const needEmail = form.require === "email" || form.require === "both";
@@ -76,6 +84,10 @@ export function ShareBack({
     const problem = submissionProblem(form, { ...f, answers }, first);
     if (problem) {
       toast.error(problem);
+      return;
+    }
+    if (consent && !agreed) {
+      toast.error("Please tick the acknowledgment to send your details.");
       return;
     }
     setBusy(true);
@@ -90,6 +102,7 @@ export function ShareBack({
           company: form.company ? f.company : "",
           note: form.note ? f.note : "",
           answers: form.questions.map((_, i) => answers[i] ?? ""),
+          ...(consent ? { consent: agreed } : {}),
         },
       });
       setDone(true);
@@ -205,7 +218,11 @@ export function ShareBack({
                   <Textarea
                     id="sb-note"
                     maxLength={1000}
-                    placeholder="Where we met, what you need…"
+                    placeholder={
+                      consent
+                        ? "Where we met. Please don't describe a legal matter here."
+                        : "Where we met, what you need…"
+                    }
                     value={f.note}
                     onChange={(e) => setF({ ...f, note: e.target.value })}
                   />
@@ -216,7 +233,20 @@ export function ShareBack({
                   An email or phone number is needed so {first} can reach you.
                 </p>
               )}
-              <Button type="submit" className="h-11 w-full" disabled={busy}>
+              {consent && (
+                <div className="flex items-start gap-2.5 rounded-lg bg-muted p-3">
+                  <Checkbox
+                    id="sb-consent"
+                    checked={agreed}
+                    onCheckedChange={(v) => setAgreed(v === true)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="sb-consent" className="text-xs font-normal leading-snug">
+                    {consentLabel(first)}
+                  </Label>
+                </div>
+              )}
+              <Button type="submit" className="h-11 w-full" disabled={busy || (consent && !agreed)}>
                 {busy ? "Sending…" : "Send my details"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">

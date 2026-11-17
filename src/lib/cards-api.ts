@@ -3,6 +3,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { slugify, type CardData, type CardLink, type LabeledValue } from "./card-model";
 import { parseTheme } from "./card-theme";
 import { parseExchange } from "./exchange";
+import { parsePractice, type CardPractice } from "./practice";
 import type { ScannedCardFields } from "./own-card";
 
 export type CardRow = Tables<"cards">;
@@ -12,7 +13,7 @@ export function rowToCard(row: CardRow, links: CardLink[]): CardData {
     slug: row.slug, label: row.label, full_name: row.full_name, job_title: row.job_title, company: row.company,
     phones: (row.phones as LabeledValue[]) ?? [], emails: (row.emails as LabeledValue[]) ?? [],
     website: row.website, location: row.location, bio: row.bio, headshot_path: row.headshot_path, logo_path: row.logo_path, logo_size: row.logo_size, banner_path: row.banner_path,
-    accent_color: row.accent_color, background_color: row.background_color, font: row.font, template: row.template, theme: row.theme ? parseTheme(row.theme) : null, exchange: parseExchange(row.exchange), links,
+    accent_color: row.accent_color, background_color: row.background_color, font: row.font, template: row.template, theme: row.theme ? parseTheme(row.theme) : null, exchange: parseExchange(row.exchange), practice: parsePractice(row.practice), links,
   };
 }
 
@@ -46,6 +47,8 @@ export async function createCard(
     orgId?: string | undefined;
     accentColor?: string | undefined;
     backgroundColor?: string | undefined;
+    /** Starts the card with a profession pack (e.g. the attorney details). */
+    practice?: CardPractice | undefined;
   },
 ) {
   const base = slugify(input.full_name || input.label);
@@ -64,6 +67,7 @@ export async function createCard(
         ...(input.orgId ? { org_id: input.orgId } : {}),
         ...(input.accentColor ? { accent_color: input.accentColor } : {}),
         ...(input.backgroundColor ? { background_color: input.backgroundColor } : {}),
+        ...(input.practice ? { practice: parsePractice(input.practice) } : {}),
       })
       .select()
       .single();
