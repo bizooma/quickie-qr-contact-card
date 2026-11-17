@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AppleWalletPanel } from "@/components/wallet/AppleWalletButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -824,6 +825,14 @@ function Editor({
               headshotPath={card.headshot_path}
               logoPath={card.logo_path}
               qrCenter={qrCenter}
+            />
+            <AppleWalletPanel
+              card={{
+                id: cardId,
+                logo_path: card.logo_path,
+                headshot_path: card.headshot_path,
+                practice: card.practice,
+              }}
             />
             <ExchangePanel
               card={card}

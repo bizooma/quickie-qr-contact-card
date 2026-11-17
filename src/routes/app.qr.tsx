@@ -27,6 +27,7 @@ import {
   type QrCenterImage,
 } from "@/components/card/QrPanel";
 import { GlassMesh } from "@/components/card/GlassMesh";
+import { AppleWalletRow } from "@/components/wallet/AppleWalletButton";
 import { usePlan } from "@/components/PremiumGate";
 import { useAuth } from "@/hooks/use-auth";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
@@ -471,6 +472,7 @@ function QuickQr() {
               </p>
             </div>
             <div className="divide-y">
+              <AppleWalletRow card={fresh} rowClass={rowClass} chipClass={chip} />
               <label className={`${rowClass} cursor-pointer`}>
                 <span className={chip}>
                   <QrCode className="h-4 w-4" />
