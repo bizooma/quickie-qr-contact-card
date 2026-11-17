@@ -54,3 +54,17 @@ describe("visitor location", () => {
     expect(readGeoHeaders(attachVisitorGeo(fn).headers).city).toBeNull();
   });
 });
+
+describe("Cloudflare location headers", () => {
+  it("fills in from cf-ipcountry and friends when request.cf is missing", async () => {
+    const { visitorGeo } = await import("./visitor-geo");
+    const req = new Request("https://quickieqr.com/_serverFn/x", {
+      headers: { "cf-ipcountry": "US", "cf-ipcity": "Jacksonville", "cf-region-code": "FL" },
+    });
+    expect(visitorGeo(req)).toEqual({ city: "Jacksonville", region: "FL", country: "US" });
+    const torOnly = new Request("https://quickieqr.com/_serverFn/x", {
+      headers: { "cf-ipcountry": "T1" },
+    });
+    expect(visitorGeo(torOnly)).toEqual({ city: null, region: null, country: null });
+  });
+});

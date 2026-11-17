@@ -61,10 +61,60 @@ export function readGeoHeaders(headers: Headers): Geo {
   };
 }
 
+/** The place from Cloudflare's own visitor-location headers, for hosting
+ *  where request.cf doesn't reach the app (a proxy in front of it). */
+export function geoFromCfHeaders(headers: Headers): Geo {
+  const read = (name: string, max: number) => {
+    const raw = headers.get(name);
+    if (!raw) return null;
+    try {
+      return clean(decodeURIComponent(raw), max);
+    } catch {
+      return clean(raw, max);
+    }
+  };
+  const country = read("cf-ipcountry", 2)?.toUpperCase() ?? null;
+  return {
+    city: read("cf-ipcity", 80),
+    region:
+      country === "US"
+        ? (read("cf-region-code", 80) ?? read("cf-region", 80))
+        : read("cf-region", 80),
+    country:
+      country && /^[A-Z]{2}$/.test(country) && country !== "XX" && country !== "T1"
+        ? country
+        : null,
+  };
+}
+
+/** request.cf first; any gaps filled from Cloudflare's location headers. */
+export function visitorGeo(request: Request): Geo {
+  const fromCf = geoFromCf((request as Request & { cf?: CfLike }).cf);
+  const fromHeaders = geoFromCfHeaders(request.headers);
+  return {
+    city: fromCf.city ?? fromHeaders.city,
+    region: fromCf.city ? fromCf.region : (fromHeaders.region ?? fromCf.region),
+    country: fromCf.country ?? fromHeaders.country,
+  };
+}
+
 /** Rebuilds a server-function request with the visitor's place attached.
  *  Other requests pass through untouched. */
 export function attachVisitorGeo(request: Request): Request {
   if (!new URL(request.url).pathname.startsWith("/_serverFn")) return request;
-  const cf = (request as Request & { cf?: CfLike }).cf;
-  return new Request(request, { headers: withGeoHeaders(request.headers, geoFromCf(cf)) });
+  return new Request(request, { headers: withGeoHeaders(request.headers, visitorGeo(request)) });
+}
+
+/** Which location signals reach the app (names only, plus the country), for
+ *  the temporary /api/geo-check page. */
+export function geoSignals(request: Request) {
+  const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
+  return {
+    hasCf: !!cf,
+    cfKeys: cf ? Object.keys(cf).sort() : [],
+    locationHeaders: [...request.headers.keys()]
+      .filter((k) => /^(cf-|x-vercel-ip|x-forwarded|x-real-ip|x-client)/.test(k))
+      .sort(),
+    result: { ...visitorGeo(request), city: visitorGeo(request).city ? "(present)" : null },
+  };
 }
