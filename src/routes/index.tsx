@@ -60,20 +60,20 @@ import { ProfileMenu } from "@/components/ProfileMenu";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "QuickieQR — Digital business cards that capture every lead" },
+      { title: "QuickieQR — Digital business cards with the follow-up written for you" },
       {
         name: "description",
         content:
-          "A digital business card that shares your details with one QR scan — and captures theirs back automatically. Free to start, no app for them to install.",
+          "Share your card with one QR scan, get their details back, and find the follow-up email already written, with a reminder to send it. Free to start, no app for them to install.",
       },
       {
         property: "og:title",
-        content: "QuickieQR — Digital business cards that capture every lead",
+        content: "QuickieQR — Digital business cards with the follow-up written for you",
       },
       {
         property: "og:description",
         content:
-          "One scan and you're in their contacts. One more tap and they're in yours. Free to start, nothing for them to install.",
+          "Scan their card. We write the follow-up and remind you to send it. Free to start, nothing for them to install.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://quickieqr.com/" },
@@ -100,7 +100,7 @@ export const Route = createFileRoute("/")({
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:
-            "A digital business card that shares your details with one QR scan and captures theirs back automatically.",
+            "A digital business card that shares your details with one QR scan, captures theirs back, and writes the follow-up email with a reminder to send it.",
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         }),
       },
@@ -332,7 +332,7 @@ function Landing() {
           <div>
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold text-white/85">
               <Zap className="h-3.5 w-3.5 text-pop-lime" />
-              Contact exchange in about 3 seconds
+              Scan their card. We write the follow-up.
             </p>
             <h1 className="text-[3rem] font-extrabold leading-[0.95] tracking-[-0.04em] text-white sm:text-7xl xl:text-[5.75rem]">
               {headline.lines[0]}
@@ -396,12 +396,12 @@ function Landing() {
       <section id="how" className="scroll-mt-6 px-6 py-24 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <Heading kicker="How it works">
-            From hello to <Hl>saved</Hl>, in three beats.
+            From hello to <Hl>followed up</Hl>, in four beats.
           </Heading>
-          <ol className="relative mt-16 grid gap-12 md:grid-cols-3 md:gap-8">
+          <ol className="relative mt-16 grid gap-12 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
             <span
               aria-hidden
-              className="absolute left-0 right-0 top-[2.1rem] hidden h-px bg-border md:block"
+              className="absolute left-0 right-0 top-[2.1rem] hidden h-px bg-border lg:block"
             />
             {[
               {
@@ -419,11 +419,16 @@ function Landing() {
                 t: "You get them back",
                 d: "The “Share yours” button sends their name, email and phone straight to your contact list, with a ping the moment it lands.",
               },
+              {
+                at: "Day 2",
+                t: "Your follow-up is waiting",
+                d: "Next morning, the email is already written and QuickieQR reminds you to send it. One tap and it's in their inbox, while they still remember you.",
+              },
             ].map(({ at, t, d }, idx) => (
               <li key={at} data-reveal={idx} className="relative">
                 <span className="relative inline-flex items-center gap-3 bg-background pr-4">
                   <span
-                    className={`h-3 w-3 rounded-full ${idx === 2 ? "bg-pop-lime ring-4 ring-pop-lime/30" : "bg-brand"}`}
+                    className={`h-3 w-3 rounded-full ${idx === 3 ? "bg-pop-lime ring-4 ring-pop-lime/30" : "bg-brand"}`}
                   />
                   <span className="font-display text-5xl font-extrabold tabular-nums tracking-tight text-brand md:text-6xl">
                     {at}
@@ -437,7 +442,7 @@ function Landing() {
           <div className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-4">
             <Cta label="Make my card free" from="how-it-works" ab={ab} />
             <p className="text-sm font-semibold text-muted-foreground">
-              Beat three is the one paper can't do.
+              Beats three and four are the ones paper can't do.
             </p>
           </div>
         </div>

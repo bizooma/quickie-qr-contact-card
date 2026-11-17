@@ -9,17 +9,17 @@ export const HEADLINES: Record<
   HeadlineVariant,
   { lines: [string, string]; accented: "first" | "second"; sub: string }
 > = {
-  // A — the product in three words
+  // A: the promise, said as the thing people forget to do
   a: {
-    lines: ["Scan. Saved. ", "Done."],
+    lines: ["Never forget a ", "follow-up."],
     accented: "second",
-    sub: "Hold up your QuickieQR code. They point their camera, tap once, and you're in their contacts before the handshake's over. One more tap and they're in yours.",
+    sub: "Scan their card or let them scan yours. QuickieQR writes the follow-up email and reminds you to send it, so the people you meet actually hear from you.",
   },
-  // C — speed, framed against the thing everyone already does
+  // C: the same promise, framed around the moment you meet
   c: {
-    lines: ["Quicker than ", "a handshake."],
+    lines: ["Every handshake, ", "followed up."],
     accented: "second",
-    sub: "Your digital business card, one scan away. No app for them, no typing for anyone, and their details come straight back to you.",
+    sub: "Swap cards with one scan. The next morning your follow-up is already written, with a reminder to send it. No app for them, no typing for you.",
   },
 };
 
