@@ -84,7 +84,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:image:alt",
         content:
-          "QuickieQR: Scan. Saved. Done. A QR card scanned into a phone that shows the saved contact.",
+          "QuickieQR: Never forget a follow-up. A phone shows a 9am reminder that 14 people are waiting, with a follow-up email already written.",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: "https://quickieqr.com/brand/og-card.png" },
