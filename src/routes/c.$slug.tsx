@@ -18,6 +18,8 @@ import { BrandMark } from "@/components/BrandLogo";
 import { buildVCard, contrastText, type CardData, type LabeledValue } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
 import { signPublicCardMedia, submitShareback } from "@/lib/capture.functions";
+import { logCardEvent } from "@/lib/card-events.functions";
+import { osFrom, parseVia, withoutVia, type Via } from "@/lib/card-source";
 import {
   formFor,
   parseExchange,
@@ -222,6 +224,23 @@ function PublicCard() {
   const fg = contrastText(pageBg);
   const inCardFg = glass ? "var(--ck-fg)" : fg;
 
+  // How they got here (QR code, NFC tag, email signature, shared link), read
+  // once and then dropped from the address bar so it isn't passed along.
+  const [via] = useState<Via | null>(() => {
+    if (typeof window === "undefined") return null;
+    const v = parseVia(window.location.search);
+    if (v) {
+      try {
+        const url =
+          window.location.pathname + withoutVia(window.location.search) + window.location.hash;
+        window.history.replaceState(window.history.state, "", url);
+      } catch {
+        // The tag just stays in the address bar.
+      }
+    }
+    return v;
+  });
+
   useEffect(() => {
     let live = true;
     // A reload shouldn't invite a member to send the same card twice. (Only
@@ -272,17 +291,37 @@ function PublicCard() {
       : /mobi|android|iphone/i.test(navigator.userAgent)
         ? "mobile"
         : "desktop";
-    // supabase.rpc returns a lazy builder: it only sends the request once
-    // awaited/then-ed, so fire-and-forget calls MUST end in .then().
-    supabase
-      .rpc("log_card_event", {
-        _slug: slug,
-        _event: "view",
-        ...(referrer ? { _referrer: referrer } : {}),
-        _device: device,
-        ...(visitor ? { _visitor: visitor } : {}),
-      })
-      .then(undefined, () => {});
+    track("view", {
+      ...(referrer ? { referrer } : {}),
+      device,
+      ...(visitor ? { visitor } : {}),
+    });
+  }
+
+  /** Sends an analytics event through the server (which adds the visitor's
+   *  city). Fire-and-forget: a failed log never gets in the visitor's way. */
+  function track(
+    event: "view" | "save" | "click",
+    extra: { meta?: string; referrer?: string; device?: string; visitor?: string } = {},
+  ) {
+    let visitor = extra.visitor;
+    if (!visitor) {
+      try {
+        visitor = localStorage.getItem("ck-visitor") ?? undefined;
+      } catch {
+        visitor = undefined;
+      }
+    }
+    void logCardEvent({
+      data: {
+        slug,
+        event,
+        ...extra,
+        ...(visitor ? { visitor } : {}),
+        ...(via ? { via } : {}),
+        os: osFrom(navigator.userAgent, navigator.maxTouchPoints),
+      },
+    }).catch(() => {});
   }
 
   async function saveContact() {
@@ -300,7 +339,7 @@ function PublicCard() {
     a.href = URL.createObjectURL(blob);
     a.download = `${(card.full_name || "contact").replace(/[^a-z0-9]+/gi, "-")}.vcf`;
     a.click();
-    supabase.rpc("log_card_event", { _slug: slug, _event: "save" }).then(undefined, () => {});
+    track("save");
   }
 
   function markSent() {
@@ -366,9 +405,7 @@ function PublicCard() {
         verified={card.verified === true}
         unbranded={unbranded}
         onLinkClick={(label) => {
-          supabase
-            .rpc("log_card_event", { _slug: slug, _event: "click", _meta: label })
-            .then(undefined, () => {});
+          track("click", { meta: label });
         }}
         actions={
           ownId ? (

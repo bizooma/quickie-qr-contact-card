@@ -149,7 +149,8 @@ export function buildPassJson(card: PassCard, id: PassIdentity, opts: { hasLogo:
     barcodes: [
       {
         format: "PKBarcodeFormatQR",
-        message: url,
+        // Tagged so Analytics counts it as a QR scan.
+        message: `${url}?via=qr`,
         messageEncoding: "iso-8859-1",
         altText: "Scan to save my contact",
       },

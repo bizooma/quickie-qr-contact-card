@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/cloudflare";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { SENTRY_DSN } from "./lib/sentry-dsn";
+import { attachVisitorGeo } from "./lib/visitor-geo";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -53,7 +54,8 @@ const handler = {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const entry = await getServerEntry();
-      const response = await entry.fetch(request, env, ctx);
+      // Server functions get the visitor's city from Cloudflare (card analytics).
+      const response = await entry.fetch(attachVisitorGeo(request), env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);

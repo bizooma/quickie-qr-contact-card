@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { listCards, type CardRow } from "@/lib/cards-api";
 import { signedUrls } from "@/lib/media";
-import { publicCardUrl } from "@/components/card/QrPanel";
+import { trackedCardUrl } from "@/components/card/QrPanel";
 import {
   backdropPresets,
   BG_HEIGHT,
@@ -420,7 +420,7 @@ function Studio({
   // QR code for this card, rendered once at the largest size the editor allows.
   useEffect(() => {
     let cancelled = false;
-    QRCode.toDataURL(publicCardUrl(card.slug), {
+    QRCode.toDataURL(trackedCardUrl(card.slug, "qr"), {
       margin: 2,
       width: 1040,
       color: { dark: "#111111", light: "#ffffff" },

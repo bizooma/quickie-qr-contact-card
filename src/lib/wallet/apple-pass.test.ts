@@ -38,7 +38,7 @@ const lowProfile: PassCard = {
 describe("buildPassJson", () => {
   it("puts the card link in the QR and one pass per card", () => {
     const p = buildPassJson(card, ID, { hasLogo: true });
-    expect(p.barcodes[0]!.message).toBe("https://quickieqr.com/c/jane-doe");
+    expect(p.barcodes[0]!.message).toBe("https://quickieqr.com/c/jane-doe?via=qr");
     expect(p.barcodes[0]!.format).toBe("PKBarcodeFormatQR");
     expect(p.serialNumber).toBe(card.id);
     expect(p.passTypeIdentifier).toBe(ID.passTypeIdentifier);

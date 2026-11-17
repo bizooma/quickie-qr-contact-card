@@ -1164,6 +1164,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_owner_visitor: { Args: { _visitor: string }; Returns: undefined }
+      log_card_view: {
+        Args: {
+          _city?: string
+          _country?: string
+          _device?: string
+          _event: string
+          _meta?: string
+          _os?: string
+          _referrer?: string
+          _region?: string
+          _slug: string
+          _via?: string
+          _viewer?: string
+          _visitor?: string
+        }
+        Returns: undefined
+      }
       follow_up_digest_candidates: {
         Args: { p_limit?: number }
         Returns: {

@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { listCards } from "@/lib/cards-api";
 import { PremiumUpsell, usePlan } from "@/components/PremiumGate";
+import { OS_LABELS, SOURCE_LABELS } from "@/lib/card-source";
 
 export const Route = createFileRoute("/app/analytics")({
   head: appHead("Analytics", "Views, saves and share-backs for each of your cards."),
@@ -51,7 +52,16 @@ type Insights = {
   devices: [string, number][];
   referrers: [string, number][];
   clicks: [string, number][];
+  /** How they found the card (qr, email, link, nfc, web, direct). */
+  sources?: [string, number][];
+  /** "Jacksonville, FL"; city-level only. */
+  places?: [string, number][];
+  /** iphone, android, mac, ... */
+  systems?: [string, number][];
 };
+
+const labelled = (rows: [string, number][] | undefined, labels: Record<string, string>) =>
+  (rows ?? []).map(([k, n]) => [labels[k] ?? k, n] as [string, number]);
 
 /** Premium breakdowns. The database checks the plan; visitor, device,
  *  referrer and link columns aren't readable any other way. */
@@ -93,6 +103,10 @@ function Analytics() {
     conversion: views ? Math.round((captures / views) * 100) : 0,
     devices: insights?.devices ?? [],
     referrers: insights?.referrers ?? [],
+    sources: labelled(insights?.sources, SOURCE_LABELS),
+    places: insights?.places ?? [],
+    // What they were on: the operating system when we have it, else phone/desktop.
+    systems: insights?.systems?.length ? labelled(insights.systems, OS_LABELS) : null,
   };
   const topClicks = insights?.clicks ?? [];
 
@@ -290,7 +304,7 @@ function Analytics() {
 
       {!isPremium && (
         <div className="mt-6">
-          <PremiumUpsell feature="Advanced analytics — unique visitors, view-to-capture conversion, devices, referrers and most-tapped links —" />
+          <PremiumUpsell feature="Advanced analytics — unique visitors, view-to-capture conversion, how people found you, where they were, devices, referrers and most-tapped links —" />
         </div>
       )}
       {isPremium && (
@@ -310,14 +324,30 @@ function Analytics() {
           </div>
         </div>
       )}
+      {isPremium && (depth.sources.length > 0 || depth.places.length > 0) && (
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {depth.sources.length > 0 && <BarList title="How they found you" rows={depth.sources} />}
+          {depth.places.length > 0 && <BarList title="Where they were" rows={depth.places} />}
+        </div>
+      )}
       {isPremium && topClicks.length > 0 && (
         <BarList className="mt-6" title="Most-tapped links" rows={topClicks} />
       )}
       {isPremium && (depth.devices.length > 0 || depth.referrers.length > 0) && (
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {depth.devices.length > 0 && <BarList title="Devices" rows={depth.devices} capitalize />}
+          {depth.systems ? (
+            <BarList title="Devices" rows={depth.systems} />
+          ) : (
+            depth.devices.length > 0 && <BarList title="Devices" rows={depth.devices} capitalize />
+          )}
           {depth.referrers.length > 0 && <BarList title="Top referrers" rows={depth.referrers} />}
         </div>
+      )}
+      {isPremium && (
+        <p className="mt-6 text-xs text-muted-foreground">
+          Your own visits aren't counted on any browser where you've opened QuickieQR. Locations are
+          approximate (city level) and no IP addresses are stored.
+        </p>
       )}
     </div>
   );

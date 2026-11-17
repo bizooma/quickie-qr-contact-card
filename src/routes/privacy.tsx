@@ -4,9 +4,16 @@ export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
       { title: "Privacy Policy — QuickieQR" },
-      { name: "description", content: "What data QuickieQR collects, how it's used, and your rights to access and delete it." },
+      {
+        name: "description",
+        content:
+          "What data QuickieQR collects, how it's used, and your rights to access and delete it.",
+      },
       { property: "og:title", content: "Privacy Policy — QuickieQR" },
-      { property: "og:description", content: "What data QuickieQR collects, how it's used, and your rights." },
+      {
+        property: "og:description",
+        content: "What data QuickieQR collects, how it's used, and your rights.",
+      },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -17,13 +24,16 @@ export const Route = createFileRoute("/privacy")({
 
 function Privacy() {
   return (
-    <LegalPage title="Privacy Policy" updated="October 10, 2026">
+    <LegalPage title="Privacy Policy" updated="November 17, 2026">
       <h2>What we collect</h2>
       <p>
         Your account (email address and password hash), the content you put on your cards (name,
         titles, contact details, photos, links), the contacts you capture or scan, and usage events
-        such as card views, saves and link clicks. Card view events record coarse device type and
-        referrer, not precise location.
+        such as card views, saves and link clicks. Card view events record the visitor&apos;s device
+        type and operating system, the website or kind of link (QR code, shared link, email
+        signature) that brought them, a random per-browser identifier used to count unique visitors,
+        and an approximate location at city level derived from their network address. We do not
+        store visitors&apos; IP addresses or precise location.
       </p>
       <h2>How we use it</h2>
       <p>

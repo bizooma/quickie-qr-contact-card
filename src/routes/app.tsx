@@ -163,6 +163,28 @@ function AppLayout() {
     if (user) void syncTimeZone(user.id);
   }, [user]);
 
+  // This browser is the owner's: their own visits to their cards (scanning
+  // their own QR to test it, say) don't count in Analytics. The card page
+  // uses the same anonymous per-browser id.
+  useEffect(() => {
+    if (!user) return;
+    let visitor: string | null = null;
+    try {
+      visitor = localStorage.getItem("ck-visitor");
+      if (!visitor) {
+        visitor = crypto.randomUUID();
+        localStorage.setItem("ck-visitor", visitor);
+      }
+      const flag = `ck-owner-visitor:${user.id}`;
+      if (localStorage.getItem(flag) === visitor) return;
+      void supabase.rpc("claim_owner_visitor", { _visitor: visitor }).then(({ error }) => {
+        if (!error) localStorage.setItem(flag, visitor!);
+      });
+    } catch {
+      // No storage: nothing to remember this browser by.
+    }
+  }, [user]);
+
   const { data: dueFollowUps = 0 } = useQuery({
     queryKey: QUEUE_COUNT_KEY,
     enabled: !!user,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { withVia, type Via } from "@/lib/card-source";
 import QRCode from "qrcode";
 import { Copy, Download, Lock, Maximize2, Share2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,12 @@ export function publicCardUrl(slug: string) {
   return `${origin}/c/${slug}`;
 }
 
+/** The card link tagged with how it was handed out, so Analytics can say
+ *  "QR code scan" or "Shared link". Shown text keeps the plain link. */
+export function trackedCardUrl(slug: string, via: Via) {
+  return withVia(publicCardUrl(slug), via);
+}
+
 function qrColors(accent: string, bg: string) {
   // Keep a light background behind dark modules so every phone camera can read it.
   // Light accents would be unreadable, so fall back to near-black.
@@ -39,7 +46,7 @@ export function useQr(slug: string, accent: string, bg: string, center?: QrCente
   const href = center?.href ?? null;
   const shape = center?.shape ?? "rounded";
   useEffect(() => {
-    const url = publicCardUrl(slug);
+    const url = trackedCardUrl(slug, "qr");
     const color = qrColors(accent, bg);
     // A center image hides some modules, so step error correction up to H.
     QRCode.toString(url, {
@@ -252,7 +259,7 @@ export function QrPanel({
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(trackedCardUrl(slug, "link"));
       toast.success("Link copied");
     } catch {
       toast.error("Could not copy the link");
@@ -262,7 +269,10 @@ export function QrPanel({
   async function share() {
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${name} — digital business card`, url });
+        await navigator.share({
+          title: `${name} — digital business card`,
+          url: trackedCardUrl(slug, "link"),
+        });
         return;
       } catch {
         /* cancelled */

@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { publicCardUrl, QrPanel, useQr } from "@/components/card/QrPanel";
+import { publicCardUrl, QrPanel, trackedCardUrl, useQr } from "@/components/card/QrPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { ScanMyCard } from "@/components/card/ScanMyCard";
 import { useAuth } from "@/hooks/use-auth";
@@ -345,7 +345,7 @@ function QrHero({ card }: { card: CardRow }) {
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(trackedCardUrl(card.slug, "link"));
       toast.success("Card link copied");
     } catch {
       toast.error("Couldn't copy — long-press the link instead");

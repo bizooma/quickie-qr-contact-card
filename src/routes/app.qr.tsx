@@ -22,6 +22,7 @@ import { openTip } from "@/components/FeatureTip";
 import { listCards } from "@/lib/cards-api";
 import {
   publicCardUrl,
+  trackedCardUrl,
   useCenterImage,
   useQr,
   type QrCenterImage,
@@ -171,6 +172,8 @@ function QuickQr() {
     view?.center ?? null,
   );
   const url = view ? publicCardUrl(view.slug) : "";
+  // What gets shared carries a tag, so Analytics can tell it from a QR scan.
+  const shareUrl = view ? trackedCardUrl(view.slug, "link") : "";
   // The QR screen follows the card's look: glass cards get their lights.
   const glass =
     view?.template === "glass"
@@ -249,18 +252,18 @@ function QuickQr() {
   async function share() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: view?.full_name || "My card", url });
+        await navigator.share({ title: view?.full_name || "My card", url: shareUrl });
         return;
       }
       throw new Error("no share");
     } catch {
-      await navigator.clipboard.writeText(url).catch(() => undefined);
+      await navigator.clipboard.writeText(shareUrl).catch(() => undefined);
       toast.success("Link copied");
     }
   }
 
   async function copy() {
-    await navigator.clipboard.writeText(url).catch(() => undefined);
+    await navigator.clipboard.writeText(shareUrl).catch(() => undefined);
     toast.success("Link copied");
   }
 

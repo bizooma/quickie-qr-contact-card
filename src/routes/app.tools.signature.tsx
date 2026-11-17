@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { listCards, getCard, rowToCard } from "@/lib/cards-api";
 import { buildSignatureHtml, SIGNATURE_STYLES, type SignatureStyle } from "@/lib/signature";
-import { publicCardUrl } from "@/components/card/QrPanel";
+import { trackedCardUrl } from "@/components/card/QrPanel";
 import { PremiumGate } from "@/components/PremiumGate";
 
 export const Route = createFileRoute("/app/tools/signature")({
@@ -50,7 +50,7 @@ function SignaturePage() {
   const html = useMemo(() => {
     if (!full?.card) return "";
     const card = rowToCard(full.card, full.links);
-    return buildSignatureHtml(card, publicCardUrl(card.slug), style);
+    return buildSignatureHtml(card, trackedCardUrl(card.slug, "email"), style);
   }, [full, style]);
 
   async function copyRich() {
