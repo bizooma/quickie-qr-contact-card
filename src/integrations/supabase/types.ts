@@ -177,6 +177,24 @@ export type Database = {
           },
         ]
       }
+      card_owner_visitors: {
+        Row: {
+          created_at: string
+          user_id: string
+          visitor: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+          visitor: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+          visitor?: string
+        }
+        Relationships: []
+      }
       card_slug_history: {
         Row: {
           card_id: string
@@ -206,35 +224,50 @@ export type Database = {
       card_views: {
         Row: {
           card_id: string
+          city: string | null
+          country: string | null
           created_at: string
           device: string | null
           event_type: string
           id: string
           meta: string | null
+          os: string | null
           referrer: string | null
+          region: string | null
           user_id: string
+          via: string | null
           visitor: string | null
         }
         Insert: {
           card_id: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           device?: string | null
           event_type?: string
           id?: string
           meta?: string | null
+          os?: string | null
           referrer?: string | null
+          region?: string | null
           user_id: string
+          via?: string | null
           visitor?: string | null
         }
         Update: {
           card_id?: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           device?: string | null
           event_type?: string
           id?: string
           meta?: string | null
+          os?: string | null
           referrer?: string | null
+          region?: string | null
           user_id?: string
+          via?: string | null
           visitor?: string | null
         }
         Relationships: [
@@ -257,7 +290,6 @@ export type Database = {
           created_at: string
           emails: Json
           exchange: Json | null
-          practice: Json | null
           font: string
           full_name: string
           headshot_path: string | null
@@ -270,6 +302,7 @@ export type Database = {
           og_path: string | null
           org_id: string | null
           phones: Json
+          practice: Json | null
           qr_center: string | null
           slug: string
           template: string
@@ -287,7 +320,6 @@ export type Database = {
           created_at?: string
           emails?: Json
           exchange?: Json | null
-          practice?: Json | null
           font?: string
           full_name?: string
           headshot_path?: string | null
@@ -300,6 +332,7 @@ export type Database = {
           og_path?: string | null
           org_id?: string | null
           phones?: Json
+          practice?: Json | null
           qr_center?: string | null
           slug: string
           template?: string
@@ -317,7 +350,6 @@ export type Database = {
           created_at?: string
           emails?: Json
           exchange?: Json | null
-          practice?: Json | null
           font?: string
           full_name?: string
           headshot_path?: string | null
@@ -330,6 +362,7 @@ export type Database = {
           og_path?: string | null
           org_id?: string | null
           phones?: Json
+          practice?: Json | null
           qr_center?: string | null
           slug?: string
           template?: string
@@ -453,77 +486,6 @@ export type Database = {
           },
         ]
       }
-      crm_connections: {
-        Row: {
-          created_at: string
-          last_error: string | null
-          provider: string
-          region: string | null
-          secret: string
-          secret_hint: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          last_error?: string | null
-          provider: string
-          region?: string | null
-          secret: string
-          secret_hint?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          last_error?: string | null
-          provider?: string
-          region?: string | null
-          secret?: string
-          secret_hint?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      crm_deliveries: {
-        Row: {
-          contact_id: string
-          created_at: string
-          error: string | null
-          id: string
-          ok: boolean
-          provider: string
-          user_id: string
-        }
-        Insert: {
-          contact_id: string
-          created_at?: string
-          error?: string | null
-          id?: string
-          ok: boolean
-          provider: string
-          user_id: string
-        }
-        Update: {
-          contact_id?: string
-          created_at?: string
-          error?: string | null
-          id?: string
-          ok?: boolean
-          provider?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_deliveries_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contacts: {
         Row: {
           address: string | null
@@ -613,6 +575,77 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_connections: {
+        Row: {
+          created_at: string
+          last_error: string | null
+          provider: string
+          region: string | null
+          secret: string
+          secret_hint: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_error?: string | null
+          provider: string
+          region?: string | null
+          secret: string
+          secret_hint?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_error?: string | null
+          provider?: string
+          region?: string | null
+          secret?: string
+          secret_hint?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crm_deliveries: {
+        Row: {
+          contact_id: string
+          created_at: string
+          error: string | null
+          id: string
+          ok: boolean
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          ok: boolean
+          provider: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          ok?: boolean
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_deliveries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -792,6 +825,7 @@ export type Database = {
           credit_scan: number
           dismissed_tips: string[]
           display_name: string | null
+          follow_up_digest_on: string | null
           id: string
           is_admin: boolean
           last_seen_at: string | null
@@ -804,7 +838,6 @@ export type Database = {
           suspended: boolean
           suspended_at: string | null
           team_seats: number
-          follow_up_digest_on: string | null
           time_zone: string | null
           updated_at: string
           verified_at: string | null
@@ -819,6 +852,7 @@ export type Database = {
           credit_scan?: number
           dismissed_tips?: string[]
           display_name?: string | null
+          follow_up_digest_on?: string | null
           id: string
           is_admin?: boolean
           last_seen_at?: string | null
@@ -831,7 +865,6 @@ export type Database = {
           suspended?: boolean
           suspended_at?: string | null
           team_seats?: number
-          follow_up_digest_on?: string | null
           time_zone?: string | null
           updated_at?: string
           verified_at?: string | null
@@ -846,6 +879,7 @@ export type Database = {
           credit_scan?: number
           dismissed_tips?: string[]
           display_name?: string | null
+          follow_up_digest_on?: string | null
           id?: string
           is_admin?: boolean
           last_seen_at?: string | null
@@ -858,7 +892,6 @@ export type Database = {
           suspended?: boolean
           suspended_at?: string | null
           team_seats?: number
-          follow_up_digest_on?: string | null
           time_zone?: string | null
           updated_at?: string
           verified_at?: string | null
@@ -1164,34 +1197,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      claim_owner_visitor: { Args: { _visitor: string }; Returns: undefined }
-      log_card_view: {
-        Args: {
-          _city?: string
-          _country?: string
-          _device?: string
-          _event: string
-          _meta?: string
-          _os?: string
-          _referrer?: string
-          _region?: string
-          _slug: string
-          _via?: string
-          _viewer?: string
-          _visitor?: string
-        }
-        Returns: undefined
-      }
-      follow_up_digest_candidates: {
-        Args: { p_limit?: number }
-        Returns: {
-          due_count: number
-          event_name: string
-          local_today: string
-          sample_name: string
-          user_id: string
-        }[]
-      }
       accept_team_invite: {
         Args: { _token: string; _user: string }
         Returns: Json
@@ -1212,6 +1217,7 @@ export type Database = {
         Returns: Json
       }
       card_is_locked: { Args: { _card: string }; Returns: boolean }
+      claim_owner_visitor: { Args: { _visitor: string }; Returns: undefined }
       claim_verified_signup_grant: {
         Args: { p_user: string }
         Returns: undefined
@@ -1223,6 +1229,16 @@ export type Database = {
         Returns: undefined
       }
       effective_plan: { Args: { _user: string }; Returns: string }
+      follow_up_digest_candidates: {
+        Args: { p_limit?: number }
+        Returns: {
+          due_count: number
+          event_name: string
+          local_today: string
+          sample_name: string
+          user_id: string
+        }[]
+      }
       get_public_card: { Args: { _slug: string }; Returns: Json }
       has_team_seat: { Args: { _user: string }; Returns: boolean }
       in_same_org_as: { Args: { _user: string }; Returns: boolean }
@@ -1233,6 +1249,23 @@ export type Database = {
           _meta?: string
           _referrer?: string
           _slug: string
+          _visitor?: string
+        }
+        Returns: undefined
+      }
+      log_card_view: {
+        Args: {
+          _city?: string
+          _country?: string
+          _device?: string
+          _event: string
+          _meta?: string
+          _os?: string
+          _referrer?: string
+          _region?: string
+          _slug: string
+          _via?: string
+          _viewer?: string
           _visitor?: string
         }
         Returns: undefined
@@ -1312,6 +1345,7 @@ export type Database = {
       valid_card_exchange: { Args: { x: Json }; Returns: boolean }
       valid_card_practice: { Args: { p: Json }; Returns: boolean }
       valid_card_theme: { Args: { t: Json }; Returns: boolean }
+      valid_pack_url: { Args: { u: Json }; Returns: boolean }
       winback_candidates: { Args: { p_limit?: number }; Returns: string[] }
     }
     Enums: {
