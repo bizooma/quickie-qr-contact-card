@@ -81,6 +81,7 @@ import {
 } from "@/lib/plans";
 import { InstallInstructions } from "@/components/InstallPrompt";
 import { ProUpsell, usePlan } from "@/components/PremiumGate";
+import { ClioGrowPanel } from "@/components/crm/ClioGrowPanel";
 import { ProfilePhotoPicker } from "@/components/ProfilePhotoPicker";
 import { NextTierCard } from "@/components/NextTierCard";
 
@@ -282,6 +283,8 @@ function Settings() {
                 />
               </>
             )}
+            {/* Attorney accounts only: the panel renders nothing otherwise. */}
+            <ClioGrowPanel />
           </section>
           <section id="install" className={PANEL}>
             <h2 className={H2}>Install the app</h2>

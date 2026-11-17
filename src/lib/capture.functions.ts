@@ -123,10 +123,12 @@ export const submitShareback = createServerFn({ method: "POST" })
       .setHeader("x-contactkickstart-visitor-ip", visitorIp ?? "");
     if (error) throw new Error(sharebackErrorMessage(error.message));
 
-    // Tag the new contact with each interest. submit_shareback doesn't return
-    // the row, so find it: this card's newest share-back from this name, made
-    // in the last minute. Best-effort: the interests are in the note either way.
-    if (card && interests.length) {
+    // submit_shareback doesn't return the row, so find it when something
+    // needs it (interest tags, the attorney's CRM): this card's newest
+    // share-back from this name, made in the last minute. Best-effort.
+    const attorneyCard = practice?.kind === "attorney";
+    let contactId: string | null = null;
+    if (card && (interests.length || attorneyCard)) {
       try {
         const { data: made } = await supabaseAdmin
           .from("contacts")
@@ -138,13 +140,21 @@ export const submitShareback = createServerFn({ method: "POST" })
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (made)
-          await supabaseAdmin.from("contact_tags").upsert(
-            interests.map((tag) => ({ contact_id: made.id, user_id: card.user_id, tag })),
-            { onConflict: "contact_id,tag", ignoreDuplicates: true },
-          );
+        contactId = made?.id ?? null;
       } catch {
-        // The contact is saved with the interests in its note.
+        contactId = null;
+      }
+    }
+
+    // Tag the new contact with each interest (also in the note either way).
+    if (card && contactId && interests.length) {
+      try {
+        await supabaseAdmin.from("contact_tags").upsert(
+          interests.map((tag) => ({ contact_id: contactId!, user_id: card.user_id, tag })),
+          { onConflict: "contact_id,tag", ignoreDuplicates: true },
+        );
+      } catch {
+        // The interests are in the note.
       }
     }
 
@@ -154,6 +164,12 @@ export const submitShareback = createServerFn({ method: "POST" })
       if (card && !plan) {
         const { getPlan } = await import("./usage.server");
         plan = await getPlan(card.user_id);
+      }
+      // An attorney card's share-back goes to the firm's CRM (logged, so a
+      // failure shows on the contact with a Resend button).
+      if (card && plan && contactId && attorneyCard) {
+        const { autoSendShareback } = await import("./crm.server");
+        await autoSendShareback(card.user_id, contactId, card.practice, plan);
       }
       if (card && plan !== "free") {
         const { sendPushToUser, postContactWebhook } = await import("./notify.server");

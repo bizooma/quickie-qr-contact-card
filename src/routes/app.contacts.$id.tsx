@@ -55,6 +55,7 @@ import {
 } from "@/lib/voice-notes";
 import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
+import { ClioContactRow } from "@/components/crm/ClioGrowPanel";
 import { ContactReminders } from "@/components/contacts/Reminders";
 import { listEvents } from "@/lib/events-api";
 
@@ -663,6 +664,7 @@ function ContactDetail() {
                 firstName={c.full_name.trim().split(/\s+/)[0] || c.full_name}
               />
             </div>
+            <ClioContactRow contactId={c.id} own={c.user_id === user?.id} />
             {!followUp && (
               <>
                 <Button variant="outline" size="sm" onClick={generateFollowUp} disabled={drafting}>

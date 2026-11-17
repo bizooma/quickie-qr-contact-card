@@ -453,6 +453,77 @@ export type Database = {
           },
         ]
       }
+      crm_connections: {
+        Row: {
+          created_at: string
+          last_error: string | null
+          provider: string
+          region: string | null
+          secret: string
+          secret_hint: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_error?: string | null
+          provider: string
+          region?: string | null
+          secret: string
+          secret_hint?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_error?: string | null
+          provider?: string
+          region?: string | null
+          secret?: string
+          secret_hint?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crm_deliveries: {
+        Row: {
+          contact_id: string
+          created_at: string
+          error: string | null
+          id: string
+          ok: boolean
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          ok: boolean
+          provider: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          ok?: boolean
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_deliveries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           address: string | null

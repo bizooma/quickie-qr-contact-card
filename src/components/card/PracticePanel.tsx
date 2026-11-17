@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { AlertTriangle, HeartHandshake, IdCard, Plus, Scale, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,6 +280,15 @@ function AttorneyFields({
           onCheckedChange={(v) => set({ consent: v })}
         />
       </div>
+
+      <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+        Use Clio Grow? Send every share-back from this card straight to your Lead Inbox. Connect it
+        in{" "}
+        <Link to="/app/settings" hash="notifications" className="font-medium text-brand underline">
+          Settings → Notifications & integrations
+        </Link>
+        .
+      </p>
     </section>
   );
 }
