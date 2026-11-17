@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CardView } from "@/components/card/CardView";
 import { ShareBack } from "@/components/card/ShareBack";
+import { BrandMark } from "@/components/BrandLogo";
 import { buildVCard, contrastText, type CardData, type LabeledValue } from "@/lib/card-model";
 import { resolveTheme } from "@/lib/card-theme";
 import { signPublicCardMedia, submitShareback } from "@/lib/capture.functions";
@@ -408,7 +409,8 @@ function PublicCard() {
             it earns the owner bonus scans (record_signup_attribution). */}
           <a
             href={`/?ref=card&c=${encodeURIComponent(slug)}`}
-            className="text-xs opacity-60 hover:opacity-100"
+            aria-label="Create your own card with QuickieQR"
+            className="inline-flex flex-col items-center gap-2 transition-transform hover:-translate-y-0.5"
             style={{ color: fg }}
             onClick={() => {
               supabase
@@ -420,7 +422,29 @@ function PublicCard() {
                 .then(undefined, () => {});
             }}
           >
-            Create your own card · QuickieQR
+            <span aria-hidden className="text-[11px] font-medium opacity-60">
+              Create your own card with
+            </span>
+            {/* The real logo, inked for this card's background (the app's
+              BrandLogo follows the site theme, not the card colors). */}
+            <span
+              aria-hidden
+              className="inline-flex items-center gap-[0.3em] font-display text-2xl font-extrabold leading-none tracking-[-0.045em]"
+            >
+              <BrandMark className="h-[1.2em] w-[1.2em] shrink-0" />
+              <span className="inline-flex items-baseline">
+                quickie
+                <span
+                  className="relative isolate ml-[0.04em]"
+                  style={{ color: fg === "#FFFFFF" ? "var(--pop-lime)" : "var(--brand)" }}
+                >
+                  {fg !== "#FFFFFF" && (
+                    <span className="absolute -inset-x-[0.08em] bottom-[0.02em] -z-10 h-[0.42em] -skew-x-12 rounded-[0.08em] bg-pop-lime/80" />
+                  )}
+                  QR
+                </span>
+              </span>
+            </span>
           </a>
         </footer>
       )}
