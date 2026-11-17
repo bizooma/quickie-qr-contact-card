@@ -18,7 +18,6 @@ import { Route as MyQrRouteImport } from './routes/my-qr'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as ApiGeoCheckRouteImport } from './routes/api.geo-check'
 import { Route as ApiPinballActivationRouteImport } from './routes/api.pinball-activation'
 import { Route as ApiPinballRefundRouteImport } from './routes/api.pinball-refund'
 import { Route as ApiPinballWebhookRouteImport } from './routes/api.pinball-webhook'
@@ -90,11 +89,6 @@ const SecurityRoute = SecurityRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiGeoCheckRoute = ApiGeoCheckRouteImport.update({
-  id: '/api/geo-check',
-  path: '/api/geo-check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPinballActivationRoute = ApiPinballActivationRouteImport.update({
@@ -243,7 +237,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
-  '/api/geo-check': typeof ApiGeoCheckRoute
   '/api/pinball-activation': typeof ApiPinballActivationRoute
   '/api/pinball-refund': typeof ApiPinballRefundRoute
   '/api/pinball-webhook': typeof ApiPinballWebhookRoute
@@ -281,7 +274,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
-  '/api/geo-check': typeof ApiGeoCheckRoute
   '/api/pinball-activation': typeof ApiPinballActivationRoute
   '/api/pinball-refund': typeof ApiPinballRefundRoute
   '/api/pinball-webhook': typeof ApiPinballWebhookRoute
@@ -321,7 +313,6 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
-  '/api/geo-check': typeof ApiGeoCheckRoute
   '/api/pinball-activation': typeof ApiPinballActivationRoute
   '/api/pinball-refund': typeof ApiPinballRefundRoute
   '/api/pinball-webhook': typeof ApiPinballWebhookRoute
@@ -362,7 +353,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/security'
     | '/terms'
-    | '/api/geo-check'
     | '/api/pinball-activation'
     | '/api/pinball-refund'
     | '/api/pinball-webhook'
@@ -400,7 +390,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/security'
     | '/terms'
-    | '/api/geo-check'
     | '/api/pinball-activation'
     | '/api/pinball-refund'
     | '/api/pinball-webhook'
@@ -439,7 +428,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/security'
     | '/terms'
-    | '/api/geo-check'
     | '/api/pinball-activation'
     | '/api/pinball-refund'
     | '/api/pinball-webhook'
@@ -479,7 +467,6 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
-  ApiGeoCheckRoute: typeof ApiGeoCheckRoute
   ApiPinballActivationRoute: typeof ApiPinballActivationRoute
   ApiPinballRefundRoute: typeof ApiPinballRefundRoute
   ApiPinballWebhookRoute: typeof ApiPinballWebhookRoute
@@ -554,13 +541,6 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/geo-check': {
-      id: '/api/geo-check'
-      path: '/api/geo-check'
-      fullPath: '/api/geo-check'
-      preLoaderRoute: typeof ApiGeoCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/pinball-activation': {
@@ -809,7 +789,6 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,
-  ApiGeoCheckRoute: ApiGeoCheckRoute,
   ApiPinballActivationRoute: ApiPinballActivationRoute,
   ApiPinballRefundRoute: ApiPinballRefundRoute,
   ApiPinballWebhookRoute: ApiPinballWebhookRoute,

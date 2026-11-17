@@ -104,17 +104,3 @@ export function attachVisitorGeo(request: Request): Request {
   if (!new URL(request.url).pathname.startsWith("/_serverFn")) return request;
   return new Request(request, { headers: withGeoHeaders(request.headers, visitorGeo(request)) });
 }
-
-/** Which location signals reach the app (names only, plus the country), for
- *  the temporary /api/geo-check page. */
-export function geoSignals(request: Request) {
-  const cf = (request as Request & { cf?: Record<string, unknown> }).cf;
-  return {
-    hasCf: !!cf,
-    cfKeys: cf ? Object.keys(cf).sort() : [],
-    locationHeaders: [...request.headers.keys()]
-      .filter((k) => /^(cf-|x-vercel-ip|x-forwarded|x-real-ip|x-client)/.test(k))
-      .sort(),
-    result: { ...visitorGeo(request), city: visitorGeo(request).city ? "(present)" : null },
-  };
-}
