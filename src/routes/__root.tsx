@@ -113,6 +113,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Fraunces:opsz,wght@9..144,500..700&family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400..700&display=swap",
       },
     ],
+    scripts: [
+      {
+        src: "https://datarightsos.com/functions/widgetJs",
+        "data-tessera-site": "sk_u40a2360dhmdu9th52lzvqqy",
+        defer: true,
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
