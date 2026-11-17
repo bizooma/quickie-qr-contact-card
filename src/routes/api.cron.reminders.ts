@@ -68,6 +68,37 @@ export const Route = createFileRoute("/api/cron/reminders")({
           }
         }
 
+        // Morning follow-up summary: once a day at ~8-10am local, for paid
+        // plans with notifications on ("14 people from the JBA mixer").
+        let digests = 0;
+        const { data: digest } = await supabaseAdmin.rpc("follow_up_digest_candidates", {
+          p_limit: 50,
+        });
+        if (digest?.length) {
+          const { digestMessage } = await import("@/lib/followups");
+          const { sendPushToUser } = await import("@/lib/notify.server");
+          for (const d of digest) {
+            const { data: plan } = await supabaseAdmin.rpc("effective_plan", { _user: d.user_id });
+            if (plan && plan !== "free") {
+              try {
+                await sendPushToUser(d.user_id, {
+                  ...digestMessage(d.due_count, d.sample_name, d.event_name),
+                  url: "/app/follow-up",
+                });
+                digests += 1;
+              } catch {
+                // Best-effort; the queue is in the app either way.
+              }
+            }
+            // Marked even when skipped, so a free account isn't re-checked
+            // every 15 minutes all morning.
+            await supabaseAdmin
+              .from("profiles")
+              .update({ follow_up_digest_on: d.local_today })
+              .eq("id", d.user_id);
+          }
+        }
+
         const { data: due, error } = await supabaseAdmin
           .from("contact_reminders")
           .select("id, user_id, contact_id, note, contacts(full_name)")
@@ -77,7 +108,7 @@ export const Route = createFileRoute("/api/cron/reminders")({
           .order("remind_at")
           .limit(MAX_PER_RUN);
         if (error) return Response.json({ error: "query failed" }, { status: 500 });
-        if (!due?.length) return Response.json({ sent: 0, winback });
+        if (!due?.length) return Response.json({ sent: 0, winback, digests });
 
         const { reminderMessage } = await import("@/lib/followups");
         const { sendPushToUser } = await import("@/lib/notify.server");
@@ -112,7 +143,7 @@ export const Route = createFileRoute("/api/cron/reminders")({
               list.map((r) => r.id),
             );
         }
-        return Response.json({ sent, reminders: due.length, winback });
+        return Response.json({ sent, reminders: due.length, winback, digests });
       },
     },
   },

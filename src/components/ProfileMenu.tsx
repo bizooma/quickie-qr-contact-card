@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CreditCard, LogOut, PlusCircle, Settings, Sparkles } from "lucide-react";
+import { BarChart3, CreditCard, LogOut, PlusCircle, Settings, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -124,6 +124,7 @@ export function ProfileMenu({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <MenuLink to="/app" icon={<CreditCard />} label="Cards" />
+        <MenuLink to="/app/analytics" icon={<BarChart3 />} label="Analytics" />
         <MenuLink to="/app/settings" icon={<Settings />} label="Settings" />
         <MenuLink
           to="/app/settings"
@@ -148,7 +149,7 @@ function MenuLink({
   icon,
   label,
 }: {
-  to: "/app" | "/app/settings";
+  to: "/app" | "/app/settings" | "/app/analytics";
   hash?: string;
   icon: ReactNode;
   label: string;

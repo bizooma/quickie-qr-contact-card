@@ -25,6 +25,7 @@ import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe-webhoo
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
+import { Route as AppFollowUpRouteImport } from './routes/app.follow-up'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppOrgRouteImport } from './routes/app.org'
 import { Route as AppQrRouteImport } from './routes/app.qr'
@@ -123,6 +124,11 @@ const AppAdminRoute = AppAdminRouteImport.update({
 const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFollowUpRoute = AppFollowUpRouteImport.update({
+  id: '/follow-up',
+  path: '/follow-up',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/follow-up': typeof AppFollowUpRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/org': typeof AppOrgRoute
   '/app/qr': typeof AppQrRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/follow-up': typeof AppFollowUpRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/org': typeof AppOrgRoute
   '/app/qr': typeof AppQrRoute
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/app/admin': typeof AppAdminRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/follow-up': typeof AppFollowUpRoute
   '/app/onboarding': typeof AppOnboardingRoute
   '/app/org': typeof AppOrgRoute
   '/app/qr': typeof AppQrRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
+    | '/app/follow-up'
     | '/app/onboarding'
     | '/app/org'
     | '/app/qr'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
+    | '/app/follow-up'
     | '/app/onboarding'
     | '/app/org'
     | '/app/qr'
@@ -423,6 +434,7 @@ export interface FileRouteTypes {
     | '/api/stripe-webhook'
     | '/app/admin'
     | '/app/analytics'
+    | '/app/follow-up'
     | '/app/onboarding'
     | '/app/org'
     | '/app/qr'
@@ -580,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/follow-up': {
+      id: '/app/follow-up'
+      path: '/follow-up'
+      fullPath: '/app/follow-up'
+      preLoaderRoute: typeof AppFollowUpRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/onboarding': {
       id: '/app/onboarding'
       path: '/onboarding'
@@ -719,6 +738,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppFollowUpRoute: typeof AppFollowUpRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppOrgRoute: typeof AppOrgRoute
   AppQrRoute: typeof AppQrRoute
@@ -739,6 +759,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
+  AppFollowUpRoute: AppFollowUpRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppOrgRoute: AppOrgRoute,
   AppQrRoute: AppQrRoute,

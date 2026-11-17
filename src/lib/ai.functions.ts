@@ -277,6 +277,16 @@ export const draftFollowUp = createServerFn({ method: "POST" })
       if (response.stop_reason === "refusal" || !response.parsed_output) {
         throw new Error("Could not draft a follow-up for this contact. Try again.");
       }
+      // Keep it on the contact: the follow-up queue shows it again without
+      // another AI call. Best-effort; the draft is returned either way.
+      await supabase
+        .from("contacts")
+        .update({ follow_up_draft: response.parsed_output })
+        .eq("id", data.contactId)
+        .then(
+          () => undefined,
+          () => undefined,
+        );
       return { result: response.parsed_output, units: 1 };
     });
   });

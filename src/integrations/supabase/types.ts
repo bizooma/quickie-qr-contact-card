@@ -532,6 +532,10 @@ export type Database = {
           created_at: string
           email: string | null
           event_id: string | null
+          follow_up_done_at: string | null
+          follow_up_draft: Json | null
+          follow_up_due_at: string | null
+          follow_up_outcome: string | null
           full_name: string
           id: string
           job_title: string | null
@@ -553,6 +557,10 @@ export type Database = {
           created_at?: string
           email?: string | null
           event_id?: string | null
+          follow_up_done_at?: string | null
+          follow_up_draft?: Json | null
+          follow_up_due_at?: string | null
+          follow_up_outcome?: string | null
           full_name: string
           id?: string
           job_title?: string | null
@@ -574,6 +582,10 @@ export type Database = {
           created_at?: string
           email?: string | null
           event_id?: string | null
+          follow_up_done_at?: string | null
+          follow_up_draft?: Json | null
+          follow_up_due_at?: string | null
+          follow_up_outcome?: string | null
           full_name?: string
           id?: string
           job_title?: string | null
@@ -792,6 +804,8 @@ export type Database = {
           suspended: boolean
           suspended_at: string | null
           team_seats: number
+          follow_up_digest_on: string | null
+          time_zone: string | null
           updated_at: string
           verified_at: string | null
           webhook_url: string | null
@@ -817,6 +831,8 @@ export type Database = {
           suspended?: boolean
           suspended_at?: string | null
           team_seats?: number
+          follow_up_digest_on?: string | null
+          time_zone?: string | null
           updated_at?: string
           verified_at?: string | null
           webhook_url?: string | null
@@ -842,6 +858,8 @@ export type Database = {
           suspended?: boolean
           suspended_at?: string | null
           team_seats?: number
+          follow_up_digest_on?: string | null
+          time_zone?: string | null
           updated_at?: string
           verified_at?: string | null
           webhook_url?: string | null
@@ -1146,6 +1164,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      follow_up_digest_candidates: {
+        Args: { p_limit?: number }
+        Returns: {
+          due_count: number
+          event_name: string
+          local_today: string
+          sample_name: string
+          user_id: string
+        }[]
+      }
       accept_team_invite: {
         Args: { _token: string; _user: string }
         Returns: Json

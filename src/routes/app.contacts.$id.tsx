@@ -55,6 +55,7 @@ import {
 } from "@/lib/voice-notes";
 import { buildSuggestions, canEnrich, ENRICH_LABELS, type Suggestion } from "@/lib/enrichment";
 import type { FollowUpDraft } from "@/lib/ai-model";
+import { markDone, QUEUE_COUNT_KEY, QUEUE_KEY, reopen } from "@/lib/follow-up-api";
 import { ClioContactRow } from "@/components/crm/ClioGrowPanel";
 import { ContactReminders } from "@/components/contacts/Reminders";
 import { listEvents } from "@/lib/events-api";
@@ -154,6 +155,12 @@ function ContactDetail() {
         linkedin_url: c.linkedin_url ?? "",
         address: c.address ?? "",
       });
+    // A draft written before (here or in Follow up) shows again, free.
+    const saved = c?.follow_up_draft as { subject?: unknown; body?: unknown } | null | undefined;
+    if (saved && typeof saved.subject === "string" && typeof saved.body === "string") {
+      const draft = { subject: saved.subject, body: saved.body };
+      setFollowUp((prev) => prev ?? draft);
+    }
   }, [data?.contact]);
 
   // Edits used to vanish unless you scrolled down to "Save details" — surface a
@@ -664,6 +671,16 @@ function ContactDetail() {
                 firstName={c.full_name.trim().split(/\s+/)[0] || c.full_name}
               />
             </div>
+            {c.user_id === user?.id && (
+              <FollowUpStatus
+                contact={c}
+                onChange={() => {
+                  void qc.invalidateQueries({ queryKey: ["contact", id] });
+                  void qc.invalidateQueries({ queryKey: QUEUE_KEY });
+                  void qc.invalidateQueries({ queryKey: QUEUE_COUNT_KEY });
+                }}
+              />
+            )}
             <ClioContactRow contactId={c.id} own={c.user_id === user?.id} />
             {!followUp && (
               <>
@@ -917,6 +934,79 @@ function ContactDetail() {
             </Button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/** Where this contact stands in the follow-up queue, with the one action
+ *  that moves it on. */
+function FollowUpStatus({
+  contact,
+  onChange,
+}: {
+  contact: {
+    id: string;
+    follow_up_due_at: string | null;
+    follow_up_done_at: string | null;
+    follow_up_outcome: string | null;
+  };
+  onChange: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  async function run(fn: () => Promise<void>) {
+    setBusy(true);
+    try {
+      await fn();
+      onChange();
+    } catch {
+      toast.error("Couldn't update that. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  const done = !!contact.follow_up_done_at;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border p-3">
+      <p className="text-sm">
+        {done ? (
+          <>
+            <span className="font-semibold">
+              {contact.follow_up_outcome === "skipped" ? "No follow-up needed" : "Followed up"}
+            </span>{" "}
+            <span className="text-muted-foreground">
+              {new Date(contact.follow_up_done_at!).toLocaleDateString()}
+            </span>
+          </>
+        ) : contact.follow_up_due_at ? (
+          <>
+            <span className="font-semibold">On your follow-up list.</span>{" "}
+            <Link to="/app/follow-up" className="text-brand underline">
+              Open the list
+            </Link>
+          </>
+        ) : (
+          <span className="text-muted-foreground">Not on your follow-up list.</span>
+        )}
+      </p>
+      {done || !contact.follow_up_due_at ? (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          onClick={() => void run(() => reopen(contact.id))}
+        >
+          {done ? "Reopen" : "Add to the list"}
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          onClick={() => void run(() => markDone(contact.id, "sent"))}
+        >
+          Mark followed up
+        </Button>
       )}
     </div>
   );

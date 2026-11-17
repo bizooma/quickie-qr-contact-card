@@ -14,6 +14,7 @@ import {
   Users,
   Wrench,
   type LucideIcon,
+  MailCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,6 +30,7 @@ import { trackActivity } from "@/lib/activity.functions";
 import { cn } from "@/lib/utils";
 import { ProfileAvatar, ProfileMenu } from "@/components/ProfileMenu";
 import { usePlan } from "@/components/PremiumGate";
+import { countDue, QUEUE_COUNT_KEY, syncTimeZone } from "@/lib/follow-up-api";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -49,12 +51,18 @@ export const Route = createFileRoute("/app")({
 type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean };
 
 // The mobile tab bar: these five plus the Profile tab (avatar menu).
+const FOLLOW_UP: NavItem = { to: "/app/follow-up", label: "Follow up", icon: MailCheck };
+const TOOLS: NavItem = { to: "/app/tools", label: "Tools", icon: Wrench };
+const ANALYTICS: NavItem = { to: "/app/analytics", label: "Analytics", icon: BarChart3 };
+
+// Follow up has a tab because it's the point of the app; Analytics is in the
+// Profile menu on phones.
 const TABS: NavItem[] = [
   { to: "/app", label: "Cards", icon: CreditCard, exact: true },
   { to: "/app/contacts", label: "Contacts", icon: Users },
   { to: "/app/scan", label: "Scan", icon: ScanLine },
-  { to: "/app/tools", label: "Tools", icon: Wrench },
-  { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
+  FOLLOW_UP,
+  TOOLS,
 ];
 
 // Desktop sidebar groups. Settings lives in the avatar menu on every screen
@@ -63,10 +71,11 @@ const TABS: NavItem[] = [
 const WORKSPACE: NavItem[] = [
   TABS[0]!,
   TABS[1]!,
+  FOLLOW_UP,
   TABS[2]!,
   { to: "/app/qr", label: "My QR", icon: QrCode },
 ];
-const GROW: NavItem[] = [TABS[3]!, TABS[4]!, { to: "/app/org", label: "Team", icon: Building2 }];
+const GROW: NavItem[] = [TOOLS, ANALYTICS, { to: "/app/org", label: "Team", icon: Building2 }];
 
 // Top-bar title for screens outside the nav.
 const TITLES: [string, string][] = [
@@ -149,6 +158,18 @@ function AppLayout() {
     void trackActivity({ data: { path: pathname } }).catch(() => {});
   }, [user, pathname]);
 
+  // The morning follow-up summary goes out at ~8am in this device's zone.
+  useEffect(() => {
+    if (user) void syncTimeZone(user.id);
+  }, [user]);
+
+  const { data: dueFollowUps = 0 } = useQuery({
+    queryKey: QUEUE_COUNT_KEY,
+    enabled: !!user,
+    refetchInterval: 60_000,
+    queryFn: () => countDue(user!.id),
+  });
+
   const { data: newLeads = 0 } = useQuery({
     queryKey: ["new-leads"],
     enabled: !!user,
@@ -210,8 +231,13 @@ function AppLayout() {
     TITLES.find(([to]) => pathname.startsWith(to))?.[1] ??
     "";
   const grow = isAdmin ? [...GROW, { to: "/app/admin", label: "Admin", icon: ShieldCheck }] : GROW;
+  const count = (n: number) => (n > 99 ? "99+" : String(n));
   const badge = (to: string) =>
-    to === "/app/contacts" && newLeads > 0 ? (newLeads > 99 ? "99+" : String(newLeads)) : null;
+    to === "/app/contacts" && newLeads > 0
+      ? count(newLeads)
+      : to === FOLLOW_UP.to && dueFollowUps > 0
+        ? count(dueFollowUps)
+        : null;
 
   return (
     <div
