@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import forge from "node-forge";
 import { unzipSync } from "fflate";
-import { buildPassJson, hexToRgb, passColors, passShowsPhoto, type PassCard } from "./apple-pass";
+import {
+  buildPassJson,
+  hexToRgb,
+  passColors,
+  passShowsPhoto,
+  shortWebsite,
+  type PassCard,
+} from "./apple-pass";
 
 const ID = { passTypeIdentifier: "pass.com.quickieqr.card", teamIdentifier: "TEAM123456" };
 
@@ -38,21 +45,30 @@ describe("buildPassJson", () => {
     expect(p.teamIdentifier).toBe(ID.teamIdentifier);
   });
 
-  it("shows name, title and company", () => {
+  it("shows name, title, phone and website, with the company on the back", () => {
     const p = buildPassJson(card, ID, { hasLogo: true });
-    expect(p.generic.primaryFields[0]).toMatchObject({ label: "WORK", value: "Jane Doe" });
+    expect(p.generic.primaryFields[0]).toMatchObject({ label: "", value: "Jane Doe" });
     expect(p.generic.secondaryFields[0]?.value).toBe("Partner");
-    expect(p.generic.auxiliaryFields[0]?.value).toBe("Doe Law");
+    expect(p.generic.auxiliaryFields).toEqual([
+      { key: "phone", label: "PHONE", value: "+1 555 0100" },
+      { key: "web", label: "WEBSITE", value: "doelaw.com" },
+    ]);
+    expect(p.generic.backFields[0]).toMatchObject({ label: "Company", value: "Doe Law" });
     expect(p).not.toHaveProperty("logoText");
   });
 
   it("writes the company in the logo spot when there's no logo image", () => {
     const p = buildPassJson(card, ID, { hasLogo: false });
     expect(p.logoText).toBe("Doe Law");
-    expect(p.generic.auxiliaryFields).toEqual([]);
+    expect(p.generic.backFields.some((f) => f.key === "company")).toBe(false);
     expect(buildPassJson({ ...card, company: null }, ID, { hasLogo: false }).logoText).toBe(
       "QuickieQR",
     );
+  });
+
+  it("shortens websites for the front", () => {
+    expect(shortWebsite("https://www.bizooma.com/")).toBe("bizooma.com");
+    expect(shortWebsite("http://x.org/about")).toBe("x.org/about");
   });
 
   it("keeps the person off a low-profile pass", () => {
@@ -62,6 +78,7 @@ describe("buildPassJson", () => {
     expect(text).not.toContain("555");
     expect(text).not.toContain("jane@");
     expect(p.generic.primaryFields[0]?.value).toBe("The PLACE");
+    expect(p.generic.auxiliaryFields.map((f) => f.key)).toEqual(["web"]);
     expect(passShowsPhoto(lowProfile)).toBe(false);
     expect(passShowsPhoto(card)).toBe(true);
   });

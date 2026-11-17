@@ -52,7 +52,7 @@ export function hexToRgb(hex: string): Rgb {
 const css = ([r, g, b]: Rgb) => `rgb(${r}, ${g}, ${b})`;
 
 /** WCAG relative luminance, 0 (black) to 1 (white). */
-function luminance([r, g, b]: Rgb): number {
+export function luminance([r, g, b]: Rgb): number {
   const lin = (c: number) => {
     const s = c / 255;
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
@@ -73,7 +73,21 @@ export function passColors(accent: string) {
   return { backgroundColor: css(bg), foregroundColor: css(fg), labelColor: css(label) };
 }
 
+/** WCAG contrast ratio between two luminances (1 to 21). */
+export function contrastRatio(a: number, b: number): number {
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 const clip = (s: string | null | undefined, n = 60) => (s ?? "").trim().slice(0, n);
+
+/** "https://www.bizooma.com/" -> "bizooma.com" for the front of the pass. */
+export function shortWebsite(url: string): string {
+  return url
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/+$/, "");
+}
 
 /** Whether the pass shows the person's photo (never on a low-profile card). */
 export function passShowsPhoto(card: Pick<PassCard, "headshot_path" | "practice">): boolean {
@@ -81,7 +95,8 @@ export function passShowsPhoto(card: Pick<PassCard, "headshot_path" | "practice"
 }
 
 /** pass.json for a card. `hasLogo` says whether a logo image is in the pass;
- *  without one the company (or QuickieQR) is written in the logo spot. */
+ *  without one the company (or QuickieQR) is written in the logo spot, and
+ *  with one the company moves to the back. */
 export function buildPassJson(card: PassCard, id: PassIdentity, opts: { hasLogo: boolean }) {
   const view = lowProfileView(card);
   const url = `${SITE}/c/${card.slug}`;
@@ -89,27 +104,30 @@ export function buildPassJson(card: PassCard, id: PassIdentity, opts: { hasLogo:
   const title = clip(view.job_title);
   const company = clip(view.company);
 
-  const back: { key: string; label: string; value: string }[] = [];
+  type Field = { key: string; label: string; value: string };
+  const back: Field[] = [];
   const low = isLowProfile(card.practice);
+  if (company && opts.hasLogo) back.push({ key: "company", label: "Company", value: company });
   // A low-profile card keeps personal contact details off the pass too.
-  if (!low) {
-    card.phones.slice(0, 3).forEach((p, i) => {
-      if (p.value?.trim())
-        back.push({ key: `phone${i}`, label: clip(p.label, 20) || "Phone", value: clip(p.value) });
-    });
-    card.emails.slice(0, 3).forEach((e, i) => {
-      if (e.value?.trim())
-        back.push({
-          key: `email${i}`,
-          label: clip(e.label, 20) || "Email",
-          value: clip(e.value, 120),
-        });
-    });
-  }
-  if (card.website?.trim())
-    back.push({ key: "website", label: "Website", value: clip(card.website, 200) });
+  const phones = low ? [] : card.phones.filter((p) => p.value?.trim()).slice(0, 3);
+  const emails = low ? [] : card.emails.filter((e) => e.value?.trim()).slice(0, 3);
+  phones.forEach((p, i) =>
+    back.push({ key: `phone${i}`, label: clip(p.label, 20) || "Phone", value: clip(p.value) }),
+  );
+  emails.forEach((e, i) =>
+    back.push({ key: `email${i}`, label: clip(e.label, 20) || "Email", value: clip(e.value, 120) }),
+  );
+  const website = card.website?.trim() ? shortWebsite(card.website) : "";
+  if (website) back.push({ key: "website", label: "Website", value: clip(card.website, 200) });
   if (card.location?.trim())
     back.push({ key: "location", label: "Location", value: clip(card.location, 120) });
+
+  // Front, under the title: how to reach them (the logo already says who
+  // they're with; without a logo the company is written in its place).
+  const front: Field[] = [];
+  if (phones[0]) front.push({ key: "phone", label: "PHONE", value: clip(phones[0].value, 30) });
+  if (website) front.push({ key: "web", label: "WEBSITE", value: clip(website, 40) });
+
   back.push({ key: "card", label: "My card", value: url });
   back.push({
     key: "about",
@@ -137,10 +155,11 @@ export function buildPassJson(card: PassCard, id: PassIdentity, opts: { hasLogo:
       },
     ],
     generic: {
-      primaryFields: [{ key: "name", label: clip(card.label, 24).toUpperCase(), value: name }],
+      // No label over the name: the card's own label ("Work") is for the
+      // owner's list, and the logo already says who they're with.
+      primaryFields: [{ key: "name", label: "", value: name }],
       secondaryFields: title ? [{ key: "title", label: "TITLE", value: title }] : [],
-      auxiliaryFields:
-        company && opts.hasLogo ? [{ key: "company", label: "COMPANY", value: company }] : [],
+      auxiliaryFields: front,
       backFields: back,
     },
   };

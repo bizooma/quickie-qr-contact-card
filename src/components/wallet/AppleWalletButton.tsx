@@ -12,6 +12,7 @@ type WalletCard = {
   id: string;
   logo_path: string | null;
   headshot_path: string | null;
+  accent_color: string;
   practice: unknown;
 };
 
@@ -41,6 +42,7 @@ function useAppleWallet(card: WalletCard | null | undefined) {
       const images = await passImages({
         logoUrl: card.logo_path ? urls[card.logo_path] : null,
         photoUrl: withPhoto && card.headshot_path ? urls[card.headshot_path] : null,
+        background: card.accent_color,
       });
       const { url } = await createAppleWalletPass({ data: { cardId: card.id, images } });
       // A real navigation to the .pkpass is what makes Safari offer "Add".

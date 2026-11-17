@@ -831,6 +831,7 @@ function Editor({
                 id: cardId,
                 logo_path: card.logo_path,
                 headshot_path: card.headshot_path,
+                accent_color: card.accent_color,
                 practice: card.practice,
               }}
             />
