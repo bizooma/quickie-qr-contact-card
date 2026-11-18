@@ -115,6 +115,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        children:
+          "window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());",
+      },
+      {
+        src: "https://www.googletagmanager.com/gtm.js?id=GTM-5QWXHQW4",
+        async: true,
+      },
+      {
         src: "https://datarightsos.com/functions/widgetJs",
         "data-tessera-site": "sk_u40a2360dhmdu9th52lzvqqy",
         defer: true,
