@@ -10,6 +10,7 @@ describe("via tags", () => {
   it("reads only known tags", () => {
     expect(parseVia("?via=qr")).toBe("qr");
     expect(parseVia("?via=EMAIL")).toBe("email");
+    expect(parseVia("?via=lexguild")).toBe("lexguild");
     expect(parseVia("?via=evil")).toBeNull();
     expect(parseVia("")).toBeNull();
   });

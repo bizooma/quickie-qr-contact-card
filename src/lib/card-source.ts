@@ -3,7 +3,7 @@
 // "?via=" tag to the card link; the card page reads it, logs it with the
 // view, and drops it from the address bar so it isn't passed along.
 
-export const VIA = ["qr", "nfc", "email", "link"] as const;
+export const VIA = ["qr", "nfc", "email", "link", "lexguild"] as const;
 export type Via = (typeof VIA)[number];
 
 export const OS = ["iphone", "ipad", "android", "mac", "windows", "linux", "other"] as const;
@@ -48,6 +48,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   nfc: "NFC tap",
   email: "Email signature",
   link: "Shared link",
+  lexguild: "LexGuild profile",
   web: "From a website",
   direct: "Direct or older QR code",
 };
